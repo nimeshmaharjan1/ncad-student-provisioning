@@ -65,9 +65,9 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
     Processing Order:
     1. Create Term Email
     2. Remove blank Term Emails
-    3. Remove duplicates using Term Email (keeping first occurrence)
-    4. Filter Registered / Recommend* Status
-    5. Remove External Students (using Course Description)
+    3. Filter Status (Registered / Recommend*)
+    4. Remove External Students (using Course Description)
+    5. Remove duplicates using Term Email (keeping FIRST occurrence)
     6. Create Type column using course number
     """
     if df.empty:
@@ -91,24 +91,38 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
     # 2. Remove blank Term Emails
     df_copy = df_copy[df_copy["Term Email"] != ""]
 
-    # IMPORTANT:
-    # Duplicate removal keeps the FIRST occurrence.
-    # Files must be merged in chronological order:
-    # oldest file first, newest file last.
-    # Example:
-    # merge_quercus_files(df_2025, df_2026)
-    # This preserves the same behaviour as the existing NCAD Excel workflow.
-    df_copy = df_copy.drop_duplicates(subset=["Term Email"], keep="first")
-
-    # 4. Filter Registered / Recommend*
+    # 3. Filter Registered / Recommend* Status
     if "Status" in df_copy.columns:
         status_series = df_copy["Status"].fillna("").astype(str)
         mask = (status_series == "Registered") | (status_series.str.startswith("Recommend"))
         df_copy = df_copy[mask]
 
-    # 5. Remove External Students
+    # 4. Remove External Students
     if "Course Description" in df_copy.columns:
         df_copy = df_copy[df_copy["Course Description"].astype(str).str.strip() != "NCAD Elective - External Students"]
+
+    # IMPORTANT:
+    # Status filtering must happen BEFORE duplicate removal.
+    #
+    # A student may appear multiple times in Quercus with different statuses
+    # (for example Withdrawn and Registered).
+    #
+    # We first keep only valid student records:
+    #   - Registered
+    #   - Recommend*
+    #
+    # Then duplicate removal is applied using Term Email.
+    #
+    # Duplicate removal keeps the FIRST occurrence.
+    # Files must be merged in chronological order:
+    # oldest file first, newest file last.
+    #
+    # Example:
+    # merge_quercus_files(df_2025, df_2026)
+    #
+    # This preserves the same behaviour as the existing NCAD workflow
+    # while avoiding invalid statuses suppressing valid records.
+    df_copy = df_copy.drop_duplicates(subset=["Term Email"], keep="first")
 
     # 6. Create Type column using course number
     if "Course Code" in df_copy.columns:
