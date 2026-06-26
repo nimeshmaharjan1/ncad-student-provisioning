@@ -1,0 +1,3 @@
+Status,ID Number,Course Code,Course Description,Course Instance Course Year,Course Instance Course Stream,First Name,Last Name,Date of Birth,Home Mobile Phone,Term Email,LDAP ID,Home Email,Student Category
+Registered,12345,AD001,Test Course,1,,John,Doe,01/01/2000,0871234567,12345@student.ncad.ie,12345,,UG
+Registered,99999,AD002,New Course,1,,Jane,Smith,02/02/2001,0879999999,99999@student.ncad.ie,99999,,PG

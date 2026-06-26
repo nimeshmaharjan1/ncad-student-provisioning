@@ -47,15 +47,29 @@ def merge_quercus_files(*dfs: pd.DataFrame) -> pd.DataFrame:
 
 def extract_course_number(course_code) -> int | None:
     """
-    Extracts the numeric part from the course code string.
-    Returns the integer value, or None if no digits are found.
+    Extracts the actual course number from the course code string.
+    
+    DESIGN DECISION:
+    Course codes at NCAD typically start with an alphabetic prefix representing the school
+    or program (e.g. 'AD', 'CEAD') directly followed by the course number digits (e.g. '401', '050').
+    To distinguish the course number from separate year prefix or suffix digits (e.g. '2026-AD401'
+    or 'AD401PC2026'), we look for the first sequence of digits that immediately follows alphabetic
+    characters. If no such pattern is found, we fall back to the first numeric sequence in the string.
     """
     if pd.isna(course_code):
         return None
     code_str = str(course_code).strip()
-    match = re.search(r'\d+', code_str)
+    
+    # Match letters followed by optional spaces and then digits (e.g. AD 401 -> capture group 401)
+    match = re.search(r'[a-zA-Z]+\s*(\d+)', code_str)
     if match:
-        return int(match.group())
+        return int(match.group(1))
+        
+    # Fallback to the first numeric sequence found anywhere in the string
+    fallback_match = re.search(r'\d+', code_str)
+    if fallback_match:
+        return int(fallback_match.group(0))
+        
     return None
 
 def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
@@ -74,6 +88,9 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
         df_copy = df.copy()
         df_copy["Term Email"] = pd.Series(dtype=str)
         df_copy["Type"] = pd.Series(dtype=str)
+        df_copy.attrs["filtered_out_status_count"] = 0
+        df_copy.attrs["external_students_removed_count"] = 0
+        df_copy.attrs["duplicate_rows_detected"] = 0
         return df_copy
 
     df_copy = df.copy()
@@ -92,14 +109,20 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
     df_copy = df_copy[df_copy["Term Email"] != ""]
 
     # 3. Filter Registered / Recommend* Status
+    filtered_out_status_count = 0
     if "Status" in df_copy.columns:
+        before_status = len(df_copy)
         status_series = df_copy["Status"].fillna("").astype(str)
         mask = (status_series == "Registered") | (status_series.str.startswith("Recommend"))
         df_copy = df_copy[mask]
+        filtered_out_status_count = before_status - len(df_copy)
 
     # 4. Remove External Students
+    external_students_removed_count = 0
     if "Course Description" in df_copy.columns:
+        before_external = len(df_copy)
         df_copy = df_copy[df_copy["Course Description"].astype(str).str.strip() != "NCAD Elective - External Students"]
+        external_students_removed_count = before_external - len(df_copy)
 
     # IMPORTANT:
     # Status filtering must happen BEFORE duplicate removal.
@@ -122,7 +145,15 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
     #
     # This preserves the same behaviour as the existing NCAD workflow
     # while avoiding invalid statuses suppressing valid records.
+    duplicate_rows_detected = 0
+    before_dup = len(df_copy)
     df_copy = df_copy.drop_duplicates(subset=["Term Email"], keep="first")
+    duplicate_rows_detected = before_dup - len(df_copy)
+
+    # Store audit metadata in attributes
+    df_copy.attrs["filtered_out_status_count"] = filtered_out_status_count
+    df_copy.attrs["external_students_removed_count"] = external_students_removed_count
+    df_copy.attrs["duplicate_rows_detected"] = duplicate_rows_detected
 
     # 6. Create Type column using course number
     if "Course Code" in df_copy.columns:

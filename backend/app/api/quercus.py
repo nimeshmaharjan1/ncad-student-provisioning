@@ -10,6 +10,7 @@ async def upload_quercus(file: UploadFile = File(...)):
     contents = await file.read()
 
     df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
+    df.columns = df.columns.str.strip()
     
     cleaned_df = preprocess_quercus(df)
 
@@ -23,5 +24,8 @@ async def upload_quercus(file: UploadFile = File(...)):
     return {
         "raw_row_count": len(df),
         "cleaned_row_count": len(cleaned_df),
+        "filtered_out_status_count": cleaned_df.attrs.get("filtered_out_status_count", 0),
+        "external_students_removed_count": cleaned_df.attrs.get("external_students_removed_count", 0),
+        "duplicate_rows_detected": cleaned_df.attrs.get("duplicate_rows_detected", 0),
         "sample_rows": sample_rows
     }
