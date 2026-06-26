@@ -1,1 +1,41 @@
-.venv
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# FastAPI / uvicorn
+uvicorn.log
+
+# Jupyter
+.ipynb_checkpoints/
