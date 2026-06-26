@@ -49,6 +49,19 @@ def normalize_baseline_schema(baseline_df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(columns=LDAP_SCHEMA_REQUIRED_COLUMNS)
 
     df_norm = baseline_df.copy()
+
+    # # Step 1: Normalize incoming column names (strip whitespace + case-insensitive rename)
+    expected_lookup = {col.lower(): col for col in LDAP_SCHEMA_REQUIRED_COLUMNS}
+    rename_map = {}
+    for col in df_norm.columns:
+        stripped = col.strip()
+        key = stripped.lower()
+        if key in expected_lookup and stripped != expected_lookup[key]:
+            rename_map[col] = expected_lookup[key]
+    df_norm = df_norm.rename(columns=rename_map)
+    # Rename is fully complete before schema enforcement begins
+
+    # Step 2: Fill any truly missing columns with empty strings
     for col in LDAP_SCHEMA_REQUIRED_COLUMNS:
         if col not in df_norm.columns:
             df_norm[col] = ""
@@ -163,6 +176,28 @@ def update_baseline_state(baseline_df: pd.DataFrame, new_students_df: pd.DataFra
 
     return combined
 
+def _format_dob_series(series: pd.Series) -> pd.Series:
+    """
+    Converts any Date of Birth format to dd/mm/yyyy.
+    Handles ISO, Excel serial, and mixed formats.
+    Empty/invalid values become empty string.
+    """
+    str_series = series.fillna("").astype(str)
+
+    # First pass: text-based datetime parsing
+    parsed = pd.to_datetime(str_series, errors="coerce", dayfirst=True)
+
+    # Second pass: Excel serial dates for values not parsed as text
+    if parsed.isna().any():
+        numeric = pd.to_numeric(series, errors="coerce")
+        excel_dates = pd.to_datetime(numeric, unit="D", origin=pd.Timestamp("1899-12-30"), errors="coerce")
+        parsed = parsed.fillna(excel_dates)
+
+    formatted = parsed.dt.strftime("%d/%m/%Y")
+    formatted[parsed.isna()] = ""
+    return formatted
+
+
 def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """
     Orchestrates the LDAP comparison pipeline.
@@ -170,29 +205,32 @@ def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.D
     Returns:
         tuple: (new_students_df, updated_baseline_df, audit_info)
     """
-    # 0. Validate Schema Contracts
-    if not baseline_df.empty:
-        # Check that required columns exist in baseline
-        missing_ldap = [col for col in LDAP_SCHEMA_REQUIRED_COLUMNS if col not in baseline_df.columns]
-        if missing_ldap:
-            raise KeyError(f"Required LDAP baseline columns missing: {missing_ldap}")
-
     # 1. Normalize Baseline Schema at Ingestion
     baseline_normalized = normalize_baseline_schema(baseline_df)
 
-    # 2. Map Quercus to LDAP format (Pure Mapping, raises KeyError if columns are missing)
+    # 2. Validate Schema Contracts (after normalization so case/whitespace differences are already resolved)
+    if not baseline_normalized.empty:
+        missing_ldap = [col for col in LDAP_SCHEMA_REQUIRED_COLUMNS if col not in baseline_normalized.columns]
+        if missing_ldap:
+            raise KeyError(f"Required LDAP baseline columns missing: {missing_ldap}")
+
+    # 3. Map Quercus to LDAP format (Pure Mapping, raises KeyError if columns are missing)
     quercus_mapped = map_quercus_to_ldap(quercus_df)
 
-    # 3. Detect new students (BEFORE deduplication)
+    # 4. Detect new students (BEFORE deduplication)
     new_students_raw = detect_new_students(baseline_normalized, quercus_mapped)
 
-    # 4. Assign passcodes to new students (stateless utility call)
+    # 5. Assign passcodes to new students (stateless utility call)
     new_students_with_passcodes = assign_passcodes(new_students_raw)
 
-    # 5. Update baseline state (this is the single stage where deduplication occurs)
+    # 6. Update baseline state (this is the single stage where deduplication occurs)
     updated_baseline = update_baseline_state(baseline_normalized, new_students_with_passcodes)
 
-    # 6. Audit info based on inputs
+    # 7. Enforce dd/mm/yyyy format on Date of Birth in both outputs
+    new_students_with_passcodes["Date of Birth"] = _format_dob_series(new_students_with_passcodes["Date of Birth"])
+    updated_baseline["Date of Birth"] = _format_dob_series(updated_baseline["Date of Birth"])
+
+    # 8. Audit info based on inputs
     audit_info = {
         "new_students_count": len(new_students_with_passcodes),
         "updated_baseline_count": len(updated_baseline),
