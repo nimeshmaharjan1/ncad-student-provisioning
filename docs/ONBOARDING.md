@@ -487,16 +487,45 @@ The date suffix is generated once per request: `datetime.now().strftime("%Y%m%d"
 
 ## Tests
 
-There is no automated test suite yet. The existing `test_ldap.py` in `backend/app/services/` is a manual script — not integrated with pytest.
+There is no automated test suite yet. Test scripts live in `backend/samples/`.
 
-To run a manual test:
+### Sample Fixture Files (`samples/`)
+
+| File | Purpose |
+|------|---------|
+| `quercus_valid.csv` | 7 rows: CEAD, UG, PG, Withdrawn (filtered), External (filtered), mixed DOB formats, mixed gender |
+| `quercus_2025.csv` / `quercus_2026.csv` | Year-over-year merge test: 3 students in 2025 (1 Withdrawn), 4 in 2026 (all Registered, 1 new) |
+| `baseline_empty.csv` | Single column header — tests empty baseline edge case |
+| `baseline_ldap.csv` | 2-row LDAP baseline snapshot |
+| `baseline_canvas.csv` | 2-row Canvas baseline snapshot |
+| `baseline_google.csv` | 2-row Google baseline (1 Active, 1 Suspended — for reactivation test) |
+| `baseline_athens.csv` | 2-row OpenAthens baseline snapshot |
+| `dob_variety.csv` | 7 rows covering every DOB format the LDAP parser handles |
+
+### Running Pipeline Smoke Test
+
 ```bash
 cd backend
 .venv\Scripts\activate
-python -c "from app.services.ldap_export import _format_dob_series; import pandas as pd; print(_format_dob_series(pd.Series(['24/08/72', '24-Aug-72', '1972-08-24', ''])))"
+python samples/test_pipelines.py
 ```
 
-When writing tests, test each service's functions in isolation (normalize, detect_new_users, generate_upload_export). Use `pytest` with CSV fixture files in `tests/`.
+This runs all 4 pipelines (LDAP, Canvas, Google, Athens) with the fixture files and verifies:
+- Quercus preprocessing filters correctly (status, external, duplicates)
+- Each pipeline detects the expected number of new users
+- Google reactivation correctly identifies suspended users back in Quercus
+- Rerun with updated baseline returns 0 new users (merge integrity)
+
+### Testing DOB Parsing
+
+```bash
+cd backend
+python samples/test_dob.py
+```
+
+### Writing New Tests
+
+Test each service function in isolation (normalize_email_identity, detect_new_users, generate_upload_export). Use `pytest` with CSV fixture files in `tests/`.
 
 ---
 

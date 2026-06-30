@@ -1,0 +1,3 @@
+user_id,integration_id,login_id,password,first_name,last_name,full_name,sortable_name,short_name,email,status
+12345,,alice@student.ncad.ie,,Alice,Smith,Alice Smith,Smith\,Alice,,00012345@student.ncad.ie,active
+54321,,carol@student.ncad.ie,,Carol,Williams,Carol Williams,Williams\,Carol,,00054321@student.ncad.ie,active

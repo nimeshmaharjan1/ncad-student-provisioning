@@ -1,0 +1,3 @@
+First Name [Required],Last Name [Required],Email Address [Required],Password,Org Unit Path,Change Password at Next Sign-In,New Status [UPLOAD ONLY],Status
+Alice,Smith,00012345@student.ncad.ie,SunRiverOcean5,/UG,TRUE,,Active
+Carol,Williams,00054321@student.ncad.ie,MoonCloudStar3,/PG,TRUE,,Suspended

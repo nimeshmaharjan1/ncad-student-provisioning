@@ -1,0 +1,5 @@
+ID Number,First Name,Last Name,Date of Birth,Gender,Course Code,Course Description,Course Instance Course Year,Course Instance Start Date,Course Instance End Date,Status,Home Mobile Phone,LDAP ID
+12345,Alice,Smith,24/08/1972,Female,CEAD050,CEAD Foundation Course,2026,01/09/2025,31/08/2026,Registered,0871234567,
+67890,Bob,Johnson,15/03/1990,Male,AD401,Bachelor of Art and Design,2026,01/09/2025,31/08/2026,Registered,0872345678,
+54321,Carol,Williams,24/08/1995,Female,PD601,Master of Fine Arts,2026,01/09/2025,31/08/2026,Registered,0873456789,
+99999,David,Nguyen,10/05/2000,Male,AD301,Bachelor of Design,2026,01/09/2025,31/08/2026,Registered,0874567890,

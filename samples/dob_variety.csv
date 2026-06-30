@@ -1,0 +1,8 @@
+ID Number,First Name,Last Name,Date of Birth,Gender,Course Code,Course Description,Course Instance Course Year,Course Instance Start Date,Course Instance End Date,Status,Home Mobile Phone,LDAP ID
+10000,Test,DobFormat1,24/08/72,,AD401,Test DOB dd/mm/yy two-digit,2025,01/09/2025,31/08/2026,Registered,0870000001,
+10001,Test,DobFormat2,24-Aug-72,,AD401,Test DOB dd-Mon-yy hyphens,2025,01/09/2025,31/08/2026,Registered,0870000002,
+10002,Test,DobFormat3,1972-08-24,,AD401,Test DOB ISO,2025,01/09/2025,31/08/2026,Registered,0870000003,
+10003,Test,DobFormat4,45000,,AD401,Test DOB Excel serial,2025,01/09/2025,31/08/2026,Registered,0870000004,
+10004,Test,DobFormat5,15/03/2023,,AD401,Test DOB dd/mm/yyyy four-digit,2025,01/09/2025,31/08/2026,Registered,0870000005,
+10005,Test,DobFormat6,,,AD401,Test DOB empty,2025,01/09/2025,31/08/2026,Registered,0870000006,
+10006,Test,DobFormat7,invalid-date,,AD401,Test DOB invalid,2025,01/09/2025,31/08/2026,Registered,0870000007,
