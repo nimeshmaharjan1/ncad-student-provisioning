@@ -6,13 +6,13 @@ import pandas as pd
 import io
 import zipfile
 from app.services.quercus_preprocess import preprocess_quercus
-from app.services.google_service import run_google_pipeline
+from app.services.athens_service import run_athens_pipeline
 
 router = APIRouter()
 
 
 @router.post("/export")
-async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = File(...)):
+async def export_athens(baseline: UploadFile = File(...), quercus: UploadFile = File(...)):
     baseline_contents = await baseline.read()
     quercus_contents = await quercus.read()
 
@@ -28,19 +28,18 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
 
     cleaned_quercus_df = preprocess_quercus(quercus_df)
 
-    upload_df, reactivation_df, _ = run_google_pipeline(baseline_df, cleaned_quercus_df)
+    new_users_df, upload_df = run_athens_pipeline(baseline_df, cleaned_quercus_df)
 
     date_suffix = datetime.now().strftime("%Y%m%d")
-    filename = f"google_export_{date_suffix}.zip"
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("google_upload.csv", upload_df.to_csv(index=False))
-        zf.writestr("google_to_reactivate.csv", reactivation_df.to_csv(index=False))
+        zf.writestr(f"{date_suffix}_athens_new_users.csv", new_users_df.to_csv(index=False))
+        zf.writestr(f"{date_suffix}_athens.csv", upload_df.to_csv(index=False))
     zip_buffer.seek(0)
 
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""}
+        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_athens_export.zip\""},
     )

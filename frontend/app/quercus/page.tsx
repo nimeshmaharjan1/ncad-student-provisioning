@@ -21,12 +21,13 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Server, Palette, Globe } from "lucide-react"
+import { ArrowLeft, Server, Palette, Globe, BookOpen } from "lucide-react"
 import { usePipeline } from "@/lib/pipeline-context"
 import { QuercusStep } from "@/components/quercus-step"
 import { LdapStep } from "@/components/ldap-step"
 import { CanvasStep } from "@/components/canvas-step"
 import { GoogleStep } from "@/components/google-step"
+import { AthensStep } from "@/components/athens-step"
 import { cn } from "@/lib/utils"
 
 function Card({
@@ -95,7 +96,7 @@ export default function QuercusPage() {
 
       <h1 className="mb-1 text-xl font-semibold md:text-2xl">Provisioning Pipeline</h1>
       <p className="mb-8 text-sm text-muted-foreground">
-        Upload Quercus student data, then generate LDAP, Canvas, and Google Workspace exports.
+        Upload Quercus student data, then generate LDAP, Canvas, Google Workspace, and OpenAthens exports.
       </p>
 
       {/* Quercus upload card — always visible */}
@@ -109,7 +110,7 @@ export default function QuercusPage() {
 
       {/* Downstream export cards — visible only after Quercus is processed */}
       {step1Done && (
-        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
           <Card
             icon={Server}
             title="LDAP"
@@ -130,6 +131,13 @@ export default function QuercusPage() {
             description="Upload baseline CSV to generate Google export."
           >
             <GoogleStep />
+          </Card>
+          <Card
+            icon={BookOpen}
+            title="OpenAthens"
+            description="Upload baseline CSV to generate OpenAthens export."
+          >
+            <AthensStep />
           </Card>
         </div>
       )}

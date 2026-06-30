@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
       source: "/library/:path*",
       destination: "http://127.0.0.1:8000/library/:path*",
     },
+    {
+      source: "/athens/:path*",
+      destination: "http://127.0.0.1:8000/athens/:path*",
+    },
   ],
 }
 

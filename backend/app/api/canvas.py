@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
@@ -15,7 +16,11 @@ async def export_canvas(baseline: UploadFile = File(...), quercus: UploadFile = 
     baseline_contents = await baseline.read()
     quercus_contents = await quercus.read()
 
-    baseline_df = pd.read_csv(io.StringIO(baseline_contents.decode("utf-8")))
+    ext = os.path.splitext(baseline.filename or "")[1].lower()
+    if ext == ".xlsx":
+        baseline_df = pd.read_excel(io.BytesIO(baseline_contents), engine="openpyxl")
+    else:
+        baseline_df = pd.read_csv(io.StringIO(baseline_contents.decode("utf-8")))
     quercus_df = pd.read_csv(io.StringIO(quercus_contents.decode("utf-8")))
 
     baseline_df.columns = baseline_df.columns.str.strip()
