@@ -1,5 +1,10 @@
 import pandas as pd
-from app.services.quercus_preprocess import clean_id_number, extract_course_number, merge_quercus_files
+from app.services.quercus_preprocess import (
+    clean_id_number,
+    extract_course_number,
+    merge_quercus_files,
+    preprocess_quercus,
+)
 
 LIBRARY_OUTPUT_COLUMNS = [
     "prefix", "givenName", "middleName", "familyName", "suffix",
@@ -51,64 +56,42 @@ def _format_date_ymd(val) -> str:
         return ""
 
 
-def generate_library_export(*dfs: pd.DataFrame) -> pd.DataFrame:
-    """
-    Pure Quercus → Library transformation pipeline.
+def clean_library_data(*dfs: pd.DataFrame) -> pd.DataFrame:
+    cleaned = preprocess_quercus(merge_quercus_files(*dfs))
+    if cleaned.empty:
+        return cleaned
 
-    Accepts one or more Quercus Library export DataFrames, merges them in order,
-    and produces a Library upload CSV with the full 48-column schema.
-    """
-    merged = merge_quercus_files(*dfs)
-    if merged.empty:
+    if "Course Code" in cleaned.columns:
+        course_nums = cleaned["Course Code"].apply(extract_course_number)
+    else:
+        course_nums = pd.Series([None] * len(cleaned))
+
+    cleaned["borrowerCategory"] = course_nums.apply(_assign_borrower_category)
+    return cleaned
+
+
+def build_library_template(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
         return pd.DataFrame(columns=LIBRARY_OUTPUT_COLUMNS)
 
-    df = merged.copy()
+    n = len(df)
 
-    # 1. Create Term Email from ID Number (8-digit zero-padded)
-    cleaned_ids = df["ID Number"].apply(clean_id_number)
-    df["_term_email"] = cleaned_ids.apply(
-        lambda x: f"{x}@student.ncad.ie" if x else ""
-    )
-
-    # 2. Remove blank Term Emails
-    df = df[df["_term_email"] != ""].copy()
-
-    # 3. Remove duplicates by Term Email, keeping first occurrence
-    df = df.drop_duplicates(subset=["_term_email"], keep="first")
-
-    # 4. Remove external students
-    if "Course Description" in df.columns:
-        df = df[
-            df["Course Description"].astype(str).str.strip()
-            != "NCAD Elective - External Students"
-        ]
-
-    # 5. Borrower category from Course Code
-    if "Course Code" in df.columns:
-        course_nums = df["Course Code"].apply(extract_course_number)
-    else:
-        course_nums = pd.Series([None] * len(df))
-    borrower_categories = course_nums.apply(_assign_borrower_category)
-
-    # 6. Gender validation
-    gender_col = df.get("Gender", pd.Series([None] * len(df)))
-    genders = gender_col.apply(_validate_gender)
-
-    # 7. Date formatting (yyyy-mm-dd)
-    start_col = df.get("Course Instance Start Date", pd.Series([None] * len(df)))
-    circ_dates = start_col.apply(_format_date_ymd)
-
-    end_col = df.get("Course Instance End Date", pd.Series([None] * len(df)))
-    oclc_dates = end_col.apply(_format_date_ymd)
-
-    # Re-derive cleaned IDs after row filtering
     final_ids = df["ID Number"].apply(clean_id_number)
-    first_names = df.get("First Name", pd.Series([""] * len(df))).fillna("").astype(str).str.strip()
-    last_names = df.get("Last Name", pd.Series([""] * len(df))).fillna("").astype(str).str.strip()
-    emails = df["_term_email"]
 
-    # 8. Build output DataFrame
-    blank = [""] * len(df)
+    first_names = df.get("First Name", pd.Series([""] * n)).fillna("").astype(str).str.strip()
+    last_names = df.get("Last Name", pd.Series([""] * n)).fillna("").astype(str).str.strip()
+
+    gender = df.get("Gender", pd.Series([None] * n)).apply(_validate_gender)
+
+    emails = df.get("Term Email", pd.Series([""] * n)).fillna("")
+
+    borrower_category = df.get("borrowerCategory", pd.Series([""] * n)).fillna("").astype(str).str.strip()
+
+    circ_dates = df.get("Course Instance Start Date", pd.Series([None] * n)).apply(_format_date_ymd)
+    oclc_dates = df.get("Course Instance End Date", pd.Series([None] * n)).apply(_format_date_ymd)
+
+    blank = [""] * n
+
     data = {
         "prefix": blank,
         "givenName": first_names,
@@ -118,15 +101,15 @@ def generate_library_export(*dfs: pd.DataFrame) -> pd.DataFrame:
         "nickname": blank,
         "canSelfEdit": blank,
         "dateOfBirth": blank,
-        "gender": genders,
-        "institutionId": ["46722"] * len(df),
-        "barcode": ["21120571"] * len(df),
+        "gender": gender,
+        "institutionId": ["46722"] * n,
+        "barcode": final_ids,
         "idAtSource": final_ids,
-        "sourceSystem": ["https://idp.ncad.ie/idp/shibboleth"] * len(df),
-        "borrowerCategory": borrower_categories,
+        "sourceSystem": ["https://idp.ncad.ie/idp/shibboleth"] * n,
+        "borrowerCategory": borrower_category,
         "circRegistrationDate": circ_dates,
         "oclcExpirationDate": oclc_dates,
-        "homeBranch": ["266006"] * len(df),
+        "homeBranch": ["266006"] * n,
         "primaryStreetAddressLine1": blank,
         "primaryStreetAddressLine2": blank,
         "primaryCityOrLocality": blank,
@@ -159,3 +142,8 @@ def generate_library_export(*dfs: pd.DataFrame) -> pd.DataFrame:
     }
 
     return pd.DataFrame(data, columns=LIBRARY_OUTPUT_COLUMNS)
+
+
+def generate_library_export(*dfs: pd.DataFrame) -> pd.DataFrame:
+    cleaned = clean_library_data(*dfs)
+    return build_library_template(cleaned)
