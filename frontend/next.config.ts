@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
       source: "/canvas/:path*",
       destination: "http://127.0.0.1:8000/canvas/:path*",
     },
+    {
+      source: "/library/:path*",
+      destination: "http://127.0.0.1:8000/library/:path*",
+    },
   ],
 }
 

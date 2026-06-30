@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api import quercus, export, ldap, google, canvas
+from app.api import quercus, export, ldap, google, canvas, library
 
 router = APIRouter()
 
@@ -8,3 +8,4 @@ router.include_router(export.router, prefix="/export")
 router.include_router(ldap.router, prefix="/ldap")
 router.include_router(google.router, prefix="/google")
 router.include_router(canvas.router, prefix="/canvas")
+router.include_router(library.router, prefix="/library")
