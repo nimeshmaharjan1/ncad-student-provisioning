@@ -1,62 +1,94 @@
-# System Design and MVP Architecture (Phase 0)
+# System Architecture — NCAD Student Provisioning
 
-## System Overview
-This system automates NCAD student provisioning across multiple platforms by transforming a single Quercus export into system-specific output files.
+## Overview
 
-The system replaces manual Excel-based processing with a structured data pipeline.
+Automates student account creation across **5 systems** from Quercus CSV exports through a centralized FastAPI + pandas pipeline with a Next.js frontend.
+
+## Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js, React, shadcn/ui, Tailwind CSS |
+| Backend | FastAPI (Python 3.10+) |
+| Data | pandas, openpyxl |
+| Communication | REST over HTTP (`multipart/form-data` for file uploads) |
+
+## Data Flow
+
+```
+                        ┌──────────────────────┐
+                        │   Quercus CSV(s)     │
+                        └──────────┬───────────┘
+                                   │ merge, strip columns
+                                   ▼
+                        ┌──────────────────────┐
+                        │  preprocess_quercus  │  ← source of truth
+                        │  1. Create Term Email │
+                        │  2. Filter Status     │
+                        │  3. Remove externals  │
+                        │  4. Deduplicate       │
+                        │  5. Assign Type       │
+                        └──────────┬───────────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+                    ▼              ▼              ▼
+            ┌───────────┐  ┌───────────┐  ┌───────────┐
+            │ LDAP      │  │ Canvas    │  │ Google    │
+            │ Athens    │  │           │  │           │
+            └───────────┘  └───────────┘  └───────────┘
+                    │              │              │
+                    │  baseline    │  baseline    │  baseline
+                    │  comparison  │  comparison  │  comparison
+                    ▼              ▼              ▼
+            ┌───────────┐  ┌───────────┐  ┌───────────┐
+            │ new users  │  │ SIS import│  │ upload +  │
+            │ + passcodes│  │           │  │reactivate │
+            └───────────┘  └───────────┘  └───────────┘
+
+                        ┌──────────────────────┐
+                        │   Library (standalone)│
+                        │   No baseline needed  │
+                        │   Direct 46-col map   │
+                        └──────────────────────┘
+```
+
+## Baseline Comparison Pattern
+
+Used by LDAP, Canvas, Google, Athens:
+
+1. **Normalize baseline schema** — case-insensitive column rename, fill missing
+2. **Map Quercus to target schema** — rename/map columns
+3. **Diff by email** — Quercus emails not in baseline emails → new users
+4. **Generate upload file** — apply system-specific formatting/constants
+5. **Update baseline** — concat + deduplicate for next run
+
+## API Design
+
+All endpoints are `POST` with `multipart/form-data` file uploads. Responses are either JSON (preview) or streaming file downloads (CSV/ZIP).
+
+Each pipeline is independent — Quercus preprocessing is the only shared step. All pipelines call `preprocess_quercus()` from `services/quercus_preprocess.py`.
+
+## Frontend Architecture
+
+- React Context (`PipelineContext`) stores the cleaned Quercus File object for reuse
+- Two top-level routes: `/quercus` (4-card pipeline) and `/library` (standalone)
+- Each pipeline step is a self-contained component with upload → process → download flow
+
+## Key Properties
+
+- **Deterministic**: same inputs → same outputs (except randomized passcodes/UUIDs)
+- **Stateless**: no database, no sessions — everything is file-in, file-out
+- **Independent pipelines**: each system can be run independently of the others
+- **Backward-compatible**: legacy `/export/all` and `/export/bundle` endpoints preserved
+
+## Out of Scope
+
+- Direct API integrations with external systems (file-based handoff only)
+- Database storage or audit trail
+- Real-time syncing or event-driven processing
+- Role-based access control
 
 ---
 
-## Architecture Decision
-The system is built using:
-
-- Frontend: Next.js (user upload and file download interface)
-- Backend: FastAPI (Python processing engine)
-- Data Processing: pandas (ETL transformations)
-
----
-
-## Processing Model
-All student data is converted into a canonical internal format before being transformed into system-specific outputs.
-
-Flow:
-
-Quercus CSV → Canonical Student Dataset → System Outputs (LDAP, Canvas, Google, Library, OpenAthens)
-
----
-
-## Data Ingestion Approach (MVP)
-For the initial prototype:
-- Quercus CSV structure is assumed fixed
-- Column mapping is hardcoded in backend
-- No dynamic schema detection is used
-
-This approach is chosen for simplicity and rapid development.
-
----
-
-## System Outputs
-The system generates the following outputs:
-
-- LDAP import file (account creation + credentials)
-- Canvas SIS import file (student enrollment)
-- Google Workspace provisioning file (accounts + groups)
-- Library system upload file (borrower + course classification)
-- OpenAthens bulk upload file (access provisioning)
-
----
-
-## Design Rationale
-A canonical data model is used to ensure:
-- consistency across all systems
-- reduced duplication of logic
-- easier long-term maintenance
-- clear separation between raw input and system outputs
-
----
-
-## Future Improvements (Out of Scope for MVP)
-- Dynamic column mapping for Quercus exports
-- Database-backed audit trail of uploads
-- Validation dashboard for error handling
-- Automated integration with institutional APIs
+**For detailed developer onboarding, see [ONBOARDING.md](ONBOARDING.md).**

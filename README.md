@@ -1,108 +1,92 @@
 # NCAD Student Provisioning Automation System
 
-## Overview
-This repository contains an internal automation system for NCAD student provisioning workflows.  
-It replaces manual Excel-based processes used to manage student account creation and updates across multiple institutional systems.
+Automates student account creation and updates across **5 institutional systems** (LDAP, Canvas, Google Workspace, OpenAthens, Library) from Quercus CSV exports. Replaces manual Excel-based processes.
 
-The system processes a single Quercus student export and generates structured output files for multiple platforms including LDAP, Canvas, Google Workspace, Library, and OpenAthens.
+**API:** `http://localhost:8000` · **UI:** `http://localhost:3000`
 
 ---
 
-## Problem Statement
-Current student provisioning is manual and fragmented across multiple systems, requiring repetitive Excel processing, duplication checks, and format conversions.
+## Quick Start
 
-This system centralises that logic into a single controlled pipeline to:
-- reduce manual errors
-- standardise data handling
-- ensure consistent formatting across systems
-- improve maintainability and handover capability
+```bash
+# Backend
+cd backend
+python -m venv .venv && .venv\Scripts\activate && pip install -r ..\requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# Frontend (separate terminal)
+cd frontend && npm install && npm run dev
+```
 
 ---
 
 ## System Architecture
 
-The system follows a 3-layer architecture:
+```
+Quercus CSV(s)
+    │
+    ▼
+preprocess_quercus() — merge, clean, deduplicate, assign Type
+    │
+    ├──→ LDAP     (baseline diff → new students + passcodes)
+    ├──→ Canvas   (baseline diff → 11-col SIS import)
+    ├──→ Google   (baseline diff → upload + reactivation)
+    ├──→ Athens   (baseline diff → 21-col template)
+    └──→ Library  (direct mapping → 46-col template)
+```
 
-1. **Frontend (Next.js)**
-   - Upload Quercus CSV files
-   - Trigger processing jobs
-   - Download generated system-specific outputs
-
-2. **Backend (FastAPI + Python)**
-   - Core processing engine
-   - Data cleaning and transformation
-   - System-specific output generation
-
-3. **Data Processing Layer (pandas)**
-   - CSV parsing
-   - Data normalization
-   - Rule-based transformations
+All pipelines (except Library) compare Quercus data against a system-specific baseline snapshot to detect new users.
 
 ---
 
-## Core Workflow
+## Entry Points
 
-Quercus Export  
-→ Canonical Student Dataset  
-→ System Transformations  
-→ Output Files per System
-
-Outputs:
-- LDAP import file
-- Canvas SIS file
-- Google Workspace provisioning file
-- Library system file
-- OpenAthens bulk upload file
-
----
-
-## Repository Structure
-
-- `/frontend` → Next.js UI
-- `/backend` → FastAPI processing engine
-- `/docs` → system documentation and SOPs
-- `/samples` → example input/output CSVs
-- `/scripts` → utility scripts (future use)
+| Path | What | Inputs |
+|------|------|--------|
+| `POST /quercus/upload` | Preview + audit | 1+ Quercus CSVs |
+| `POST /quercus/download` | Cleaned CSV | 1+ Quercus CSVs |
+| `POST /ldap/export` | JSON preview | baseline + quercus |
+| `POST /ldap/download` | ZIP (new + baseline) | baseline + quercus |
+| `POST /canvas/export` | ZIP | baseline + quercus |
+| `POST /google/export` | ZIP (upload + reactivate) | baseline + quercus |
+| `POST /athens/export` | ZIP | baseline + quercus |
+| `POST /library/export` | ZIP (cleaned + template) | 1+ Quercus CSVs |
+| `POST /export/all` | JSON preview (legacy) | 1 Quercus CSV |
+| `POST /export/bundle` | ZIP (legacy) | 1 Quercus CSV |
 
 ---
 
-## MVP Scope
+## Documentation
 
-Current MVP includes:
-- CSV upload (Quercus export)
-- fixed-format data ingestion
-- transformation into canonical dataset
-- generation of system-specific CSV outputs
+**[→ Full Developer Onboarding Guide](docs/ONBOARDING.md)**
 
-Excluded from MVP:
-- direct API integrations with external systems
-- automated login/download workflows
-- database storage or audit system
-- real-time syncing
+Covers: setup, every file in the codebase, pipeline architecture, API details with input/output schemas, 13 key design decisions, how to add a new pipeline, common gotchas.
+
+Additional docs:
+- [`docs/architecture.md`](docs/architecture.md) — original design document
+- [`backend/README.md`](backend/README.md) — backend specifics
+- [`frontend/README.md`](frontend/README.md) — frontend specifics
 
 ---
 
-## Data Handling Approach (MVP)
+## Filename Convention
 
-The system assumes:
-- Quercus export format is stable
-- column mapping is fixed and predefined
-- transformations are deterministic and rule-based
-
-This approach prioritises simplicity and rapid implementation.
+All outputs use `YYYYMMDD_<system>[_<description>].csv`. ZIP files use `YYYYMMDD_<system>_export.zip`.
 
 ---
 
-## Future Enhancements
+## Key Design Decisions
 
-- dynamic column mapping for Quercus exports
-- validation dashboard for error reporting
-- database-backed audit trail
-- API integrations with external systems
-- role-based access control for staff usage
+- **Email-based identity**: `Term Email` (`${studentId}@student.ncad.ie`) is the canonical key across all systems.
+- **Deduplication keeps first**: Files merged in chronological order (oldest → newest), `keep="first"`.
+- **Status filter before dedup**: A student may appear as Withdrawn AND Registered — filter status first.
+- **Library is standalone**: No baseline, no diff. Separate page. Reuses the same `preprocess_quercus()`.
+- **Baseline supports .xlsx**: Detected by file extension, read with `openpyxl`.
+
+See [ONBOARDING.md](docs/ONBOARDING.md) for the full list with rationale.
 
 ---
 
 ## Purpose
 
-This system is designed as an internal NCAD IT provisioning tool and is intended for long-term maintainability and handover.
+Internal NCAD IT provisioning tool. Designed for long-term maintainability and handover.
