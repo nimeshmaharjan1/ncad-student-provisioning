@@ -27,23 +27,12 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Check if ports are already in use
-netstat -ano 2>nul | findstr ":8000 " >nul 2>&1
-if %errorlevel% equ 0 (
-    echo [WARN] Port 8000 is already in use.
-    echo        Close the other server first, then try again.
-    echo.
-    pause
-    exit /b 1
+:: Kill any existing servers on the same ports
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000 "') do (
+    taskkill /f /pid %%a >nul 2>&1
 )
-
-netstat -ano 2>nul | findstr ":3000 " >nul 2>&1
-if %errorlevel% equ 0 (
-    echo [WARN] Port 3000 is already in use.
-    echo        Close the other server first, then try again.
-    echo.
-    pause
-    exit /b 1
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000 "') do (
+    taskkill /f /pid %%a >nul 2>&1
 )
 
 :: ------------------------------------------------------------------
@@ -66,7 +55,7 @@ if %errorlevel% neq 0 (
 echo.
 
 echo [3/4] Starting backend on http://localhost:8000 ...
-start /B "" cmd /c ".venv\Scripts\python -m uvicorn app.main:app --reload --port 8000"
+start /B "" cmd /c ".venv\Scripts\python -m uvicorn app.main:app --port 8000"
 cd ..
 
 :: ------------------------------------------------------------------
@@ -80,7 +69,11 @@ if %errorlevel% neq 0 (
     pause
     exit /b 1
 )
-start /B "" cmd /c "npm run dev"
+if not exist ".next" (
+    echo Building frontend for production (one-time)...
+    call npm run build
+)
+start /B "" cmd /c "npm run start"
 cd ..
 
 echo.

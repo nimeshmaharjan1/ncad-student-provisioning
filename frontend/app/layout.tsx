@@ -17,7 +17,6 @@
 
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
-import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "NCAD Student Provisioning",
@@ -26,6 +25,7 @@ export const metadata: Metadata = {
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PipelineProvider } from "@/lib/pipeline-context"
+import { NavBar } from "@/components/nav-bar"
 import { cn } from "@/lib/utils"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })

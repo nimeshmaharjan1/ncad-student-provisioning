@@ -27,17 +27,10 @@ if ! command -v node &>/dev/null; then
 fi
 
 # Check ports
+# Kill any existing servers on the same ports
 if command -v lsof &>/dev/null; then
-  if lsof -ti:8000 &>/dev/null; then
-    echo "[WARN] Port 8000 is already in use."
-    echo "       Close the other server first, then try again."
-    exit 1
-  fi
-  if lsof -ti:3000 &>/dev/null; then
-    echo "[WARN] Port 3000 is already in use."
-    echo "       Close the other server first, then try again."
-    exit 1
-  fi
+  lsof -ti:8000 2>/dev/null | xargs kill -9 2>/dev/null
+  lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null
 fi
 
 cleanup() {
@@ -68,7 +61,7 @@ fi
 echo ""
 
 echo "[3/4] Starting backend on http://localhost:8000 ..."
-.venv/bin/python -m uvicorn app.main:app --reload --port 8000 &
+.venv/bin/python -m uvicorn app.main:app --port 8000 &
 BACKEND_PID=$!
 cd ..
 
@@ -82,7 +75,11 @@ if [ $? -ne 0 ]; then
   echo "[ERROR] Failed to install Node.js dependencies."
   exit 1
 fi
-npm run dev &
+if [ ! -d ".next" ]; then
+  echo "Building frontend for production (one-time)..."
+  npm run build
+fi
+npm run start &
 FRONTEND_PID=$!
 cd ..
 
