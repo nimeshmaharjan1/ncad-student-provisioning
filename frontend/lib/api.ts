@@ -92,3 +92,20 @@ export async function downloadGoogleExport(
   }
   return res.blob()
 }
+
+export async function downloadCanvasExport(
+  baseline: File,
+  quercusFile: File,
+): Promise<Blob> {
+  const formData = new FormData()
+  formData.append("baseline", baseline)
+  formData.append("quercus", quercusFile)
+  const res = await fetch("/canvas/export", {
+    method: "POST",
+    body: formData,
+  })
+  if (!res.ok) {
+    throw new Error(`Canvas export failed: ${res.status}`)
+  }
+  return res.blob()
+}

@@ -3,6 +3,7 @@
 import { PipelineProvider, usePipeline } from "@/lib/pipeline-context"
 import { QuercusStep } from "@/components/quercus-step"
 import { LdapStep } from "@/components/ldap-step"
+import { CanvasStep } from "@/components/canvas-step"
 import { GoogleStep } from "@/components/google-step"
 
 function PageContent() {
@@ -15,7 +16,7 @@ function PageContent() {
           <div>
             <h1 className="text-2xl font-semibold">NCAD Student Provisioning</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Upload Quercus student data, then generate LDAP and Google Workspace exports.
+              Upload Quercus student data, then generate downstream system exports.
             </p>
           </div>
           {step1Done && (
@@ -42,7 +43,12 @@ function PageContent() {
           </section>
 
           <section className="mb-12">
-            <h2 className="mb-4 text-lg font-medium">Step 3 — Google Workspace</h2>
+            <h2 className="mb-4 text-lg font-medium">Step 3 — Canvas</h2>
+            <CanvasStep />
+          </section>
+
+          <section className="mb-12">
+            <h2 className="mb-4 text-lg font-medium">Step 4 — Google Workspace</h2>
             <GoogleStep />
           </section>
         </>
