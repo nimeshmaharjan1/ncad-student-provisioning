@@ -53,7 +53,6 @@ export function AthensStep() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = "athens_export.zip"
       a.click()
       URL.revokeObjectURL(url)
       setDone(true)

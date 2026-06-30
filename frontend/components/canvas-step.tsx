@@ -22,7 +22,6 @@ export function CanvasStep() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = "canvas_export.zip"
       a.click()
       URL.revokeObjectURL(url)
       setDone(true)

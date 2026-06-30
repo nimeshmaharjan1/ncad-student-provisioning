@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from fastapi import APIRouter, UploadFile, File, Form, Query
 from fastapi.responses import StreamingResponse
 import pandas as pd
@@ -72,11 +73,13 @@ async def download_ldap(
 
     new_students_df, updated_baseline_df, _ = generate_ldap_comparison_exports(baseline_df, cleaned_quercus_df)
 
+    date_suffix = datetime.now().strftime("%Y%m%d")
+
     def _ensure_csv(name: str) -> str:
         return name if name.lower().endswith(".csv") else name + ".csv"
 
-    new_fn = _ensure_csv(new_students_filename) if new_students_filename else "new_students.csv"
-    upd_fn = _ensure_csv(updated_baseline_filename) if updated_baseline_filename else "updated_baseline.csv"
+    new_fn = _ensure_csv(new_students_filename) if new_students_filename else f"{date_suffix}_ldap_new_students.csv"
+    upd_fn = _ensure_csv(updated_baseline_filename) if updated_baseline_filename else f"{date_suffix}_ldap_updated_baseline.csv"
 
     if format == "zip":
         zip_buffer = io.BytesIO()
@@ -87,7 +90,7 @@ async def download_ldap(
         return StreamingResponse(
             zip_buffer,
             media_type="application/zip",
-            headers={"Content-Disposition": "attachment; filename=\"ldap_export.zip\""}
+            headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_ldap_export.zip\""}
         )
 
     stream = io.StringIO()
@@ -101,5 +104,5 @@ async def download_ldap(
     return StreamingResponse(
         io.BytesIO(response_content.encode("utf-8")),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=\"ldap_export.csv\""}
+        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_ldap.csv\""}
     )

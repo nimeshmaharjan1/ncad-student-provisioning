@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import HTTPException
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File
@@ -55,6 +56,8 @@ async def download_quercus(files: list[UploadFile] = File(...)):
     merged_df = merge_quercus_files(*dfs)
     cleaned_df = preprocess_quercus(merged_df)
 
+    date_suffix = datetime.now().strftime("%Y%m%d")
+
     # Convert cleaned DataFrame to CSV string
     stream = io.StringIO()
     cleaned_df.to_csv(stream, index=False)
@@ -64,5 +67,5 @@ async def download_quercus(files: list[UploadFile] = File(...)):
     return StreamingResponse(
         io.BytesIO(response_content.encode("utf-8")),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=\"quercus_cleaned.csv\""}
+        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_quercus.csv\""}
     )

@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 import pandas as pd
@@ -51,20 +52,22 @@ async def export_bundle(file: UploadFile = File(...)):
     # Run the full export pipeline
     ldap_df, canvas_df, athens_df, library_df = run_export_pipeline(df)
     
+    date_suffix = datetime.now().strftime("%Y%m%d")
+
     # Package into a zip file in memory
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        zip_file.writestr("ldap.csv", ldap_df.to_csv(index=False))
-        zip_file.writestr("canvas.csv", canvas_df.to_csv(index=False))
-        zip_file.writestr("athens.csv", athens_df.to_csv(index=False))
-        zip_file.writestr("library.csv", library_df.to_csv(index=False))
+        zip_file.writestr(f"{date_suffix}_ldap.csv", ldap_df.to_csv(index=False))
+        zip_file.writestr(f"{date_suffix}_canvas.csv", canvas_df.to_csv(index=False))
+        zip_file.writestr(f"{date_suffix}_athens.csv", athens_df.to_csv(index=False))
+        zip_file.writestr(f"{date_suffix}_library.csv", library_df.to_csv(index=False))
         
     zip_buffer.seek(0)
     
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=quercus_exports.zip"}
+        headers={"Content-Disposition": f"attachment; filename={date_suffix}_quercus_exports.zip"}
     )
 
 

@@ -31,16 +31,15 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
     upload_df, reactivation_df, _ = run_google_pipeline(baseline_df, cleaned_quercus_df)
 
     date_suffix = datetime.now().strftime("%Y%m%d")
-    filename = f"google_export_{date_suffix}.zip"
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("google_upload.csv", upload_df.to_csv(index=False))
-        zf.writestr("google_to_reactivate.csv", reactivation_df.to_csv(index=False))
+        zf.writestr(f"{date_suffix}_google_upload.csv", upload_df.to_csv(index=False))
+        zf.writestr(f"{date_suffix}_google_reactivate.csv", reactivation_df.to_csv(index=False))
     zip_buffer.seek(0)
 
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""}
+        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_google_export.zip\""}
     )

@@ -35,11 +35,11 @@ async def export_canvas(baseline: UploadFile = File(...), quercus: UploadFile = 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(f"{date_suffix}_canvas.csv", new_users_df.to_csv(index=False))
-        zf.writestr(f"canvas_all_pre_{date_suffix}.csv", updated_baseline_df.to_csv(index=False))
+        zf.writestr(f"{date_suffix}_canvas_all_pre.csv", updated_baseline_df.to_csv(index=False))
     zip_buffer.seek(0)
 
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename=\"canvas_export_{date_suffix}.zip\""},
+        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_canvas_export.zip\""},
     )
