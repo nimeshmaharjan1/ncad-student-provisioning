@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       source: "/export/:path*",
       destination: "http://127.0.0.1:8000/export/:path*",
     },
+    {
+      source: "/canvas/:path*",
+      destination: "http://127.0.0.1:8000/canvas/:path*",
+    },
   ],
 }
 
