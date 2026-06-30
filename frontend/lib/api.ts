@@ -109,3 +109,22 @@ export async function downloadCanvasExport(
   }
   return res.blob()
 }
+
+export async function downloadLibraryExport(files: File[]): Promise<{ blob: Blob; filename: string }> {
+  const formData = new FormData()
+  for (const f of files) {
+    formData.append("files", f)
+  }
+  const res = await fetch("/library/export", {
+    method: "POST",
+    body: formData,
+  })
+  if (!res.ok) {
+    throw new Error(`Library export failed: ${res.status}`)
+  }
+  const disposition = res.headers.get("Content-Disposition") ?? ""
+  const match = disposition.match(/filename="?(.+?)"?$/)
+  const filename = match ? match[1] : "library_export.csv"
+  const blob = await res.blob()
+  return { blob, filename }
+}

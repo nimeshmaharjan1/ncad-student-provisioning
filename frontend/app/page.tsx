@@ -5,6 +5,7 @@ import { QuercusStep } from "@/components/quercus-step"
 import { LdapStep } from "@/components/ldap-step"
 import { CanvasStep } from "@/components/canvas-step"
 import { GoogleStep } from "@/components/google-step"
+import { LibraryStep } from "@/components/library-step"
 
 function PageContent() {
   const { step1Done, reset } = usePipeline()
@@ -53,6 +54,16 @@ function PageContent() {
           </section>
         </>
       )}
+
+      <hr className="my-12 border-t" />
+
+      <section className="mb-12">
+        <h2 className="mb-4 text-lg font-medium">Library Export</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Upload raw Quercus Library export files to generate a Library upload CSV. Independent from the Quercus pipeline above.
+        </p>
+        <LibraryStep />
+      </section>
     </div>
   )
 }
