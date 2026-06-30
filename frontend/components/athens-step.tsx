@@ -49,10 +49,11 @@ export function AthensStep() {
     setLoading(true)
     setError(null)
     try {
-      const blob = await downloadAthensExport(baselineFile, cleanedQuercusFile)
+      const { blob, filename } = await downloadAthensExport(baselineFile, cleanedQuercusFile)
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
+      a.download = filename
       a.click()
       URL.revokeObjectURL(url)
       setDone(true)
@@ -67,6 +68,7 @@ export function AthensStep() {
     <div className="space-y-4">
       <FileUpload
         label="Upload OpenAthens Baseline CSV"
+        accept=".csv,.xlsx"
         disabled={!step1Done}
         onFilesSelected={(f) => setBaselineFile(f[0] ?? null)}
       />

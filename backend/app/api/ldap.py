@@ -66,7 +66,7 @@ async def download_ldap(
 
     new_students_df, updated_baseline_df, _ = generate_ldap_comparison_exports(baseline_df, cleaned_quercus_df)
 
-    ds = ds()
+    ds = date_suffix()
 
     def _ensure_csv(name: str) -> str:
         return name if name.lower().endswith(".csv") else name + ".csv"

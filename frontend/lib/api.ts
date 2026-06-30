@@ -59,72 +59,44 @@ export async function uploadQuercus(files: File[]): Promise<UploadQuercusResult>
   }
 }
 
-export async function downloadLdapExport(
-  baseline: File,
-  quercusFile: File,
-): Promise<Blob> {
-  const formData = new FormData()
-  formData.append("baseline", baseline)
-  formData.append("quercus", quercusFile)
-  const res = await fetch("/ldap/download?format=zip", {
-    method: "POST",
-    body: formData,
-  })
+async function downloadExport(url: string, formData: FormData): Promise<{ blob: Blob; filename: string }> {
+  const res = await fetch(url, { method: "POST", body: formData })
   if (!res.ok) {
-    throw new Error(`LDAP export failed: ${res.status}`)
+    throw new Error(`Export failed: ${res.status}`)
   }
-  return res.blob()
+  const disposition = res.headers.get("Content-Disposition") ?? ""
+  const match = disposition.match(/filename="?(.+?)"?$/)
+  const filename = match ? match[1] : "export.zip"
+  const blob = await res.blob()
+  return { blob, filename }
 }
 
-export async function downloadGoogleExport(
-  baseline: File,
-  quercusFile: File,
-): Promise<Blob> {
+export function downloadLdapExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
-  const res = await fetch("/google/export", {
-    method: "POST",
-    body: formData,
-  })
-  if (!res.ok) {
-    throw new Error(`Google export failed: ${res.status}`)
-  }
-  return res.blob()
+  return downloadExport("/ldap/download?format=zip", formData)
 }
 
-export async function downloadAthensExport(
-  baseline: File,
-  quercusFile: File,
-): Promise<Blob> {
+export function downloadGoogleExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
-  const res = await fetch("/athens/export", {
-    method: "POST",
-    body: formData,
-  })
-  if (!res.ok) {
-    throw new Error(`Athens export failed: ${res.status}`)
-  }
-  return res.blob()
+  return downloadExport("/google/export", formData)
 }
 
-export async function downloadCanvasExport(
-  baseline: File,
-  quercusFile: File,
-): Promise<Blob> {
+export function downloadAthensExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
-  const res = await fetch("/canvas/export", {
-    method: "POST",
-    body: formData,
-  })
-  if (!res.ok) {
-    throw new Error(`Canvas export failed: ${res.status}`)
-  }
-  return res.blob()
+  return downloadExport("/athens/export", formData)
+}
+
+export function downloadCanvasExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
+  const formData = new FormData()
+  formData.append("baseline", baseline)
+  formData.append("quercus", quercusFile)
+  return downloadExport("/canvas/export", formData)
 }
 
 export async function downloadLibraryExport(files: File[]): Promise<{ blob: Blob; filename: string }> {

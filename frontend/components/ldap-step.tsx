@@ -18,10 +18,11 @@ export function LdapStep() {
     setLoading(true)
     setError(null)
     try {
-      const blob = await downloadLdapExport(baselineFile, cleanedQuercusFile)
+      const { blob, filename } = await downloadLdapExport(baselineFile, cleanedQuercusFile)
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
+      a.download = filename
       a.click()
       URL.revokeObjectURL(url)
       setDone(true)
@@ -36,6 +37,7 @@ export function LdapStep() {
     <div className="space-y-4">
       <FileUpload
         label="Upload LDAP Baseline CSV"
+        accept=".csv,.xlsx"
         disabled={!step1Done}
         onFilesSelected={(f) => setBaselineFile(f[0] ?? null)}
       />
