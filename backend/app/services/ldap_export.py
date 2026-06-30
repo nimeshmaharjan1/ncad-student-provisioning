@@ -1,3 +1,5 @@
+import re
+from datetime import datetime
 import pandas as pd
 from app.utils.passcode_generator import generate_passcode
 
@@ -179,22 +181,68 @@ def update_baseline_state(baseline_df: pd.DataFrame, new_students_df: pd.DataFra
 def _format_dob_series(series: pd.Series) -> pd.Series:
     """
     Converts any Date of Birth format to dd/mm/yyyy.
+    Uses explicit strptime per pattern — no pandas date heuristics.
+    Two-digit years: > current year → 1900s, ≤ current year → 2000s.
     Handles ISO, Excel serial, and mixed formats.
     Empty/invalid values become empty string.
     """
     str_series = series.fillna("").astype(str)
+    current_short = datetime.now().year % 100
 
-    # First pass: text-based datetime parsing
-    parsed = pd.to_datetime(str_series, errors="coerce", dayfirst=True)
+    def _parse_dob(val):
+        s = val.strip()
+        if not s:
+            return ""
 
-    # Second pass: Excel serial dates for values not parsed as text
-    if parsed.isna().any():
+        # Pattern 1: dd/mm/yy or dd/mm/yyyy
+        m = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{2,4})$', s)
+        if m:
+            day, month, year_str = int(m.group(1)), int(m.group(2)), m.group(3)
+            if len(year_str) == 2:
+                yr = int(year_str)
+                year = 1900 + yr if yr > current_short else 2000 + yr
+            else:
+                year = int(year_str)
+            try:
+                dt = datetime(year, month, day)
+                return dt.strftime("%d/%m/%Y")
+            except ValueError:
+                return ""
+
+        # Pattern 2: dd-Mon-yy or dd-Mon-yyyy (e.g. 24-Aug-72)
+        m = re.match(r'^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$', s)
+        if m:
+            day, month_str, year_str = int(m.group(1)), m.group(2), m.group(3)
+            if len(year_str) == 2:
+                yr = int(year_str)
+                year = 1900 + yr if yr > current_short else 2000 + yr
+            else:
+                year = int(year_str)
+            try:
+                dt = datetime.strptime(f"{day} {month_str} {year}", "%d %b %Y")
+                return dt.strftime("%d/%m/%Y")
+            except ValueError:
+                return ""
+
+        # Pattern 3: ISO yyyy-mm-dd
+        try:
+            dt = datetime.strptime(s, "%Y-%m-%d")
+            return dt.strftime("%d/%m/%Y")
+        except ValueError:
+            pass
+
+        return ""
+
+    formatted = str_series.apply(_parse_dob)
+
+    # Fallback: Excel serial dates for values not parsed as text
+    if (formatted == "").any():
         numeric = pd.to_numeric(series, errors="coerce")
         excel_dates = pd.to_datetime(numeric, unit="D", origin=pd.Timestamp("1899-12-30"), errors="coerce")
-        parsed = parsed.fillna(excel_dates)
+        excel_fmt = excel_dates.dt.strftime("%d/%m/%Y")
+        excel_fmt[excel_dates.isna()] = ""
+        formatted = formatted.mask(formatted == "", excel_fmt)
 
-    formatted = parsed.dt.strftime("%d/%m/%Y")
-    formatted[parsed.isna()] = ""
     return formatted
 
 
