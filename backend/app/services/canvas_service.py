@@ -1,4 +1,10 @@
 import pandas as pd
+from app.utils.df_utils import (
+    normalize_email_identity,
+    normalize_baseline_schema,
+    detect_new_users,
+    update_baseline_state,
+)
 
 # ==============================================================================
 # NCAD CANVAS PROVISIONING PIPELINE
@@ -12,6 +18,8 @@ import pandas as pd
 # 4. Identity key is ALWAYS: email (Term Email).
 # ==============================================================================
 
+CANVAS_EMAIL_PRIORITY = ["email", "Term Email"]
+
 CANVAS_BASELINE_COLUMNS = [
     "user_id", "integration_id", "login_id", "password",
     "first_name", "last_name", "full_name", "sortable_name",
@@ -21,37 +29,6 @@ CANVAS_BASELINE_COLUMNS = [
 CANVAS_QUERCUS_REQUIRED_COLUMNS = [
     "ID Number", "First Name", "Last Name", "Term Email",
 ]
-
-
-def normalize_email_identity(df: pd.DataFrame) -> pd.Series:
-    if "email" in df.columns:
-        email_col = "email"
-    elif "Term Email" in df.columns:
-        email_col = "Term Email"
-    else:
-        raise KeyError("Identity email column ('email' or 'Term Email') not found in DataFrame.")
-    return df[email_col].fillna("").astype(str).str.strip().str.lower()
-
-
-def normalize_baseline_schema(baseline_df: pd.DataFrame) -> pd.DataFrame:
-    if baseline_df.empty:
-        return pd.DataFrame(columns=CANVAS_BASELINE_COLUMNS)
-
-    df_norm = baseline_df.copy()
-
-    expected_lookup = {col.lower(): col for col in CANVAS_BASELINE_COLUMNS}
-    rename_map = {}
-    for col in df_norm.columns:
-        stripped = col.strip()
-        key = stripped.lower()
-        if key in expected_lookup and stripped != expected_lookup[key]:
-            rename_map[col] = expected_lookup[key]
-    df_norm = df_norm.rename(columns=rename_map)
-
-    for col in CANVAS_BASELINE_COLUMNS:
-        if col not in df_norm.columns:
-            df_norm[col] = ""
-    return df_norm[CANVAS_BASELINE_COLUMNS]
 
 
 def map_quercus_to_canvas(quercus_df: pd.DataFrame) -> pd.DataFrame:
@@ -79,33 +56,8 @@ def map_quercus_to_canvas(quercus_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(data, columns=CANVAS_BASELINE_COLUMNS)
 
 
-def detect_new_users(baseline_df: pd.DataFrame, quercus_mapped_df: pd.DataFrame) -> pd.DataFrame:
-    baseline_emails = set(normalize_email_identity(baseline_df))
-    quercus_emails = normalize_email_identity(quercus_mapped_df)
-
-    new_mask = (
-        (quercus_emails != "") &
-        (quercus_emails != "nan") &
-        (~quercus_emails.isin(baseline_emails))
-    )
-
-    return quercus_mapped_df[new_mask].copy()
-
-
-def update_baseline_state(baseline_df: pd.DataFrame, new_users_df: pd.DataFrame) -> pd.DataFrame:
-    combined = pd.concat([baseline_df, new_users_df], ignore_index=True)
-
-    combined["_email_clean"] = normalize_email_identity(combined)
-    combined = combined[(combined["_email_clean"] != "") & (combined["_email_clean"] != "nan")]
-
-    combined = combined.drop_duplicates(subset=["_email_clean"], keep="first")
-    combined = combined.drop(columns=["_email_clean"])
-
-    return combined
-
-
 def generate_canvas_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    baseline_normalized = normalize_baseline_schema(baseline_df)
+    baseline_normalized = normalize_baseline_schema(baseline_df, CANVAS_BASELINE_COLUMNS)
 
     if not baseline_normalized.empty:
         missing = [col for col in CANVAS_BASELINE_COLUMNS if col not in baseline_normalized.columns]
@@ -114,11 +66,11 @@ def generate_canvas_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd
 
     quercus_mapped = map_quercus_to_canvas(quercus_df)
 
-    new_users_raw = detect_new_users(baseline_normalized, quercus_mapped)
+    new_users_raw = detect_new_users(baseline_normalized, quercus_mapped, CANVAS_EMAIL_PRIORITY)
 
     sorted_new = new_users_raw.sort_values(by="email").reset_index(drop=True)
 
-    updated_baseline = update_baseline_state(baseline_normalized, sorted_new)
+    updated_baseline = update_baseline_state(baseline_normalized, sorted_new, CANVAS_EMAIL_PRIORITY)
 
     audit_info = {
         "new_users_count": len(sorted_new),

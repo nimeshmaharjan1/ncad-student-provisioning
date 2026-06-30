@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from fastapi import APIRouter, UploadFile, File, Form, Query
 from fastapi.responses import StreamingResponse
 import pandas as pd
@@ -7,6 +6,8 @@ import io
 import zipfile
 from app.services.ldap_export import generate_ldap_comparison_exports
 from app.services.quercus_preprocess import preprocess_quercus
+from app.utils.date_utils import date_suffix
+from app.utils.df_utils import sanitize_records
 
 router = APIRouter()
 
@@ -30,17 +31,9 @@ async def export_ldap(baseline: UploadFile = File(...), quercus: UploadFile = Fi
 
     new_students_df, updated_baseline_df, audit_info = generate_ldap_comparison_exports(baseline_df, cleaned_quercus_df)
 
-    def sanitize_df(df: pd.DataFrame) -> list:
-        records = df.to_dict(orient="records")
-        for row in records:
-            for key, val in row.items():
-                if pd.isna(val):
-                    row[key] = None
-        return records
-
     return {
-        "new_students": sanitize_df(new_students_df),
-        "updated_baseline": sanitize_df(updated_baseline_df),
+        "new_students": sanitize_records(new_students_df),
+        "updated_baseline": sanitize_records(updated_baseline_df),
         "audit_info": {
             "new_students_count": audit_info["new_students_count"],
             "updated_baseline_count": audit_info["updated_baseline_count"]
@@ -73,13 +66,13 @@ async def download_ldap(
 
     new_students_df, updated_baseline_df, _ = generate_ldap_comparison_exports(baseline_df, cleaned_quercus_df)
 
-    date_suffix = datetime.now().strftime("%Y%m%d")
+    ds = ds()
 
     def _ensure_csv(name: str) -> str:
         return name if name.lower().endswith(".csv") else name + ".csv"
 
-    new_fn = _ensure_csv(new_students_filename) if new_students_filename else f"{date_suffix}_ldap_new_students.csv"
-    upd_fn = _ensure_csv(updated_baseline_filename) if updated_baseline_filename else f"{date_suffix}_ldap_updated_baseline.csv"
+    new_fn = _ensure_csv(new_students_filename) if new_students_filename else f"{ds}_ldap_new_students.csv"
+    upd_fn = _ensure_csv(updated_baseline_filename) if updated_baseline_filename else f"{ds}_ldap_updated_baseline.csv"
 
     if format == "zip":
         zip_buffer = io.BytesIO()
@@ -90,7 +83,7 @@ async def download_ldap(
         return StreamingResponse(
             zip_buffer,
             media_type="application/zip",
-            headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_ldap_export.zip\""}
+            headers={"Content-Disposition": f"attachment; filename=\"{ds}_ldap_export.zip\""}
         )
 
     stream = io.StringIO()
@@ -104,5 +97,5 @@ async def download_ldap(
     return StreamingResponse(
         io.BytesIO(response_content.encode("utf-8")),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_ldap.csv\""}
+        headers={"Content-Disposition": f"attachment; filename=\"{ds}_ldap.csv\""}
     )

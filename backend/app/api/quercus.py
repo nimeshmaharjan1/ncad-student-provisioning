@@ -1,10 +1,11 @@
-from datetime import datetime
 from fastapi import HTTPException
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 import io
 from app.services.quercus_preprocess import preprocess_quercus, merge_quercus_files
+from app.utils.date_utils import date_suffix
+from app.utils.df_utils import sanitize_records
 
 router = APIRouter()
 
@@ -26,12 +27,7 @@ async def upload_quercus(files: list[UploadFile] = File(...)):
     merged_df = merge_quercus_files(*dfs)
     cleaned_df = preprocess_quercus(merged_df)
 
-    # Convert head(10) to dictionary, replacing NaN/nulls with None for standard JSON serialization
-    sample_rows = cleaned_df.head(10).to_dict(orient="records")
-    for row in sample_rows:
-        for key, val in row.items():
-            if pd.isna(val):
-                row[key] = None
+    sample_rows = sanitize_records(cleaned_df.head(10))
 
     return {
         "uploaded_files": [f.filename for f in files],
@@ -56,7 +52,7 @@ async def download_quercus(files: list[UploadFile] = File(...)):
     merged_df = merge_quercus_files(*dfs)
     cleaned_df = preprocess_quercus(merged_df)
 
-    date_suffix = datetime.now().strftime("%Y%m%d")
+    ds = date_suffix()
 
     # Convert cleaned DataFrame to CSV string
     stream = io.StringIO()
@@ -67,5 +63,5 @@ async def download_quercus(files: list[UploadFile] = File(...)):
     return StreamingResponse(
         io.BytesIO(response_content.encode("utf-8")),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_quercus.csv\""}
+        headers={"Content-Disposition": f"attachment; filename=\"{ds}_quercus.csv\""}
     )

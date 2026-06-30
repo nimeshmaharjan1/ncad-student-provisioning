@@ -2,6 +2,12 @@ import re
 from datetime import datetime
 import pandas as pd
 from app.utils.passcode_generator import generate_passcode
+from app.utils.df_utils import (
+    normalize_email_identity,
+    normalize_baseline_schema,
+    detect_new_users,
+    update_baseline_state,
+)
 
 # ==============================================================================
 # NCAD LDAP PROVISIONING SYSTEM CONTRACT:
@@ -16,6 +22,8 @@ from app.utils.passcode_generator import generate_passcode
 # 5. Identity key is ALWAYS: Email_address (Term Email).
 # ==============================================================================
 
+LDAP_EMAIL_PRIORITY = ["Email_address", "Term Email"]
+
 QUERCUS_SCHEMA_REQUIRED_COLUMNS = [
     "ID Number", "Course Code", "Course Description",
     "Course Instance Course Year", "Type", "First Name",
@@ -28,46 +36,6 @@ LDAP_SCHEMA_REQUIRED_COLUMNS = [
     "First Name", "Last Name", "Date of Birth", "Phone",
     "Email_address", "Quercus_LDAP", "Card", "Passcode"
 ]
-
-def normalize_email_identity(df: pd.DataFrame) -> pd.Series:
-    """
-    Stateless utility function to normalize the identity email address series early.
-    Raises KeyError if neither 'Email_address' nor 'Term Email' is found.
-    """
-    if "Email_address" in df.columns:
-        email_col = "Email_address"
-    elif "Term Email" in df.columns:
-        email_col = "Term Email"
-    else:
-        raise KeyError("Identity email column ('Email_address' or 'Term Email') not found in DataFrame.")
-    return df[email_col].fillna("").astype(str).str.strip().str.lower()
-
-def normalize_baseline_schema(baseline_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Ensures baseline schema conforms exactly to expected LDAP columns.
-    Happens once at the ingestion stage.
-    """
-    if baseline_df.empty:
-        return pd.DataFrame(columns=LDAP_SCHEMA_REQUIRED_COLUMNS)
-
-    df_norm = baseline_df.copy()
-
-    # # Step 1: Normalize incoming column names (strip whitespace + case-insensitive rename)
-    expected_lookup = {col.lower(): col for col in LDAP_SCHEMA_REQUIRED_COLUMNS}
-    rename_map = {}
-    for col in df_norm.columns:
-        stripped = col.strip()
-        key = stripped.lower()
-        if key in expected_lookup and stripped != expected_lookup[key]:
-            rename_map[col] = expected_lookup[key]
-    df_norm = df_norm.rename(columns=rename_map)
-    # Rename is fully complete before schema enforcement begins
-
-    # Step 2: Fill any truly missing columns with empty strings
-    for col in LDAP_SCHEMA_REQUIRED_COLUMNS:
-        if col not in df_norm.columns:
-            df_norm[col] = ""
-    return df_norm[LDAP_SCHEMA_REQUIRED_COLUMNS]
 
 def map_quercus_to_ldap(quercus_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -100,42 +68,6 @@ def map_quercus_to_ldap(quercus_df: pd.DataFrame) -> pd.DataFrame:
 
     return pd.DataFrame(ldap_data)
 
-def normalize_emails(df: pd.DataFrame, email_col: str) -> pd.Series:
-    """
-    Maintained for API backwards compatibility.
-    Raises KeyError if email_col is missing.
-    """
-    if email_col not in df.columns:
-        raise KeyError(f"Email column '{email_col}' not found in DataFrame.")
-    return normalize_email_identity(df)
-
-def detect_new_students(baseline_df: pd.DataFrame, quercus_mapped_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Identity diff concern: Identifies new students from Quercus data by comparing
-    against the baseline dataset. Done BEFORE any deduplication.
-    
-    INLINE DOCUMENTATION:
-    - Email_address is the only identity key:
-      This is the canonical identity key across both baseline and new student systems
-      to determine if a student already has an LDAP account.
-    - Comparison is state-based, not overwrite-based:
-      We compare the incoming data against the historical snapshot to identify records
-      that do not exist in the current baseline.
-    - Deduplication happens after diff detection:
-      Running deduplication before diff detection could mask new student entries or lead
-      to state loss. By diffing first, we ensure we evaluate all incoming records.
-    """
-    baseline_emails = set(normalize_email_identity(baseline_df))
-    quercus_emails = normalize_email_identity(quercus_mapped_df)
-
-    new_mask = (
-        (quercus_emails != "") &
-        (quercus_emails != "nan") &
-        (~quercus_emails.isin(baseline_emails))
-    )
-
-    return quercus_mapped_df[new_mask].copy()
-
 def assign_passcodes(new_students_df: pd.DataFrame) -> pd.DataFrame:
     """
     Passcode generation concern: Stateless utility call to generate passcodes
@@ -153,30 +85,7 @@ def assign_passcodes(new_students_df: pd.DataFrame) -> pd.DataFrame:
     df_copy["Passcode"] = df_copy["Passcode"].apply(get_passcode)
     return df_copy
 
-def update_baseline_state(baseline_df: pd.DataFrame, new_students_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Baseline update concern: Merges baseline and new students, applying deduplication
-    ONLY in this stage to form the updated baseline state.
-    
-    INLINE DOCUMENTATION:
-    - Baseline-first ordering matters:
-      Placing baseline_df first and new_students_df second guarantees that drop_duplicates
-      (with keep="first") always preserves the historical state of existing accounts
-      (including their original passcodes and details) rather than overwriting them.
-    """
-    # Append new student rows under baseline
-    combined = pd.concat([baseline_df, new_students_df], ignore_index=True)
 
-    # Clean emails temporarily for deduplication
-    combined["_email_clean"] = normalize_email_identity(combined)
-    combined = combined[(combined["_email_clean"] != "") & (combined["_email_clean"] != "nan")]
-
-    # Duplication logic is centralized to preserve state integrity.
-    # Deduplication happens ONLY here in this state management stage
-    combined = combined.drop_duplicates(subset=["_email_clean"], keep="first")
-    combined = combined.drop(columns=["_email_clean"])
-
-    return combined
 
 def _format_dob_series(series: pd.Series) -> pd.Series:
     """
@@ -254,7 +163,7 @@ def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.D
         tuple: (new_students_df, updated_baseline_df, audit_info)
     """
     # 1. Normalize Baseline Schema at Ingestion
-    baseline_normalized = normalize_baseline_schema(baseline_df)
+    baseline_normalized = normalize_baseline_schema(baseline_df, LDAP_SCHEMA_REQUIRED_COLUMNS)
 
     # 2. Validate Schema Contracts (after normalization so case/whitespace differences are already resolved)
     if not baseline_normalized.empty:
@@ -266,13 +175,13 @@ def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.D
     quercus_mapped = map_quercus_to_ldap(quercus_df)
 
     # 4. Detect new students (BEFORE deduplication)
-    new_students_raw = detect_new_students(baseline_normalized, quercus_mapped)
+    new_students_raw = detect_new_users(baseline_normalized, quercus_mapped, LDAP_EMAIL_PRIORITY)
 
     # 5. Assign passcodes to new students (stateless utility call)
     new_students_with_passcodes = assign_passcodes(new_students_raw)
 
     # 6. Update baseline state (this is the single stage where deduplication occurs)
-    updated_baseline = update_baseline_state(baseline_normalized, new_students_with_passcodes)
+    updated_baseline = update_baseline_state(baseline_normalized, new_students_with_passcodes, LDAP_EMAIL_PRIORITY)
 
     # 7. Enforce dd/mm/yyyy format on Date of Birth in both outputs
     new_students_with_passcodes["Date of Birth"] = _format_dob_series(new_students_with_passcodes["Date of Birth"])

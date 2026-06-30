@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 import pandas as pd
@@ -7,6 +6,7 @@ import io
 import zipfile
 from app.services.quercus_preprocess import preprocess_quercus
 from app.services.canvas_service import generate_canvas_comparison_exports
+from app.utils.date_utils import date_suffix
 
 router = APIRouter()
 
@@ -30,16 +30,16 @@ async def export_canvas(baseline: UploadFile = File(...), quercus: UploadFile = 
 
     new_users_df, updated_baseline_df, _ = generate_canvas_comparison_exports(baseline_df, cleaned_quercus_df)
 
-    date_suffix = datetime.now().strftime("%Y%m%d")
+    ds = date_suffix()
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(f"{date_suffix}_canvas.csv", new_users_df.to_csv(index=False))
-        zf.writestr(f"{date_suffix}_canvas_all_pre.csv", updated_baseline_df.to_csv(index=False))
+        zf.writestr(f"{ds}_canvas.csv", new_users_df.to_csv(index=False))
+        zf.writestr(f"{ds}_canvas_all_pre.csv", updated_baseline_df.to_csv(index=False))
     zip_buffer.seek(0)
 
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename=\"{date_suffix}_canvas_export.zip\""},
+        headers={"Content-Disposition": f"attachment; filename=\"{ds}_canvas_export.zip\""},
     )

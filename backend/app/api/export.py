@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 import pandas as pd
@@ -6,18 +5,10 @@ import io
 import zipfile
 from app.services.quercus_transform import transform_quercus
 from app.services.export_pipeline import run_export_pipeline
+from app.utils.date_utils import date_suffix
+from app.utils.df_utils import sanitize_records
 
 router = APIRouter()
-
-def sanitize_preview(df: pd.DataFrame) -> list:
-    """Converts the first 3 rows of a DataFrame to records, mapping NaNs to None for JSON compliance."""
-    sample_df = df.head(3)
-    records = sample_df.to_dict(orient="records")
-    for row in records:
-        for key, val in row.items():
-            if pd.isna(val):
-                row[key] = None
-    return records
 
 @router.post("/all")
 async def export_all(file: UploadFile = File(...)):
@@ -37,10 +28,10 @@ async def export_all(file: UploadFile = File(...)):
     return {
         "raw_row_count": len(df),
         "cleaned_row_count": cleaned_row_count,
-        "ldap_preview": sanitize_preview(ldap_df),
-        "canvas_preview": sanitize_preview(canvas_df),
-        "athens_preview": sanitize_preview(athens_df),
-        "library_preview": sanitize_preview(library_df)
+        "ldap_preview": sanitize_records(ldap_df.head(3)),
+        "canvas_preview": sanitize_records(canvas_df.head(3)),
+        "athens_preview": sanitize_records(athens_df.head(3)),
+        "library_preview": sanitize_records(library_df.head(3))
     }
 
 @router.post("/bundle")
@@ -52,22 +43,22 @@ async def export_bundle(file: UploadFile = File(...)):
     # Run the full export pipeline
     ldap_df, canvas_df, athens_df, library_df = run_export_pipeline(df)
     
-    date_suffix = datetime.now().strftime("%Y%m%d")
+    ds = date_suffix()
 
     # Package into a zip file in memory
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        zip_file.writestr(f"{date_suffix}_ldap.csv", ldap_df.to_csv(index=False))
-        zip_file.writestr(f"{date_suffix}_canvas.csv", canvas_df.to_csv(index=False))
-        zip_file.writestr(f"{date_suffix}_athens.csv", athens_df.to_csv(index=False))
-        zip_file.writestr(f"{date_suffix}_library.csv", library_df.to_csv(index=False))
+        zip_file.writestr(f"{ds}_ldap.csv", ldap_df.to_csv(index=False))
+        zip_file.writestr(f"{ds}_canvas.csv", canvas_df.to_csv(index=False))
+        zip_file.writestr(f"{ds}_athens.csv", athens_df.to_csv(index=False))
+        zip_file.writestr(f"{ds}_library.csv", library_df.to_csv(index=False))
         
     zip_buffer.seek(0)
     
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename={date_suffix}_quercus_exports.zip"}
+        headers={"Content-Disposition": f"attachment; filename={ds}_quercus_exports.zip"}
     )
 
 

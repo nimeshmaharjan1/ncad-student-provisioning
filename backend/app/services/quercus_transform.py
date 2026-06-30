@@ -1,26 +1,5 @@
 import pandas as pd
-
-def clean_id_number(val) -> str:
-    """
-    Cleans the ID Number value.
-    - If null/NaN/empty, returns empty string.
-    - Strips whitespace.
-    - Handles float representations (e.g. 12345.0) by removing the trailing '.0'.
-    - Returns a zero-padded string of length 8.
-    """
-    if pd.isna(val):
-        return ""
-    
-    val_str = str(val).strip()
-    if not val_str or val_str.lower() == 'nan':
-        return ""
-    
-    # Remove float decimal point if present
-    if val_str.endswith('.0'):
-        val_str = val_str[:-2]
-        
-    val_str = val_str.strip()
-    return val_str.zfill(8)
+from app.services.quercus_preprocess import clean_id_number
 
 def transform_quercus(df: pd.DataFrame) -> pd.DataFrame:
     """

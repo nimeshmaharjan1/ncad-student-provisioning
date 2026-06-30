@@ -1,4 +1,10 @@
 import pandas as pd
+from app.utils.df_utils import (
+    normalize_email_identity,
+    detect_new_users,
+)
+
+ATHENS_EMAIL_PRIORITY = ["attribute/emailAddress", "Term Email"]
 
 ATHENS_UPLOAD_COLUMNS = [
     "organisationId", "username", "groups", "expiry", "status",
@@ -11,23 +17,15 @@ ATHENS_UPLOAD_COLUMNS = [
 ]
 
 
-def normalize_email_identity(df: pd.DataFrame) -> pd.Series:
-    """
-    Normalize the identity email column.
-    OpenAthens baseline uses 'attribute/emailAddress'.
-    Quercus data uses 'Term Email'.
-    """
-    if "attribute/emailAddress" in df.columns:
-        email_col = "attribute/emailAddress"
-    elif "Term Email" in df.columns:
-        email_col = "Term Email"
-    else:
-        raise KeyError("Identity email column ('attribute/emailAddress' or 'Term Email') not found in DataFrame.")
-    return df[email_col].fillna("").astype(str).str.strip().str.lower()
-
-
 def normalize_baseline_schema(baseline_df: pd.DataFrame) -> pd.DataFrame:
-    """Normalize OpenAthens baseline columns. Mainly ensures attribute/emailAddress exists."""
+    """
+    Normalize OpenAthens baseline columns. Mainly ensures attribute/emailAddress exists.
+
+    NOTE: This is deliberately simpler than the shared normalize_baseline_schema
+    in df_utils.py. OpenAthens does not enforce a full required-column schema —
+    we only need the email column. The shared version (with required_columns and
+    alias_map) would be overkill here.
+    """
     if baseline_df.empty:
         return pd.DataFrame()
 
@@ -47,25 +45,11 @@ def normalize_baseline_schema(baseline_df: pd.DataFrame) -> pd.DataFrame:
     return df_norm
 
 
-def detect_new_users(baseline_df: pd.DataFrame, quercus_mapped_df: pd.DataFrame) -> pd.DataFrame:
-    """Find Quercus students not present in the OpenAthens baseline by email."""
-    baseline_emails = set(normalize_email_identity(baseline_df))
-    quercus_emails = normalize_email_identity(quercus_mapped_df)
-
-    new_mask = (
-        (quercus_emails != "") &
-        (quercus_emails != "nan") &
-        (~quercus_emails.isin(baseline_emails))
-    )
-
-    return quercus_mapped_df[new_mask].copy()
-
-
 def deduplicate(df: pd.DataFrame) -> pd.DataFrame:
     """Remove duplicate rows by Term Email, keeping first occurrence."""
     if df.empty:
         return df
-    emails = normalize_email_identity(df)
+    emails = normalize_email_identity(df, ATHENS_EMAIL_PRIORITY)
     valid = (emails != "") & (emails != "nan")
     df_valid = df[valid].copy()
     df_valid["_email_dedup"] = emails[valid]
@@ -146,7 +130,7 @@ def run_athens_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> 
             - upload_df: 21-column OpenAthens upload template.
     """
     baseline_normalized = normalize_baseline_schema(baseline_df)
-    new_users = detect_new_users(baseline_normalized, quercus_df)
+    new_users = detect_new_users(baseline_normalized, quercus_df, ATHENS_EMAIL_PRIORITY)
     new_users_deduped = deduplicate(new_users)
     upload_df = generate_athens_upload(new_users_deduped)
     return new_users_deduped, upload_df
