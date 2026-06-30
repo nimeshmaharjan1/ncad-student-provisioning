@@ -1,3 +1,24 @@
+/*
+ * PipelineContext — shared state for the /quercus provisioning flow.
+ *
+ * Stores the cleaned Quercus CSV file (returned by POST /quercus/download)
+ * so it can be reused by LDAP, Canvas, Google endpoints without forcing
+ * the user to re-upload Quercus data for each pipeline.
+ *
+ * State:
+ *   cleanedQuercusFile — the actual File object from /quercus/download,
+ *     sent as the "quercus" field in downstream export requests.
+ *   auditInfo — preprocessing row counts (raw, filtered, duplicates, etc.)
+ *   sampleRows — first 10 cleaned rows for the DataTable preview.
+ *   step1Done — derived boolean: true when cleanedQuercusFile is set.
+ *
+ * Persists across page navigation (mounted in root layout) so the user
+ * can switch between /quercus and /library without losing Quercus state.
+ *
+ * NOT used by LibraryStep — Library is a standalone export that accepts
+ * its own file inputs and sends them directly to POST /library/export.
+ */
+
 "use client"
 
 import { createContext, useContext, useState, type ReactNode } from "react"
