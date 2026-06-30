@@ -56,7 +56,8 @@ utils/*.py        → Shared utilities (passcode generator, etc.)
 
 ```bash
 cd backend
-.venv\Scripts\activate
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 uvicorn app.main:app --reload --port 8000
 ```
 

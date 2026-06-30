@@ -1,5 +1,7 @@
 # NCAD Student Provisioning Automation System
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Automates student account creation and updates across **5 institutional systems** (LDAP, Canvas, Google Workspace, OpenAthens, Library) from Quercus CSV exports. Replaces manual Excel-based processes.
 
 **API:** `http://localhost:8000` · **UI:** `http://localhost:3000`
@@ -8,14 +10,28 @@ Automates student account creation and updates across **5 institutional systems*
 
 ## Quick Start
 
+### One-click launcher (no manual steps)
+
+Double-click the launcher for your OS — it installs dependencies, starts both servers, and opens the browser:
+
+- **Windows:** double-click `start.bat`
+- **macOS/Linux:** run `./start.sh`
+
+### Manual setup
+
 ```bash
 # Backend
 cd backend
-python -m venv .venv && .venv\Scripts\activate && pip install -r ..\requirements.txt
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r ../requirements.txt
 uvicorn app.main:app --reload --port 8000
 
 # Frontend (separate terminal)
-cd frontend && npm install && npm run dev
+cd frontend
+npm install
+npm run dev
 ```
 
 ---

@@ -28,8 +28,9 @@ NCAD Student Provisioning automates the creation and update of student accounts 
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate      # Windows
-pip install -r ..\requirements.txt
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r ../requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -506,7 +507,8 @@ There is no automated test suite yet. Test scripts live in `backend/samples/`.
 
 ```bash
 cd backend
-.venv\Scripts\activate
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 python samples/test_pipelines.py
 ```
 
