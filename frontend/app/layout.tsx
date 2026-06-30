@@ -49,27 +49,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <PipelineProvider>
-            <nav className="border-b">
-              <div className="mx-auto flex max-w-5xl items-center gap-6 px-4 py-3">
-                <Link
-                  href="/"
-                  className="text-sm font-semibold tracking-tight hover:text-primary"
-                >
-                  NCAD
-                </Link>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <Link href="/" className="hover:text-foreground transition-colors">
-                    Home
-                  </Link>
-                  <Link href="/quercus" className="hover:text-foreground transition-colors">
-                    Quercus
-                  </Link>
-                  <Link href="/library" className="hover:text-foreground transition-colors">
-                    Library
-                  </Link>
-                </div>
-              </div>
-            </nav>
+            <NavBar />
             {children}
           </PipelineProvider>
         </ThemeProvider>
