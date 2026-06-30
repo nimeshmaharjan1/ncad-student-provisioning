@@ -28,11 +28,13 @@ interface PipelineState {
   cleanedQuercusFile: File | null
   sampleRows: Record<string, unknown>[] | null
   auditInfo: AuditInfo | null
+  uploadedFileNames: string[]
   step1Done: boolean
   setQuercusData: (data: {
     cleanedQuercusFile: File
     sampleRows: Record<string, unknown>[]
     auditInfo: AuditInfo
+    uploadedFileNames?: string[]
   }) => void
   reset: () => void
 }
@@ -43,21 +45,27 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
   const [cleanedQuercusFile, setCleanedQuercusFile] = useState<File | null>(null)
   const [sampleRows, setSampleRows] = useState<Record<string, unknown>[] | null>(null)
   const [auditInfo, setAuditInfo] = useState<AuditInfo | null>(null)
+  const [uploadedFileNames, setUploadedFileNames] = useState<string[]>([])
 
   const setQuercusData = (data: {
     cleanedQuercusFile: File
     sampleRows: Record<string, unknown>[]
     auditInfo: AuditInfo
+    uploadedFileNames?: string[]
   }) => {
     setCleanedQuercusFile(data.cleanedQuercusFile)
     setSampleRows(data.sampleRows)
     setAuditInfo(data.auditInfo)
+    if (data.uploadedFileNames) {
+      setUploadedFileNames(data.uploadedFileNames)
+    }
   }
 
   const reset = () => {
     setCleanedQuercusFile(null)
     setSampleRows(null)
     setAuditInfo(null)
+    setUploadedFileNames([])
   }
 
   return (
@@ -66,6 +74,7 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
         cleanedQuercusFile,
         sampleRows,
         auditInfo,
+        uploadedFileNames,
         step1Done: cleanedQuercusFile !== null,
         setQuercusData,
         reset,

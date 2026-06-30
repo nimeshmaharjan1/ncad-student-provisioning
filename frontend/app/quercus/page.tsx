@@ -20,8 +20,9 @@
 
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Server, Palette, Globe, BookOpen } from "lucide-react"
+import { ArrowLeft, Server, Palette, Globe, BookOpen, FileText } from "lucide-react"
 import { usePipeline } from "@/lib/pipeline-context"
 import { QuercusStep } from "@/components/quercus-step"
 import { LdapStep } from "@/components/ldap-step"
@@ -69,7 +70,11 @@ function Card({
 }
 
 export default function QuercusPage() {
-  const { step1Done, reset } = usePipeline()
+  const { step1Done, cleanedQuercusFile, uploadedFileNames, reset } = usePipeline()
+
+  useEffect(() => {
+    document.title = "Provisioning Pipeline — NCAD Student Provisioning"
+  }, [])
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -95,9 +100,22 @@ export default function QuercusPage() {
       </div>
 
       <h1 className="mb-1 text-xl font-semibold md:text-2xl">Provisioning Pipeline</h1>
-      <p className="mb-8 text-sm text-muted-foreground">
+      <p className="mb-2 text-sm text-muted-foreground">
         Upload Quercus student data, then generate LDAP, Canvas, Google Workspace, and OpenAthens exports.
       </p>
+
+      {step1Done && cleanedQuercusFile && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+          <FileText className="size-3.5 shrink-0" />
+          <span className="font-medium">Active Quercus file:</span>
+          <span>{cleanedQuercusFile.name}</span>
+          {uploadedFileNames.length > 1 && (
+            <span className="text-muted-foreground">
+              (from {uploadedFileNames.join(", ")})
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Quercus upload card — always visible */}
       <Card

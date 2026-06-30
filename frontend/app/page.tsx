@@ -10,12 +10,17 @@
 
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { Database, BookOpen } from "lucide-react"
 import { usePipeline } from "@/lib/pipeline-context"
 
 export default function HomePage() {
   const { step1Done } = usePipeline()
+
+  useEffect(() => {
+    document.title = "Home — NCAD Student Provisioning"
+  }, [])
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">

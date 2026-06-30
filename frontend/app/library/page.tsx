@@ -21,11 +21,15 @@
 
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { ArrowLeft, BookOpen } from "lucide-react"
 import { LibraryStep } from "@/components/library-step"
 
 export default function LibraryPage() {
+  useEffect(() => {
+    document.title = "Library Export — NCAD Student Provisioning"
+  }, [])
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       {/* Back link */}

@@ -66,6 +66,7 @@ export function QuercusStep() {
         cleanedQuercusFile: data.cleanedQuercusFile,
         sampleRows: data.sampleRows,
         auditInfo: data.auditInfo,
+        uploadedFileNames: data.uploadedFiles,
       })
       const url = URL.createObjectURL(data.cleanedQuercusFile)
       const a = document.createElement("a")
