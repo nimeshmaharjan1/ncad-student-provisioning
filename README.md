@@ -95,6 +95,8 @@ Covers: setup, every file in the codebase, pipeline architecture, API details wi
 
 Additional docs:
 - [`docs/architecture.md`](docs/architecture.md) — original design document
+- [`docs/MANUAL_PROCESS.md`](docs/MANUAL_PROCESS.md) — the legacy manual process this system replaces
+- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) — step-by-step tutorial for non-IT staff using the system
 - [`backend/README.md`](backend/README.md) — backend specifics
 - [`frontend/README.md`](frontend/README.md) — frontend specifics
 
