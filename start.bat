@@ -6,8 +6,11 @@ echo ============================================
 echo   NCAD Student Provisioning -- Launcher
 echo ============================================
 echo.
+echo Checking prerequisites...
+echo.
 
-:: Check Python
+:: ----- Check Python ---------------------------------------------------------
+echo [1/5] Checking Python...
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python is not installed or not on PATH.
@@ -17,7 +20,8 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Check pip (Python may be installed without it)
+:: ----- Check pip ------------------------------------------------------------
+echo [2/5] Checking pip...
 pip --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] pip is not installed.
@@ -28,7 +32,8 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Check Node
+:: ----- Check Node.js ---------------------------------------------------------
+echo [3/5] Checking Node.js...
 node --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Node.js is not installed or not on PATH.
@@ -38,7 +43,8 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Check npm (Node may be installed without it)
+:: ----- Check npm ------------------------------------------------------------
+echo [4/5] Checking npm...
 npm --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] npm is not installed.
@@ -48,17 +54,25 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+:: ----- Check system ports ----------------------------------------------------
+echo [5/5] Checking system ports...
 :: Auto-kill orphaned processes on ports 8000 and 3000.
-:: This handles the case where a previous terminal was closed but
-:: the Node / uvicorn process kept running (orphaned). Non-IT users
-:: don't need to hunt down PIDs — the script just cleans up.
-:: If you intentionally have something else on these ports, kill it manually.
-powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue; Write-Host '[INFO] Port 8000 was in use - killed leftover process.' }"
-powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue; Write-Host '[INFO] Port 3000 was in use - killed leftover process.' }"
+:: Uses netstat + taskkill (native cmd) instead of PowerShell,
+:: because corporate Windows may restrict PowerShell execution policy.
+for /f "tokens=5 delims= " %%p in ('netstat -ano ^| findstr ":8000"') do (
+    if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1 && echo [INFO] Port 8000 was in use - killed leftover process.
+)
+for /f "tokens=5 delims= " %%p in ('netstat -ano ^| findstr ":3000"') do (
+    if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1 && echo [INFO] Port 3000 was in use - killed leftover process.
+)
 
-:: ------------------------------------------------------------------
+echo.
+echo All prerequisites met.
+echo.
+
+:: ----------------------------------------------------------------------------
 :: Backend
-:: ------------------------------------------------------------------
+:: ----------------------------------------------------------------------------
 echo [1/4] Setting up Python virtual environment...
 cd backend
 if not exist ".venv" (
@@ -79,9 +93,9 @@ echo [3/4] Starting backend on http://localhost:8000 ...
 start /B "" cmd /c ".venv\Scripts\python -m uvicorn app.main:app --port 8000"
 cd ..
 
-:: ------------------------------------------------------------------
+:: ----------------------------------------------------------------------------
 :: Frontend
-:: ------------------------------------------------------------------
+:: ----------------------------------------------------------------------------
 echo [4/4] Setting up and starting frontend on http://localhost:3000 ...
 cd frontend
 call npm install
@@ -104,26 +118,22 @@ echo   Frontend: http://localhost:3000
 echo ============================================
 echo.
 
-:: Wait for frontend to be ready (poll port 3000, max 120 seconds)
+:: ----- Wait for frontend to be ready -----------------------------------------
+:: Uses netstat (native cmd) instead of PowerShell to avoid corporate
+:: execution policy restrictions on New-Object / Get-NetTCPConnection.
+:: Polls every ~2 seconds for up to 120 seconds.
 echo Waiting for frontend to start (this may take a minute)...
-powershell -NoProfile -Command ^
-  "$t = [datetime]::Now.AddSeconds(120); ^
-   while (1) { ^
-     try { ^
-       $c = New-Object Net.Sockets.TcpClient('127.0.0.1', 3000); ^
-       $c.Close(); ^
-       Write-Host 'Frontend ready.'; ^
-       break ^
-     } catch { ^
-       Start-Sleep -Seconds 2 ^
-     } ^
-     if ([datetime]::Now -ge $t) { ^
-       Write-Host '[WARN] Frontend not ready after 120s. Open http://localhost:3000 manually.'; ^
-       break ^
-     } ^
-   }"
+for /l %%i in (1,1,60) do (
+    >nul 2>&1 netstat -ano | findstr ":3000" | findstr "LISTENING" && (
+        echo Frontend ready.
+        goto :frontend_up
+    )
+    >nul ping -n 3 localhost
+)
+echo [WARN] Frontend not ready after 120s. Open http://localhost:3000 manually.
+:frontend_up
 
-:: Open browser
+:: ----- Open browser ----------------------------------------------------------
 start http://localhost:3000
 
 echo.
