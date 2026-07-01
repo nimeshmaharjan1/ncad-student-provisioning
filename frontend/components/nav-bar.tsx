@@ -24,7 +24,9 @@ export function NavBar() {
         </Link>
         <div className="flex items-center gap-4 text-sm">
           {links.map((link) => {
-            const isActive = pathname === link.href
+            const isActive = link.href === "/"
+              ? pathname === "/"
+              : pathname === link.href || pathname.startsWith(link.href + "/")
             return (
               <Link
                 key={link.href}

@@ -99,8 +99,8 @@ export default function QuercusPage() {
         )}
       </div>
 
-      <h1 className="mb-1 text-xl font-semibold md:text-2xl">Provisioning Pipeline</h1>
-      <p className="mb-2 text-sm text-muted-foreground">
+      <h1 className="mb-2 text-xl font-semibold md:text-2xl">Provisioning Pipeline</h1>
+      <p className="mb-8 text-sm text-muted-foreground">
         Upload Quercus student data, then generate LDAP, Canvas, Google Workspace, and OpenAthens exports.
       </p>
 

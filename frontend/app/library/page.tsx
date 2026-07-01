@@ -31,7 +31,7 @@ export default function LibraryPage() {
     document.title = "Library Export — NCAD Student Provisioning"
   }, [])
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Back link */}
       <div className="mb-6">
         <Link
