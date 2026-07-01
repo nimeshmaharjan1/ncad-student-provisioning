@@ -8,6 +8,24 @@ Automates student account creation and updates across **5 institutional systems*
 
 ---
 
+## Demo Environment
+
+A public demo is deployed for testing and validation:
+
+- **Frontend:** https://ncad-student-provisioning.vercel.app/
+- **Backend:** https://ncad-student-provisioning.onrender.com/
+
+No sensitive student data is exposed. All processing is transient (upload → transform → export) — no data is persisted or stored.
+
+To switch between local and demo, edit `frontend/.env`:
+
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000          # local backend
+# NEXT_PUBLIC_API_URL=https://ncad-student-provisioning.onrender.com  # demo
+```
+
+---
+
 ## Quick Start
 
 ### One-click launcher (no manual steps)
