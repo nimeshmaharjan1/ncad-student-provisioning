@@ -76,8 +76,9 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 if [ ! -d ".next" ]; then
-  echo "Building frontend for production (one-time)..."
+  echo "Building frontend for production (this may take a minute)..."
   npm run build
+  echo "Build complete."
 fi
 npm run start &
 FRONTEND_PID=$!

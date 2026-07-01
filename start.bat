@@ -28,12 +28,11 @@ if %errorlevel% neq 0 (
 )
 
 :: Kill any existing servers on the same ports
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000 "') do (
-    taskkill /f /pid %%a >nul 2>&1
-)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000 "') do (
-    taskkill /f /pid %%a >nul 2>&1
-)
+netstat -ano | findstr ":8000 " > .ports.txt
+for /f "tokens=5" %%a in (.ports.txt) do taskkill /f /pid %%a >nul 2>&1
+netstat -ano | findstr ":3000 " > .ports.txt
+for /f "tokens=5" %%a in (.ports.txt) do taskkill /f /pid %%a >nul 2>&1
+del .ports.txt 2>nul
 
 :: ------------------------------------------------------------------
 :: Backend
@@ -70,8 +69,9 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 if not exist ".next" (
-    echo Building frontend for production (one-time)...
+    echo Building frontend for production ^(this may take a minute^)...
     call npm run build
+    echo Build complete.
 )
 start /B "" cmd /c "npm run start"
 cd ..
