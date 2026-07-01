@@ -19,6 +19,13 @@ else
   exit 1
 fi
 
+# Check pip (Python may be installed without it)
+if ! "$PYTHON" -m pip --version &>/dev/null; then
+  echo "[ERROR] pip is not installed."
+  echo "Python 3.4+ includes pip by default. Reinstall Python or install pip manually."
+  exit 1
+fi
+
 # Check Node
 if ! command -v node &>/dev/null; then
   echo "[ERROR] Node.js is not installed."
@@ -26,19 +33,30 @@ if ! command -v node &>/dev/null; then
   exit 1
 fi
 
-# Check if ports are already in use
-if command -v lsof &>/dev/null; then
-  if lsof -ti:8000 &>/dev/null; then
-    echo "[ERROR] Port 8000 is already in use."
-    echo "       Close the other server first, then try again."
-    exit 1
-  fi
-  if lsof -ti:3000 &>/dev/null; then
-    echo "[ERROR] Port 3000 is already in use."
-    echo "       Close the other server first, then try again."
-    exit 1
-  fi
+# Check npm (Node may be installed without it)
+if ! command -v npm &>/dev/null; then
+  echo "[ERROR] npm is not installed."
+  echo "Node.js 20+ includes npm by default. Reinstall from https://nodejs.org"
+  exit 1
 fi
+
+# Auto-kill orphaned processes on ports 8000 and 3000.
+# Tries lsof first, then fuser — covers both macOS and Linux.
+kill_port() {
+  local port=$1
+  local pid=""
+  if command -v lsof &>/dev/null; then
+    pid=$(lsof -ti:"$port" 2>/dev/null)
+  elif command -v fuser &>/dev/null; then
+    pid=$(fuser "$port/tcp" 2>/dev/null | awk '{print $1}')
+  fi
+  if [ -n "$pid" ]; then
+    kill -9 "$pid" 2>/dev/null
+    echo "[INFO] Port $port was in use - killed leftover process."
+  fi
+}
+kill_port 8000
+kill_port 3000
 
 cleanup() {
   echo ""
@@ -97,7 +115,15 @@ echo "  Frontend: http://localhost:3000"
 echo "============================================"
 echo ""
 
-sleep 5
+# Wait for frontend to be ready (poll port 3000, max 120 seconds)
+echo "Waiting for frontend to start (this may take a minute)..."
+for i in $(seq 1 120); do
+  if command -v curl &>/dev/null && curl -s -o /dev/null http://localhost:3000 2>/dev/null; then
+    echo "Frontend ready."
+    break
+  fi
+  sleep 1
+done
 
 # Open browser
 if command -v xdg-open &>/dev/null; then

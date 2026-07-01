@@ -15,7 +15,7 @@ Automates student account creation and updates across **5 institutional systems*
 Double-click the launcher for your OS — it installs dependencies, starts both servers, and opens the browser:
 
 - **Windows:** double-click `start.bat`
-- **macOS/Linux:** run `./start.sh`
+- **macOS/Linux:** run `./start.sh` (first time: `chmod +x start.sh`)
 
 ### Manual setup
 
