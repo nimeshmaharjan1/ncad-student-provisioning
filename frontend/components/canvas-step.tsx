@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
+import { ProcessingProgress } from "@/components/processing-progress"
 import { downloadCanvasExport } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
 
@@ -47,6 +49,19 @@ export function CanvasStep() {
       >
         {loading ? "Exporting..." : "Run Canvas Export"}
       </Button>
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <ProcessingProgress stages={["Comparing files...", "Generating download..."]} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {error && <p className="text-sm text-destructive">{error}</p>}
       {done && (
         <p className="text-sm text-green-600 dark:text-green-400">

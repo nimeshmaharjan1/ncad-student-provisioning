@@ -1,41 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
+import { ProcessingProgress } from "@/components/processing-progress"
 import { downloadAthensExport } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
-
-function ProcessingProgress() {
-  const [stage, setStage] = useState(0)
-  const stages = ["Comparing files...", "Generating download..."]
-
-  useEffect(() => {
-    const t = setInterval(() => setStage((p) => Math.min(p + 1, stages.length - 1)), 1800)
-    return () => clearInterval(t)
-  }, [stages.length])
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="relative flex size-4">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/40" />
-          <span className="relative inline-flex size-4 rounded-full bg-primary" />
-        </span>
-        {stages[stage]}
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
-        <motion.div
-          className="h-full rounded-full bg-primary"
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{ duration: 3.6, ease: "easeInOut" }}
-        />
-      </div>
-    </div>
-  )
-}
 
 export function AthensStep() {
   const { step1Done, cleanedQuercusFile } = usePipeline()
@@ -87,7 +58,7 @@ export function AthensStep() {
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <ProcessingProgress />
+            <ProcessingProgress stages={["Comparing files...", "Generating download..."]} />
           </motion.div>
         )}
       </AnimatePresence>

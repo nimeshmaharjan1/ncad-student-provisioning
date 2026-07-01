@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
+import { ProcessingProgress } from "@/components/processing-progress"
 import { downloadLibraryExport } from "@/lib/api"
 
 export function LibraryStep() {
@@ -42,6 +44,19 @@ export function LibraryStep() {
       <Button onClick={handleRun} disabled={files.length === 0 || loading}>
         {loading ? "Exporting..." : "Run Library Export"}
       </Button>
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <ProcessingProgress stages={["Processing library data...", "Generating download..."]} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {error && <p className="text-sm text-destructive">{error}</p>}
       {done && (
         <p className="text-sm text-green-600 dark:text-green-400">
