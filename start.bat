@@ -45,7 +45,7 @@ if %errorlevel% neq 0 (
 
 :: ----- Check npm ------------------------------------------------------------
 echo [4/5] Checking npm...
-npm --version >nul 2>&1
+call npm --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] npm is not installed.
     echo Node.js 20+ includes npm by default. Reinstall from https://nodejs.org
