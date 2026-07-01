@@ -7,39 +7,8 @@ import zipfile
 from app.services.ldap_export import generate_ldap_comparison_exports
 from app.services.quercus_preprocess import preprocess_quercus
 from app.utils.date_utils import date_suffix
-from app.utils.df_utils import sanitize_records
 
 router = APIRouter()
-
-@router.post("/export")
-async def export_ldap(baseline: UploadFile = File(...), quercus: UploadFile = File(...)):
-    # This endpoint represents the official LDAP provisioning pipeline and is separate from Quercus preprocessing.
-    baseline_contents = await baseline.read()
-    quercus_contents = await quercus.read()
-
-    ext = os.path.splitext(baseline.filename or "")[1].lower()
-    if ext == ".xlsx":
-        baseline_df = pd.read_excel(io.BytesIO(baseline_contents), engine="openpyxl")
-    else:
-        baseline_df = pd.read_csv(io.StringIO(baseline_contents.decode("utf-8")))
-    quercus_df = pd.read_csv(io.StringIO(quercus_contents.decode("utf-8")))
-
-    baseline_df.columns = baseline_df.columns.str.strip()
-    quercus_df.columns = quercus_df.columns.str.strip()
-
-    cleaned_quercus_df = preprocess_quercus(quercus_df)
-
-    new_students_df, updated_baseline_df, audit_info = generate_ldap_comparison_exports(baseline_df, cleaned_quercus_df)
-
-    return {
-        "new_students": sanitize_records(new_students_df),
-        "updated_baseline": sanitize_records(updated_baseline_df),
-        "audit_info": {
-            "new_students_count": audit_info["new_students_count"],
-            "updated_baseline_count": audit_info["updated_baseline_count"]
-        }
-    }
-
 
 @router.post("/download")
 async def download_ldap(

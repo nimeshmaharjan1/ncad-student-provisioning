@@ -80,7 +80,6 @@ Each pipeline is independent — Quercus preprocessing is the only shared step. 
 - **Deterministic**: same inputs → same outputs (except randomized passcodes/UUIDs)
 - **Stateless**: no database, no sessions — everything is file-in, file-out
 - **Independent pipelines**: each system can be run independently of the others
-- **Backward-compatible**: legacy `/export/all` and `/export/bundle` endpoints preserved
 
 ## Out of Scope
 

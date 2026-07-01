@@ -65,22 +65,18 @@ ncad-student-provisioning/
 │   │   ├── api/
 │   │   │   ├── routes.py        # Router → prefix registration
 │   │   │   ├── quercus.py       # POST /quercus/upload, /quercus/download
-│   │   │   ├── ldap.py          # POST /ldap/export, /ldap/download
+│   │   │   ├── ldap.py          # POST /ldap/download
 │   │   │   ├── canvas.py        # POST /canvas/export
 │   │   │   ├── google.py        # POST /google/export
 │   │   │   ├── athens.py        # POST /athens/export
-│   │   │   ├── library.py       # POST /library/export
-│   │   │   └── export.py        # POST /export/all, /export/bundle (legacy)
+│   │   │   └── library.py       # POST /library/export
 │   │   ├── services/
 │   │   │   ├── quercus_preprocess.py   # Source of truth: preprocess_quercus()
-│   │   │   ├── quercus_transform.py    # Legacy variant (used by /export/*)
 │   │   │   ├── ldap_export.py          # LDAP diff + passcode generation
-│   │   │   ├── ldap_service.py         # Legacy LDAP mapper (used by /export/*)
-│   │   │   ├── canvas_service.py       # Canvas diff pipeline + legacy mapper
+│   │   │   ├── canvas_service.py       # Canvas diff pipeline
 │   │   │   ├── google_service.py       # Google diff + reactivation
 │   │   │   ├── athens_service.py       # Athens diff + 21-col upload template
-│   │   │   ├── library_service.py      # Library clean + 46-col template
-│   │   │   └── export_pipeline.py      # Legacy: runs all legacy mappers at once
+│   │   │   └── library_service.py      # Library clean + 46-col template
 │   │   ├── utils/
 │   │   │   ├── passcode_generator.py   # Word-based passcode generation
 │   │   │   └── file_handler.py         # (currently empty — placeholder)
@@ -155,14 +151,6 @@ Same input as upload. Returns `YYYYMMDD_quercus.csv` — the cleaned, preprocess
 
 ### LDAP Pipeline
 
-#### `POST /ldap/export` (JSON preview)
-| Field | Type | Description |
-|-------|------|-------------|
-| `baseline` | `UploadFile` | Current LDAP snapshot (`.csv` or `.xlsx`) |
-| `quercus` | `UploadFile` | Cleaned Quercus CSV |
-
-Returns JSON: `{ new_students: [...], updated_baseline: [...], audit_info: {...} }`
-
 #### `POST /ldap/download` (file download)
 Same inputs. Returns a ZIP containing:
 - `YYYYMMDD_ldap_new_students.csv` — 13 cols (Student ID, Code, Description, Year, ... Passcode)
@@ -232,14 +220,6 @@ Returns ZIP:
 Constants: `institutionId=46722`, `homeBranch=266006`, `sourceSystem=https://idp.ncad.ie/idp/shibboleth`.
 
 ---
-
-### Legacy Endpoints
-
-#### `POST /export/all`
-Single Quercus file → JSON preview of all 4 legacy pipelines. Uses `quercus_transform.py` (not `quercus_preprocess.py`).
-
-#### `POST /export/bundle`
-Single Quercus file → ZIP with all 4 legacy exports. Same machinery as `/export/all`.
 
 ---
 
@@ -331,9 +311,8 @@ Two endpoints:
 Key detail: reads CSVs with `pd.read_csv(io.StringIO(...))` and strips column whitespace. This is the canonical CSV-reading pattern used across all endpoints.
 
 #### `api/ldap.py`
-Two endpoints:
-- `/ldap/export`: returns JSON preview (sanitizes NaN → None)
-- `/ldap/download`: returns file (ZIP or CSV)
+One endpoint:
+- `/ldap/download`: returns ZIP or CSV
 
 Supports `.xlsx` baseline files (detected by extension). Calls `preprocess_quercus()` then `generate_ldap_comparison_exports()`.
 
@@ -342,9 +321,6 @@ Identical pattern to ldap.py — read baseline + quercus → preprocess → call
 
 #### `api/library.py`
 Different: accepts multiple files (no baseline), calls `clean_library_data()` + `build_library_template()`. Returns ZIP with debug CSV.
-
-#### `api/export.py`
-Legacy endpoints. Uses `quercus_transform.py` (different preprocessing logic — filters on "Recommended" not "Recommend", uses "Normalized ID" dedup not "Term Email"). Do NOT use for new work.
 
 #### `services/quercus_preprocess.py` (SOURCE OF TRUTH)
 The one preprocessing pipeline used by all 5 downstream services. Key functions:
@@ -388,13 +364,6 @@ Two-stage pipeline:
 2. `build_library_template()` — pure 46-column mapping with constants (institutionId=46722, homeBranch=266006)
 
 Gender validation: blanks → UNKNOWN, Male/Female → MALE/FEMALE.
-
-#### `services/quercus_transform.py` (LEGACY)
-Used only by `/export/all` and `/export/bundle`. Different from `quercus_preprocess.py`:
-- Filters on "Recommended" (not "Recommend")
-- Creates "Normalized ID" intermediate column
-- Deduplicates by "Normalized ID" (not "Term Email")
-- Drops the intermediate column before returning
 
 #### `utils/passcode_generator.py`
 Generates Word+Word+Word+Word+Number passcodes (e.g. "RiverForestCrystalStorm7"). Word list of 56 safe, non-offensive words.
@@ -533,8 +502,6 @@ Test each service function in isolation (normalize_email_identity, detect_new_us
 
 ## Common Gotchas
 
-- **preprocess_quercus vs transform_quercus**: These are NOT the same. The former is the source of truth (used by all current pipelines). The latter is legacy (used only by `/export/all`). Do not mix them up.
-- **"Recommend" vs "Recommended"**: `preprocess_quercus()` checks for `startswith("Recommend")`. `transform_quercus()` checks for `startswith("Recommended")`. This difference matters if your data uses one form.
 - **df.attrs**: Audit metadata is stored in DataFrame attrs. These are lost after pandas operations like `concat` or `copy(deep=True)`. Read them immediately after preprocessing.
 - **XLSX baseline**: Requires `openpyxl` in the virtual environment. If you get "Missing optional dependency 'openpyxl'", run `pip install openpyxl`.
 - **File encoding**: All CSVs are assumed UTF-8. The `io.StringIO(contents.decode("utf-8"))` pattern will fail on non-UTF-8 files.
