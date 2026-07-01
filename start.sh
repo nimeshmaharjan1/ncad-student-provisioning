@@ -51,7 +51,7 @@ kill_port() {
     pid=$(fuser "$port/tcp" 2>/dev/null | awk '{print $1}')
   fi
   if [ -n "$pid" ]; then
-    kill -9 "$pid" 2>/dev/null
+    kill -9 $pid 2>/dev/null
     echo "[INFO] Port $port was in use - killed leftover process."
   fi
 }
