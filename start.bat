@@ -27,12 +27,23 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Kill any existing servers on the same ports
-netstat -ano | findstr ":8000 " > .ports.txt
-for /f "tokens=5" %%a in (.ports.txt) do taskkill /f /pid %%a >nul 2>&1
-netstat -ano | findstr ":3000 " > .ports.txt
-for /f "tokens=5" %%a in (.ports.txt) do taskkill /f /pid %%a >nul 2>&1
-del .ports.txt 2>nul
+:: Check if ports are already in use
+powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+if %errorlevel% equ 1 (
+    echo [ERROR] Port 8000 is already in use.
+    echo        Close the other server window first, then try again.
+    echo.
+    pause
+    exit /b 1
+)
+powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+if %errorlevel% equ 1 (
+    echo [ERROR] Port 3000 is already in use.
+    echo        Close the other server window first, then try again.
+    echo.
+    pause
+    exit /b 1
+)
 
 :: ------------------------------------------------------------------
 :: Backend
@@ -68,11 +79,9 @@ if %errorlevel% neq 0 (
     pause
     exit /b 1
 )
-if not exist ".next" (
-    echo Building frontend for production ^(this may take a minute^)...
-    call npm run build
-    echo Build complete.
-)
+echo Building frontend for production ^(this may take a minute^)...
+call npm run build
+echo Build complete.
 start /B "" cmd /c "npm run start"
 cd ..
 

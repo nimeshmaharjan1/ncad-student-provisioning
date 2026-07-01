@@ -26,11 +26,18 @@ if ! command -v node &>/dev/null; then
   exit 1
 fi
 
-# Check ports
-# Kill any existing servers on the same ports
+# Check if ports are already in use
 if command -v lsof &>/dev/null; then
-  lsof -ti:8000 2>/dev/null | xargs kill -9 2>/dev/null
-  lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null
+  if lsof -ti:8000 &>/dev/null; then
+    echo "[ERROR] Port 8000 is already in use."
+    echo "       Close the other server first, then try again."
+    exit 1
+  fi
+  if lsof -ti:3000 &>/dev/null; then
+    echo "[ERROR] Port 3000 is already in use."
+    echo "       Close the other server first, then try again."
+    exit 1
+  fi
 fi
 
 cleanup() {
@@ -75,11 +82,9 @@ if [ $? -ne 0 ]; then
   echo "[ERROR] Failed to install Node.js dependencies."
   exit 1
 fi
-if [ ! -d ".next" ]; then
-  echo "Building frontend for production (this may take a minute)..."
-  npm run build
-  echo "Build complete."
-fi
+echo "Building frontend for production (this may take a minute)..."
+npm run build
+echo "Build complete."
 npm run start &
 FRONTEND_PID=$!
 cd ..
