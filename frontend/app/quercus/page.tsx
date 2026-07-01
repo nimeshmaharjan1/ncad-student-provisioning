@@ -99,10 +99,20 @@ export default function QuercusPage() {
         )} */}
       </div>
 
-      <h1 className="mb-2 text-xl font-semibold md:text-2xl">Provisioning Pipeline</h1>
-      <p className="mb-8 text-sm text-muted-foreground">
-        Upload Quercus student data, then generate LDAP, Canvas, Google Workspace, and OpenAthens exports.
-      </p>
+      <div className="mb-8 flex items-end justify-between">
+        <div>
+          <h1 className="text-xl font-semibold md:text-2xl">Provisioning Pipeline</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Upload Quercus student data, then generate LDAP, Canvas, Google Workspace, and OpenAthens exports.
+          </p>
+        </div>
+        <Link
+          href="/guide"
+          className="hidden shrink-0 text-xs font-medium text-primary hover:underline md:inline-block"
+        >
+          View full guide &rarr;
+        </Link>
+      </div>
 
       {step1Done && cleanedQuercusFile && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">

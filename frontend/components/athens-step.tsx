@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
 import { ProcessingProgress } from "@/components/processing-progress"
+import { WorkflowChips } from "@/components/workflow-chips"
 import { downloadAthensExport } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
+import { Upload, Check } from "lucide-react"
 
 export function AthensStep() {
   const { step1Done, cleanedQuercusFile } = usePipeline()
@@ -73,6 +75,13 @@ export function AthensStep() {
           Complete Step 1 (Quercus) first.
         </p>
       )}
+      <WorkflowChips
+        systemId="openathens"
+        chips={[
+          { number: 4, icon: Upload, title: "Bulk upload to OpenAthens", detail: "Accounts → Bulk Upload in admin.openathens.net", type: "manual" },
+          { number: 5, icon: Check, title: "Confirm accounts appear", detail: "Verify new accounts in the user list", type: "manual" },
+        ]}
+      />
     </div>
   )
 }

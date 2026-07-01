@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
 import { ProcessingProgress } from "@/components/processing-progress"
+import { WorkflowChips } from "@/components/workflow-chips"
 import { downloadLibraryExport } from "@/lib/api"
+import { Upload, Check } from "lucide-react"
 
 export function LibraryStep() {
   const [files, setFiles] = useState<File[]>([])
@@ -63,6 +65,13 @@ export function LibraryStep() {
           Library export downloaded.
         </p>
       )}
+      <WorkflowChips
+        systemId="library"
+        chips={[
+          { number: 4, icon: Upload, title: "SFTP upload to Library system", detail: "Connect using the Library SFTP credentials from John", type: "manual" },
+          { number: 5, icon: Check, title: "Library handles merging", detail: "Just upload the file and the system does the rest", type: "manual" },
+        ]}
+      />
     </div>
   )
 }

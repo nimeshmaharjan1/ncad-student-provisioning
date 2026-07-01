@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
 import { ProcessingProgress } from "@/components/processing-progress"
+import { WorkflowChips } from "@/components/workflow-chips"
 import { downloadCanvasExport } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
+import { Upload, Globe, AlertTriangle } from "lucide-react"
 
 export function CanvasStep() {
   const { step1Done, cleanedQuercusFile } = usePipeline()
@@ -73,6 +75,14 @@ export function CanvasStep() {
           Complete Step 1 (Quercus) first.
         </p>
       )}
+      <WorkflowChips
+        systemId="canvas"
+        chips={[
+          { number: 4, icon: Upload, title: "SIS Import", detail: "Upload to Canvas administration", type: "manual" },
+          { number: 5, icon: Globe, title: "FileSender + notify Rene", detail: "Upload via filesender2.heanet.ie", type: "manual" },
+          { number: 6, icon: AlertTriangle, title: "Verify no duplicates", detail: "Check the Canvas user list for duplicate accounts", type: "manual" },
+        ]}
+      />
     </div>
   )
 }

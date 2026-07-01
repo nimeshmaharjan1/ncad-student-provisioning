@@ -30,7 +30,7 @@ Before using this system, make sure you have:
 | Google Workspace Admin access | admin.google.com (student domain) |
 | Canvas Admin access | Provided by IT |
 | OpenAthens Admin access | https://admin.openathens.net |
-| SFTP client | e.g. FileZilla, WinSCP, or command-line sftp |
+| SFTP client | e.g. Cyberduck |
 | Thunderbird | With **Mail Merge** add-on installed |
 | Baseline CSV files | From the previous month's run (stored in system folders) |
 | Latest Quercus CSVs | Export from Quercus (see Phase 1) |

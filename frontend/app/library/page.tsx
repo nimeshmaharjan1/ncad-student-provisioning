@@ -23,7 +23,7 @@
 
 import { useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, BookOpen } from "lucide-react"
+import { ArrowLeft, BookOpen, ExternalLink } from "lucide-react"
 import { LibraryStep } from "@/components/library-step"
 
 export default function LibraryPage() {
@@ -44,7 +44,7 @@ export default function LibraryPage() {
       </div>
 
       <div className="rounded-xl border bg-card shadow-xs">
-        <div className="border-b px-5 py-3.5">
+        <div className="flex items-center justify-between border-b px-5 py-3.5">
           <div className="flex items-center gap-3">
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <BookOpen className="size-4" />
@@ -57,6 +57,13 @@ export default function LibraryPage() {
               </p>
             </div>
           </div>
+          <Link
+            href="/guide#system-library"
+            className="hidden shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline md:inline-flex"
+          >
+            View in guide
+            <ExternalLink className="size-3" />
+          </Link>
         </div>
         <div className="px-5 py-4">
           <LibraryStep />

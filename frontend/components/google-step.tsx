@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
 import { ProcessingProgress } from "@/components/processing-progress"
+import { WorkflowChips } from "@/components/workflow-chips"
 import { downloadGoogleExport } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
+import { Upload, UserPlus } from "lucide-react"
 
 export function GoogleStep() {
   const { step1Done, cleanedQuercusFile } = usePipeline()
@@ -73,6 +75,13 @@ export function GoogleStep() {
           Complete Step 1 (Quercus) first.
         </p>
       )}
+      <WorkflowChips
+        systemId="google-workspace"
+        chips={[
+          { number: 4, icon: Upload, title: "Bulk upload to Google Workspace", detail: "Users → Bulk upload users in Admin Console", type: "manual" },
+          { number: 5, icon: UserPlus, title: "Review reactivations", detail: "Check suspended students, add to mailing groups, send password reset", type: "critical" },
+        ]}
+      />
     </div>
   )
 }

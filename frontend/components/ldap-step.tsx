@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
 import { ProcessingProgress } from "@/components/processing-progress"
+import { WorkflowChips } from "@/components/workflow-chips"
 import { downloadLdapExport } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
+import { Upload, Mail, Clock } from "lucide-react"
 
 export function LdapStep() {
   const { step1Done, cleanedQuercusFile } = usePipeline()
@@ -73,6 +75,14 @@ export function LdapStep() {
           Complete Step 1 (Quercus) first.
         </p>
       )}
+      <WorkflowChips
+        systemId="ldap"
+        chips={[
+          { number: 4, icon: Upload, title: "SFTP to Triangle server", detail: "Upload via Cyberduck", type: "manual" },
+          { number: 5, icon: Mail, title: "Email Triangle Service Desk", detail: "Confirm the upload was received", type: "manual" },
+          { number: 6, icon: Clock, title: "Wait for confirmation", detail: "Do not send student emails until LDAP accounts are confirmed", type: "critical" },
+        ]}
+      />
     </div>
   )
 }
