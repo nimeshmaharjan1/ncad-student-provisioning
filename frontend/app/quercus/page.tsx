@@ -89,14 +89,14 @@ export default function QuercusPage() {
             Home
           </Link>
         </div>
-        {step1Done && (
+        {/* {step1Done && (
           <button
             onClick={reset}
             className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
             Start over
           </button>
-        )}
+        )} */}
       </div>
 
       <h1 className="mb-2 text-xl font-semibold md:text-2xl">Provisioning Pipeline</h1>
