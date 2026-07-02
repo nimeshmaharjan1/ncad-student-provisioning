@@ -8,7 +8,7 @@ DO NOT change any of this without understanding the tradeoffs below.
 
 Format:     WordWordWordWordWordNN  (5 title-cased words + 2-digit number, no separator)
 Example:    RiverForestCrystalStormFalcon42
-Word list:  1,668 words, manually curated — no profanity, slurs, or offensive terms.
+Word list:  1,668 words (loaded dynamically from words.txt) — no profanity, slurs, or offensive terms.
 Entropy:    ~57 bits  (1668^5 * 90 = ~1.16 x 10^17 combinations)
 Equivalent: ~9.5-char random alphanumeric.
 
@@ -45,8 +45,8 @@ If the repo ever goes public
 ----------------------------
 The word list secrecy is NOT the entropy source (Kerckhoffs's principle).
 1668^5 * 90 = ~57 bits regardless of whether the attacker knows the list.
-If you want more paranoia, add a PASSCODE_WORD_FILE env var that overrides
-the embedded list with a private file.
+To allow public hosting, the list is gitignored. If you want more paranoia,
+set the PASSCODE_WORD_FILE env var to override the file path.
 
 Word list maintenance
 ---------------------

@@ -366,7 +366,7 @@ Two-stage pipeline:
 Gender validation: blanks → UNKNOWN, Male/Female → MALE/FEMALE.
 
 #### `utils/passcode_generator.py`
-Generates Word+Word+Word+Word+Number passcodes (e.g. "RiverForestCrystalStorm7"). Word list of 56 safe, non-offensive words.
+Generates passcodes in the format `WordWordWordWordWordNN` (5 title-cased words + 2-digit number, e.g., `RiverForestCrystalStormFalcon42`). To allow public hosting of this repository, the 1,668-word list is gitignored and loaded dynamically at runtime from `words.txt` or the `PASSCODE_WORD_FILE` environment variable, falling back to a minimal 15-word list if neither is found.
 
 ---
 
