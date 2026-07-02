@@ -39,3 +39,12 @@ uvicorn.log
 
 # Jupyter
 .ipynb_checkpoints/
+
+# NCAD Specific Security Exclusions
+backend/app/utils/words.txt
+
+# Student Data Exports (Ignore all data sheets except inside samples/)
+*.csv
+*.xlsx
+*.xls
+!samples/*.csv
