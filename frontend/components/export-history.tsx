@@ -88,10 +88,11 @@ export function ExportHistory() {
               <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900/50 dark:bg-amber-950/20">
                 <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
                 <p className="text-[11px] text-amber-800 dark:text-amber-300">
-                  <strong>Privacy:</strong> Only anonymized metadata (timestamps,
-                  system names, row counts) is stored locally on this device.
-                  No student or staff personal data is saved.{" "}
-                  <strong>No names, emails, IDs, or file contents.</strong>
+                  <strong>Privacy:</strong> This history only stores simple
+                  notes on your computer (timestamps, system names, row counts).
+                  <strong> No names, emails, ID numbers, or any personal
+                  student or staff details are saved.</strong> You can clear
+                  everything with the button below.
                 </p>
               </div>
               <div className="space-y-1.5">

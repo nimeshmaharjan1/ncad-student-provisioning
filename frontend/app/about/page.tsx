@@ -237,10 +237,10 @@ export default function AboutPage() {
             <div className="space-y-2">
               <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">GDPR Compliance</p>
               <ul className="list-inside list-disc space-y-1 text-sm text-amber-700 dark:text-amber-400">
-                <li><strong>Processing is transient.</strong> All data is processed in memory — upload, transform, download. No student data is stored on the server.</li>
-                <li><strong>Local storage (browser).</strong> Your browser stores only anonymized metadata: export timestamps, system names, row counts, and file names. <strong>No student or staff personal data</strong> (names, emails, IDs, DOBs, or file contents) is ever saved.</li>
-                <li><strong>Clear local data.</strong> Use the "Clear all stored data" button in the Export History section, or click "Start over" on the pipeline page.</li>
-                <li><strong>Server logs.</strong> The backend server writes operational logs (errors, warnings). No personal data is logged.</li>
+                <li><strong>Processing is transient.</strong> Your data is never saved on the server. When you upload a CSV file, the system reads it, processes it, and sends the result back to your browser as a download — then it's gone. Nothing is written to disk, stored in a database, or kept. If the server restarts, everything is wiped clean.</li>
+                <li><strong>What's stored on your computer (in your browser):</strong> Only simple progress notes — like "LDAP was exported at 2:30pm" or "Step 1 is done" — so you don't lose your place if you refresh the page. <strong>No student names, emails, ID numbers, or any personal details are ever saved.</strong> Just timestamps and row counts.</li>
+                <li><strong>Clear all stored data.</strong> Click "Start over" on the pipeline page or "Clear all stored data" in the Export History section at any time to delete everything saved on your computer.</li>
+                <li><strong>Server logs.</strong> The backend writes operational logs (errors, warnings). No names, emails, or ID numbers are included in these logs.</li>
               </ul>
             </div>
           </div>
