@@ -6,20 +6,31 @@ import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
 import { ProcessingProgress } from "@/components/processing-progress"
 import { WorkflowChips } from "@/components/workflow-chips"
-import { downloadLibraryExport } from "@/lib/api"
-import { Upload, Check } from "lucide-react"
+import { ExportError } from "@/components/export-error"
+import { SuccessCard } from "@/components/success-card"
+import { downloadLibraryExport, ExportError as ExportErrorClass } from "@/lib/api"
+import { usePipeline } from "@/lib/pipeline-context"
+import { useToast } from "@/lib/toast-context"
+import { addExportHistoryEntry } from "@/lib/local-storage"
+import { Upload, Check, BookOpen } from "lucide-react"
 
 export function LibraryStep() {
+  const { setStepStatus } = usePipeline()
+  const { addToast } = useToast()
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<ExportErrorClass | null>(null)
   const [done, setDone] = useState(false)
+  const [doneTs, setDoneTs] = useState<Date | null>(null)
 
   const handleRun = async () => {
     if (files.length === 0) return
     setLoading(true)
     setError(null)
+    setErrorDetail(null)
     setDone(false)
+    setDoneTs(null)
     try {
       const { blob, filename } = await downloadLibraryExport(files)
       const url = URL.createObjectURL(blob)
@@ -29,8 +40,42 @@ export function LibraryStep() {
       a.click()
       URL.revokeObjectURL(url)
       setDone(true)
+      setDoneTs(new Date())
+      setStepStatus("library", "done")
+      addExportHistoryEntry({
+        ts: new Date().toISOString(),
+        system: "Library",
+        status: "success",
+        rowCount: null,
+        fileCount: filename.endsWith(".zip") ? 2 : 1,
+      })
+      addToast({
+        type: "success",
+        title: "Library export successful",
+        description: filename,
+      })
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Library export failed")
+      const message = e instanceof Error ? e.message : "Library export failed"
+      if (e instanceof ExportErrorClass) {
+        setError(message)
+        setErrorDetail(e)
+      } else {
+        setError(message)
+      }
+      setStepStatus("library", "error")
+      addExportHistoryEntry({
+        ts: new Date().toISOString(),
+        system: "Library",
+        status: "error",
+        rowCount: null,
+        fileCount: 0,
+        detail: message,
+      })
+      addToast({
+        type: "error",
+        title: "Library export failed",
+        description: message,
+      })
     } finally {
       setLoading(false)
     }
@@ -59,11 +104,18 @@ export function LibraryStep() {
           </motion.div>
         )}
       </AnimatePresence>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {done && (
-        <p className="text-sm text-green-600 dark:text-green-400">
-          Library export downloaded.
-        </p>
+      {error && (
+        <ExportError
+          message={error}
+          detail={errorDetail?.exportError ?? null}
+        />
+      )}
+      {done && doneTs && (
+        <SuccessCard
+          system="Library"
+          timestamp={doneTs}
+          systemIcon={BookOpen}
+        />
       )}
       <WorkflowChips
         systemId="library"

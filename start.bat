@@ -115,6 +115,7 @@ echo ============================================
 echo   All servers starting...
 echo   Backend:  http://localhost:8000
 echo   Frontend: http://localhost:3000
+echo   Docs:     http://localhost:3000/about
 echo ============================================
 echo.
 
@@ -133,11 +134,12 @@ for /l %%i in (1,1,60) do (
 echo [WARN] Frontend not ready after 120s. Open http://localhost:3000 manually.
 :frontend_up
 
-:: ----- Open browser ----------------------------------------------------------
+:: ----- Open browser tabs -----------------------------------------------------
 start http://localhost:3000
+start http://localhost:3000/about
 
 echo.
-echo Browser should open automatically.
+echo Browser tabs should open automatically.
 echo Close this window to stop both servers.
 echo.
 pause

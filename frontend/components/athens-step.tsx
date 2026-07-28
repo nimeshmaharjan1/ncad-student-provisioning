@@ -6,21 +6,31 @@ import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/file-upload"
 import { ProcessingProgress } from "@/components/processing-progress"
 import { WorkflowChips } from "@/components/workflow-chips"
-import { downloadAthensExport } from "@/lib/api"
+import { ExportError } from "@/components/export-error"
+import { SuccessCard } from "@/components/success-card"
+import { downloadAthensExport, ExportError as ExportErrorClass } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
-import { Upload, Check } from "lucide-react"
+import { useToast } from "@/lib/toast-context"
+import { addExportHistoryEntry } from "@/lib/local-storage"
+import { Upload, Check, BookOpen } from "lucide-react"
 
 export function AthensStep() {
-  const { step1Done, cleanedQuercusFile } = usePipeline()
+  const { step1Done, cleanedQuercusFile, setStepStatus } = usePipeline()
+  const { addToast } = useToast()
   const [baselineFile, setBaselineFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<ExportErrorClass | null>(null)
   const [done, setDone] = useState(false)
+  const [doneTs, setDoneTs] = useState<Date | null>(null)
 
   const handleRun = async () => {
     if (!baselineFile || !cleanedQuercusFile) return
     setLoading(true)
     setError(null)
+    setErrorDetail(null)
+    setDone(false)
+    setDoneTs(null)
     try {
       const { blob, filename } = await downloadAthensExport(baselineFile, cleanedQuercusFile)
       const url = URL.createObjectURL(blob)
@@ -30,8 +40,42 @@ export function AthensStep() {
       a.click()
       URL.revokeObjectURL(url)
       setDone(true)
+      setDoneTs(new Date())
+      setStepStatus("athens", "done")
+      addExportHistoryEntry({
+        ts: new Date().toISOString(),
+        system: "OpenAthens",
+        status: "success",
+        rowCount: null,
+        fileCount: filename.endsWith(".zip") ? 2 : 1,
+      })
+      addToast({
+        type: "success",
+        title: "OpenAthens export successful",
+        description: filename,
+      })
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Athens export failed")
+      const message = e instanceof Error ? e.message : "Athens export failed"
+      if (e instanceof ExportErrorClass) {
+        setError(message)
+        setErrorDetail(e)
+      } else {
+        setError(message)
+      }
+      setStepStatus("athens", "error")
+      addExportHistoryEntry({
+        ts: new Date().toISOString(),
+        system: "OpenAthens",
+        status: "error",
+        rowCount: null,
+        fileCount: 0,
+        detail: message,
+      })
+      addToast({
+        type: "error",
+        title: "OpenAthens export failed",
+        description: message,
+      })
     } finally {
       setLoading(false)
     }
@@ -64,13 +108,20 @@ export function AthensStep() {
           </motion.div>
         )}
       </AnimatePresence>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {done && !loading && (
-        <p className="text-sm text-green-600 dark:text-green-400">
-          OpenAthens export downloaded.
-        </p>
+      {error && (
+        <ExportError
+          message={error}
+          detail={errorDetail?.exportError ?? null}
+        />
       )}
-      {!step1Done && (
+      {done && doneTs && (
+        <SuccessCard
+          system="OpenAthens"
+          timestamp={doneTs}
+          systemIcon={BookOpen}
+        />
+      )}
+      {!step1Done && !loading && (
         <p className="text-xs text-muted-foreground">
           Complete Step 1 (Quercus) first.
         </p>

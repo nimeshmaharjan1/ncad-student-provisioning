@@ -1,28 +1,10 @@
-/*
- * PipelineContext — shared state for the /quercus provisioning flow.
- *
- * Stores the cleaned Quercus CSV file (returned by POST /quercus/download)
- * so it can be reused by LDAP, Canvas, Google endpoints without forcing
- * the user to re-upload Quercus data for each pipeline.
- *
- * State:
- *   cleanedQuercusFile — the actual File object from /quercus/download,
- *     sent as the "quercus" field in downstream export requests.
- *   auditInfo — preprocessing row counts (raw, filtered, duplicates, etc.)
- *   sampleRows — first 10 cleaned rows for the DataTable preview.
- *   step1Done — derived boolean: true when cleanedQuercusFile is set.
- *
- * Persists across page navigation (mounted in root layout) so the user
- * can switch between /quercus and /library without losing Quercus state.
- *
- * NOT used by LibraryStep — Library is a standalone export that accepts
- * its own file inputs and sends them directly to POST /library/export.
- */
-
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import type { AuditInfo } from "@/lib/api"
+import { loadPipelineState, savePipelineState, clearPipelineState as clearStorage } from "@/lib/local-storage"
+
+export type StepStatus = "pending" | "done" | "error"
 
 interface PipelineState {
   cleanedQuercusFile: File | null
@@ -30,6 +12,8 @@ interface PipelineState {
   auditInfo: AuditInfo | null
   uploadedFileNames: string[]
   step1Done: boolean
+  stepStatuses: Record<string, StepStatus>
+  setStepStatus: (system: string, status: StepStatus) => void
   setQuercusData: (data: {
     cleanedQuercusFile: File
     sampleRows: Record<string, unknown>[]
@@ -41,13 +25,36 @@ interface PipelineState {
 
 const PipelineContext = createContext<PipelineState | null>(null)
 
+const STORED_SYSTEMS = ["ldap", "canvas", "google", "athens", "library"]
+
 export function PipelineProvider({ children }: { children: ReactNode }) {
   const [cleanedQuercusFile, setCleanedQuercusFile] = useState<File | null>(null)
   const [sampleRows, setSampleRows] = useState<Record<string, unknown>[] | null>(null)
   const [auditInfo, setAuditInfo] = useState<AuditInfo | null>(null)
   const [uploadedFileNames, setUploadedFileNames] = useState<string[]>([])
+  const [stepStatuses, setStepStatuses] = useState<Record<string, StepStatus>>({})
 
-  const setQuercusData = (data: {
+  useEffect(() => {
+    const saved = loadPipelineState()
+    if (saved.quercusDone && saved.cleanedQuercusFileName) {
+      setUploadedFileNames(saved.uploadedFileNames)
+    }
+  }, [])
+
+  useEffect(() => {
+    const saved = loadPipelineState()
+    savePipelineState({
+      quercusDone: cleanedQuercusFile !== null,
+      uploadedFileNames,
+      cleanedQuercusFileName: cleanedQuercusFile?.name ?? null,
+    })
+  }, [cleanedQuercusFile, uploadedFileNames])
+
+  const setStepStatus = useCallback((system: string, status: StepStatus) => {
+    setStepStatuses((prev) => ({ ...prev, [system]: status }))
+  }, [])
+
+  const setQuercusData = useCallback((data: {
     cleanedQuercusFile: File
     sampleRows: Record<string, unknown>[]
     auditInfo: AuditInfo
@@ -59,14 +66,16 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
     if (data.uploadedFileNames) {
       setUploadedFileNames(data.uploadedFileNames)
     }
-  }
+  }, [])
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setCleanedQuercusFile(null)
     setSampleRows(null)
     setAuditInfo(null)
     setUploadedFileNames([])
-  }
+    setStepStatuses({})
+    clearStorage()
+  }, [])
 
   return (
     <PipelineContext.Provider
@@ -76,6 +85,8 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
         auditInfo,
         uploadedFileNames,
         step1Done: cleanedQuercusFile !== null,
+        stepStatuses,
+        setStepStatus,
         setQuercusData,
         reset,
       }}
@@ -87,8 +98,6 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
 
 export function usePipeline(): PipelineState {
   const ctx = useContext(PipelineContext)
-  if (!ctx) {
-    throw new Error("usePipeline must be used within a PipelineProvider")
-  }
+  if (!ctx) throw new Error("usePipeline must be used within a PipelineProvider")
   return ctx
 }

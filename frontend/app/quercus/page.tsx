@@ -1,34 +1,16 @@
-/*
- * Provisioning Pipeline — /quercus
- *
- * Main pipeline page. Flow:
- *   1. Upload raw Quercus CSV files (typically 2025 + 2026)
- *   2. Backend merges, cleans, and deduplicates
- *   3. Cleaned CSV is stored in PipelineContext
- *   4. Once processed, LDAP / Canvas / Google export cards appear
- *
- * Each downstream card:
- *   - Uploads a system-specific baseline CSV
- *   - Sends it + the stored cleaned Quercus file (from PipelineContext) to the backend
- *   - Downloads the resulting ZIP
- *
- * Why cards are hidden before Quercus is processed:
- *   LDAP, Canvas, and Google depend on cleanedQuercusFile from PipelineContext.
- *   If Quercus has not been processed, the downstream cards have no data to send
- *   and the user would see empty upload states. Hiding them avoids confusion.
- */
-
 "use client"
 
 import { useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Server, Palette, Globe, BookOpen, FileText } from "lucide-react"
+import { ArrowLeft, Server, Palette, Globe, BookOpen, FileText, RotateCcw } from "lucide-react"
 import { usePipeline } from "@/lib/pipeline-context"
 import { QuercusStep } from "@/components/quercus-step"
 import { LdapStep } from "@/components/ldap-step"
 import { CanvasStep } from "@/components/canvas-step"
 import { GoogleStep } from "@/components/google-step"
 import { AthensStep } from "@/components/athens-step"
+import { PipelineStepper } from "@/components/pipeline-stepper"
+import { ExportHistory } from "@/components/export-history"
 import { cn } from "@/lib/utils"
 
 function Card({
@@ -70,7 +52,7 @@ function Card({
 }
 
 export default function QuercusPage() {
-  const { step1Done, cleanedQuercusFile, uploadedFileNames, reset } = usePipeline()
+  const { step1Done, cleanedQuercusFile, uploadedFileNames, stepStatuses, setStepStatus, reset } = usePipeline()
 
   useEffect(() => {
     document.title = "Provisioning Pipeline — NCAD Student Provisioning"
@@ -78,7 +60,6 @@ export default function QuercusPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Back link + header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
@@ -89,14 +70,15 @@ export default function QuercusPage() {
             Home
           </Link>
         </div>
-        {/* {step1Done && (
+        {step1Done && (
           <button
             onClick={reset}
-            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
+            <RotateCcw className="size-3" />
             Start over
           </button>
-        )} */}
+        )}
       </div>
 
       <div className="mb-8 flex items-end justify-between">
@@ -112,6 +94,11 @@ export default function QuercusPage() {
         >
           View full guide &rarr;
         </Link>
+      </div>
+
+      {/* Pipeline status dashboard */}
+      <div className="mb-6">
+        <PipelineStepper stepStatuses={stepStatuses} />
       </div>
 
       {step1Done && cleanedQuercusFile && (
@@ -169,6 +156,11 @@ export default function QuercusPage() {
           </Card>
         </div>
       )}
+
+      {/* Export history — always visible, shows only when entries exist */}
+      <div className="mt-8">
+        <ExportHistory />
+      </div>
     </div>
   )
 }

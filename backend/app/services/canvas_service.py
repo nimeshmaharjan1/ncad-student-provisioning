@@ -30,6 +30,8 @@ CANVAS_QUERCUS_REQUIRED_COLUMNS = [
     "ID Number", "First Name", "Last Name", "Term Email",
 ]
 
+CANVAS_QUERCUS_OPTIONAL_COLUMNS: list[str] = []
+
 
 def map_quercus_to_canvas(quercus_df: pd.DataFrame) -> pd.DataFrame:
     missing = [col for col in CANVAS_QUERCUS_REQUIRED_COLUMNS if col not in quercus_df.columns]

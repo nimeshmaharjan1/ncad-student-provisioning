@@ -25,6 +25,8 @@ export const metadata: Metadata = {
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PipelineProvider } from "@/lib/pipeline-context"
+import { ToastProvider } from "@/lib/toast-context"
+import { ToastViewport } from "@/components/toast-viewport"
 import { NavBar } from "@/components/nav-bar"
 import { cn } from "@/lib/utils"
 
@@ -49,8 +51,11 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <PipelineProvider>
-            <NavBar />
-            {children}
+            <ToastProvider>
+              <NavBar />
+              {children}
+              <ToastViewport />
+            </ToastProvider>
           </PipelineProvider>
         </ThemeProvider>
       </body>

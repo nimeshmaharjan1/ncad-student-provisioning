@@ -112,6 +112,7 @@ echo "============================================"
 echo "  All servers starting..."
 echo "  Backend:  http://localhost:8000"
 echo "  Frontend: http://localhost:3000"
+echo "  Docs:     http://localhost:3000/about"
 echo "============================================"
 echo ""
 
@@ -141,15 +142,17 @@ else
   echo "If the browser doesn't open, visit http://localhost:3000 manually."
 fi
 
-# Open browser
+# Open app and docs
 if command -v xdg-open &>/dev/null; then
-  xdg-open http://localhost:3000
+  xdg-open "http://localhost:3000"
+  xdg-open "http://localhost:3000/about"
 elif command -v open &>/dev/null; then
-  open http://localhost:3000
+  open "http://localhost:3000"
+  open "http://localhost:3000/about"
 fi
 
 echo ""
-echo "Browser should open automatically."
+echo "Browser tabs should open automatically."
 echo "Press Ctrl+C to stop both servers."
 echo ""
 

@@ -59,10 +59,39 @@ export async function uploadQuercus(files: File[]): Promise<UploadQuercusResult>
   }
 }
 
+export interface ExportErrorDetail {
+  detail: string
+  error_code: string
+  missing_required?: string[]
+  missing_optional?: string[]
+  present_columns?: string[]
+  all_required?: string[]
+  all_optional?: string[]
+}
+
+export class ExportError extends Error {
+  status: number
+  exportError: ExportErrorDetail | null
+
+  constructor(status: number, detail: string, exportError: ExportErrorDetail | null) {
+    super(detail)
+    this.name = "ExportError"
+    this.status = status
+    this.exportError = exportError
+  }
+}
+
 async function downloadExport(url: string, formData: FormData): Promise<{ blob: Blob; filename: string }> {
   const res = await fetch(url, { method: "POST", body: formData })
   if (!res.ok) {
-    throw new Error(`Export failed: ${res.status}`)
+    let errorBody: ExportErrorDetail | null = null
+    try {
+      errorBody = await res.json()
+    } catch {
+      // response body isn't JSON — fall back to status-only error
+    }
+    const message = errorBody?.detail ?? `Export failed: ${res.status}`
+    throw new ExportError(res.status, message, errorBody)
   }
   const disposition = res.headers.get("Content-Disposition") ?? ""
   const match = disposition.match(/filename="?(.+?)"?$/)
@@ -109,7 +138,14 @@ export async function downloadLibraryExport(files: File[]): Promise<{ blob: Blob
     body: formData,
   })
   if (!res.ok) {
-    throw new Error(`Library export failed: ${res.status}`)
+    let errorBody: ExportErrorDetail | null = null
+    try {
+      errorBody = await res.json()
+    } catch {
+      // not JSON
+    }
+    const message = errorBody?.detail ?? `Library export failed: ${res.status}`
+    throw new ExportError(res.status, message, errorBody)
   }
   const disposition = res.headers.get("Content-Disposition") ?? ""
   const match = disposition.match(/filename="?(.+?)"?$/)

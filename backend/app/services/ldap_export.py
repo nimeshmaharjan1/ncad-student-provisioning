@@ -1,6 +1,9 @@
+import logging
 import re
 from datetime import datetime
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 from app.utils.passcode_generator import generate_passcode
 from app.utils.df_utils import (
     normalize_email_identity,
@@ -27,8 +30,12 @@ LDAP_EMAIL_PRIORITY = ["Email_address", "Term Email"]
 QUERCUS_SCHEMA_REQUIRED_COLUMNS = [
     "ID Number", "Course Code", "Course Description",
     "Course Instance Course Year", "Type", "First Name",
-    "Last Name", "Date of Birth", "Home Mobile Phone",
+    "Last Name", "Date of Birth",
     "Term Email", "LDAP ID"
+]
+
+QUERCUS_SCHEMA_OPTIONAL_COLUMNS = [
+    "Home Mobile Phone",
 ]
 
 LDAP_SCHEMA_REQUIRED_COLUMNS = [
@@ -43,10 +50,15 @@ def map_quercus_to_ldap(quercus_df: pd.DataFrame) -> pd.DataFrame:
     Renames Quercus fields to match LDAP schema.
     Raises KeyError if required Quercus columns are missing.
     """
-    # Validate Quercus schema first
-    missing_quercus = [col for col in QUERCUS_SCHEMA_REQUIRED_COLUMNS if col not in quercus_df.columns]
-    if missing_quercus:
-        raise KeyError(f"Required Quercus columns missing: {missing_quercus}")
+    # Validate required Quercus columns
+    missing_required = [col for col in QUERCUS_SCHEMA_REQUIRED_COLUMNS if col not in quercus_df.columns]
+    if missing_required:
+        raise KeyError(f"Required Quercus columns missing: {missing_required}")
+
+    # Warn about optional Quercus columns
+    missing_optional = [col for col in QUERCUS_SCHEMA_OPTIONAL_COLUMNS if col not in quercus_df.columns]
+    if missing_optional:
+        logger.warning("Optional Quercus columns missing (will be left blank): %s", missing_optional)
 
     mapping = {
         "Student ID": "ID Number",
@@ -57,12 +69,23 @@ def map_quercus_to_ldap(quercus_df: pd.DataFrame) -> pd.DataFrame:
         "First Name": "First Name",
         "Last Name": "Last Name",
         "Date of Birth": "Date of Birth",
-        "Phone": "Home Mobile Phone",
         "Email_address": "Term Email",
         "Quercus_LDAP": "LDAP ID"
     }
 
-    ldap_data = {ldap_col: quercus_df[quercus_col].copy() for ldap_col, quercus_col in mapping.items()}
+    ldap_data: dict[str, pd.Series] = {}
+    for ldap_col, quercus_col in mapping.items():
+        if quercus_col in quercus_df.columns:
+            ldap_data[ldap_col] = quercus_df[quercus_col].copy()
+        else:
+            ldap_data[ldap_col] = pd.Series("", index=quercus_df.index)
+
+    # Map optional columns if present
+    if "Home Mobile Phone" in quercus_df.columns:
+        ldap_data["Phone"] = quercus_df["Home Mobile Phone"].copy()
+    else:
+        ldap_data["Phone"] = pd.Series("", index=quercus_df.index)
+
     ldap_data["Card"] = ""
     ldap_data["Passcode"] = ""
 

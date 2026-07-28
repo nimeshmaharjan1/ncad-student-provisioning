@@ -7,11 +7,15 @@ import { FileUpload } from "@/components/file-upload"
 import { DataTable } from "@/components/data-table"
 import { AuditSummary } from "@/components/audit-summary"
 import { ProcessingProgress } from "@/components/processing-progress"
+import { ExportError } from "@/components/export-error"
 import { uploadQuercus, type AuditInfo } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
+import { useToast } from "@/lib/toast-context"
+import { addExportHistoryEntry } from "@/lib/local-storage"
 
 export function QuercusStep() {
-  const { step1Done, setQuercusData } = usePipeline()
+  const { step1Done, setQuercusData, setStepStatus } = usePipeline()
+  const { addToast } = useToast()
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,8 +43,36 @@ export function QuercusStep() {
       a.download = data.cleanedQuercusFile.name
       a.click()
       URL.revokeObjectURL(url)
+      setStepStatus("quercus", "done")
+      addExportHistoryEntry({
+        ts: new Date().toISOString(),
+        system: "Quercus",
+        status: "success",
+        rowCount: data.auditInfo.cleaned_row_count,
+        fileCount: data.uploadedFiles.length,
+      })
+      addToast({
+        type: "success",
+        title: "Quercus data processed",
+        description: `${data.auditInfo.cleaned_row_count} cleaned rows from ${data.uploadedFiles.length} file(s)`,
+      })
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to process Quercus files")
+      const message = e instanceof Error ? e.message : "Failed to process Quercus files"
+      setError(message)
+      setStepStatus("quercus", "error")
+      addExportHistoryEntry({
+        ts: new Date().toISOString(),
+        system: "Quercus",
+        status: "error",
+        rowCount: null,
+        fileCount: 0,
+        detail: message,
+      })
+      addToast({
+        type: "error",
+        title: "Quercus processing failed",
+        description: message,
+      })
     } finally {
       setLoading(false)
     }
@@ -86,7 +118,7 @@ export function QuercusStep() {
           </motion.div>
         )}
       </AnimatePresence>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <ExportError message={error} detail={null} />}
       {result && !loading && (
         <>
           <AuditSummary audit={result.auditInfo} />
