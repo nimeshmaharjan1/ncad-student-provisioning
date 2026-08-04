@@ -12,6 +12,38 @@ the current process owner.
 
 ---
 
+## How to Read This Document — Every Technical Word, Explained
+
+This document uses some technical words because the systems behind them are
+technical. Nothing here requires you to understand how they work — only what
+they mean well enough to make decisions. Read this section first; when you see
+a word you forgot, come back here.
+
+| Word you'll see | What it means, in plain English |
+|----------------|--------------------------------|
+| **Passcode** | A temporary password for a new student account (e.g. their Google Workspace password). Like a PIN: if it leaks, someone could log in as that student, which is why this document treats passcodes carefully |
+| **PII** (personally identifiable information) | Student details that identify a real person: name, date of birth, email address, phone number, passcode. The law treats this data more strictly than ordinary data, so the document is careful about where it is stored and how long it is kept |
+| **Baseline** | The saved list of students who are already in a system (LDAP, Canvas, Google, OpenAthens). The system compares each week's Quercus list against the baseline to find out who is new |
+| **Diff** (comparison) | The act of comparing two lists to see what changed — in our case: which students are new and which accounts were suspended |
+| **SFTP** | A secure way to copy files over the internet to another organisation's computer (e.g. the Library's or Triangle's). It is the same kind of thing you already do with Cyberduck, just done by the scheduler itself |
+| **SMTP** | The technical name for "sending an email from a computer program". Thunderbird uses it behind the scenes; the scheduler needs its own set of sending details (the same details you use in Outlook) |
+| **API** | A standard door that software uses to talk to another system. "Quercus has no API" means there is no door: the only way to get data out of it is the website's export button, which needs a person |
+| **Admin token** / **service account** | A secret key that an administrator of an outside system (e.g. Canvas or Google) creates so that our program alone may use that system's door. It can be limited and revoked at any time |
+| **Scheduler** (cron / Windows Task Scheduler) | An alarm clock built into the server: "every Monday at 9 a.m., run the provisioning pipeline". The alarm clock fires, the pipeline runs, nobody has to be there |
+| **Drop-folder** | A special folder on the server that the system watches. You (or the Quercus export, if it can be scheduled) put the exported file in it; the system notices the new file and does everything else by itself |
+| **Always-on private server** | A quiet computer, owned by NCAD, that stays switched on and is only reachable by NCAD staff. Unlike the current public demo hosting (Vercel / Render) — free-tier services that switch themselves off when unused ("instances sleep") and are visible to anyone on the internet |
+| **Dry-run** | A practice run: the system generates everything exactly as it would for a real week — files, emails, logs — but sends nothing. A person reviews the practice output, then clicks "send for real" |
+| **Approval gate** / **click-to-confirm** / **human-in-the-loop** | A small review screen: the system prepares everything and then stops, waiting for a person to click "yes" before anything is sent. Used only for the few steps that need a human decision |
+| **Encryption (at rest)** | Storing student data and passwords in scrambled form on the server's disk. Even if the disk were stolen, the data would be unreadable without the secret key |
+| **Retention policy** | A rule the manager sets: how long student data may be kept, who may see it, and when it is deleted |
+| **GDPR / DPIA** | GDPR is the European data-protection law. A DPIA is the formal written check of "is storing this student data allowed, and under what rules?" — a management decision, not a programming one |
+| **Run log** | The system's diary of each weekly run: run number, which step, counts, and any errors. It deliberately never contains student names or passwords |
+| **UI-robot** (Puppeteer / Playwright) | A program that imitates a person clicking through a website. Rejected for Quercus because websites change frequently and the robot would break silently without anyone noticing |
+| **Push integration / connector** | The piece of the scheduler that delivers our generated files to one outside system (Library, Triangle, Canvas, Google, OpenAthens). Each one becomes possible when that organisation gives us access credentials |
+| **Ellucian** | The company that makes Quercus. "Quercus has no API" comes from them: they do not offer a door for automatic data extraction |
+
+---
+
 ## 1. Current State — What Is Already Automated
 
 Before this repo, the process owner did everything by hand: merging Quercus
@@ -55,7 +87,9 @@ close we can get.
 ## 3. The Weekly Scheduler — Concept
 
 The manager's idea, fleshed out: a scheduler on an always-on server runs the
-provisioning pipeline once per week automatically.
+provisioning pipeline once per week automatically. A drop-folder (see
+glossary) is simply a watched inbox: the moment the Quercus export file is
+put in it, the rest of the run happens by itself.
 
 ```
 Weekly trigger (cron / Windows Task Scheduler)
@@ -97,11 +131,11 @@ works.
 | # | Blocker (external factor) | Why it blocks | What we do instead |
 |---|--------------------------|---------------|--------------------|
 | 1 | **Quercus has NO API** (Ellucian). Data only via web UI export | "Pull from Quercus automatically" is impossible without fragile UI-robots (Puppeteer/Playwright), rejected in AUTOMATION_STRATEGY.md — any Ellucian UI change breaks it | Keep the ~5-minute manual export; the scheduler **watches a drop-folder (SFTP)** — the moment a new export lands, everything else runs automatically. Also ask the Quercus admin about *saved/scheduled report delivery* (see Credentials & Access Checklist #8) |
-| 2 | **GDPR posture flips**. Automation requires storing student PII server-side (baselines, run logs). The current app explicitly promises transient processing | Storage of PII = a data-protection decision (DPIA-level), not a code decision | Documented decision required from the manager: secure storage, access control, encryption, retention policy. The public demo stays transient; the scheduler runs on a private server only |
-| 3 | **Triangle Service Desk is a human gate**. Their confirmation is their business process | The confirmation step cannot be auto-approved | Auto-SFTP the LDAP files + auto-email the Service Desk, then **wait for a click-to-confirm** in a simple approval screen (human-in-the-loop for this one step only) |
+| 2 | **GDPR posture flips**. Automation requires storing student PII server-side (baselines, run logs). The current app explicitly promises transient processing | Storing student names/details (PII — see glossary) on a server is a data-protection decision (GDPR, DPIA — see glossary), not a code decision | Documented decision required from the manager: secure storage, access control, encryption, retention policy (all in the glossary). The public demo stays transient; the scheduler runs on a private server only |
+| 3 | **Triangle Service Desk is a human gate**. Their confirmation is their business process | The confirmation step cannot be auto-approved | Auto-SFTP the LDAP files + auto-email the Service Desk, then **wait for a click-to-confirm** (see glossary: a review screen where a person clicks "yes") — human decision for this one step only |
 | 4 | **APIs/credentials may not exist yet**: Canvas admin token, Google service account, OpenAthens API, SMTP details | Each push integration needs an administrator to create/issue credentials | Ship integrations **per system, in order of credential availability** (Credentials & Access Checklist, section 7). No credential → that step stays manual |
-| 5 | **Hosting reality**. Current deployments are Vercel + Render — public, ephemeral, free-tier (instances sleep) | Not suitable as a scheduler host; also public by design | Dedicated always-on private server for the scheduler (Checklist #4). Demo deployments stay as they are — harmless and useful for demos |
-| 6 | **Passcodes are sensitive**. Emails carry generated credentials | Sending PII+credentials by email needs security and consent practices, not just an SMTP call | Send passcodes only where the manager approves; encrypt secrets at rest; never log passcodes or PII (logs carry run IDs, counts, statuses only) |
+| 5 | **Hosting reality**. Current deployments are Vercel + Render — public, ephemeral, free-tier (instances sleep — see glossary: free hosting switches itself off when unused) | Not suitable as a scheduler host; also public by design | Dedicated always-on private server for the scheduler (Checklist #4). Demo deployments stay as they are — harmless and useful for demos |
+| 6 | **Passcodes are sensitive**. Emails carry generated credentials | Automated emails carrying student passwords need rules (who may receive them, how they are protected) — a policy decision, not just a technical one. It matters more now because automation sends them in bulk, every week | We **already** send passcodes by email today (Thunderbird mail merge) — automation keeps that practice, it does not invent a new one. The manager signs off **ONCE** per email type, e.g. "student passwords may be emailed from the automated system, to the student's personal address". After that single decision, the weekly emails send themselves — there is **no per-email approval step**. Passwords are stored scrambled (encrypted at rest) and never appear in run logs (logs record only run numbers, counts, and statuses) |
 | 7 | **Ownership & maintenance**. No deadline ≠ no risk | After the current process owner leaves, someone must own credentials, API changes, failed runs, renewals | This repo is the handover: everything documented (this file, ONBOARDING, MANUAL_TESTING). Manager assigns an owner for credentials and monitoring |
 | 8 | **Half-failed runs**. A weekly run that dies mid-way must not send 2 of 5 exports | Silent partial provisioning is worse than no automation | Per-step status + **dry-run mode** (default) + explicit approval gate before any email/SFTP push; failure alerts to IT |
 
@@ -124,7 +158,8 @@ works.
 - Google Workspace auto-provisioning (needs service account)
 
 ### Phase 3 — Email & notifications
-- Student passcode emails (per manager approval)
+- Student passcode emails (one-time manager sign-off per email type — see
+  Harsh Reality #6)
 - Failure alerts and weekly summary to IT
 
 ### Phase 4 — Human-in-the-loop approval UI
@@ -175,15 +210,98 @@ items simply wait — nothing else stops.
 
 ## 8. Summary for the Manager
 
-- **Already achieved:** the entire generation layer is automated and
-  regression-tested (Quercus processing, new-student detection for all 5
-  systems, file generation, error handling, documentation).
-- **Achievable next:** a weekly scheduler on a private server that takes a
-  Quercus export from a drop-folder, runs the whole pipeline, generates
-  everything, and logs every run — with a dry-run + approval gate.
-- **Only one manual step remains by necessity:** the Quercus export itself
-  (Ellucian provides no API). Five minutes a month.
-- **Push integrations arrive one by one** as IT provides credentials —
-  each one eliminates a manual upload and nothing breaks in between.
-- **Two decisions needed from the manager:** (1) approve PII storage on a
-  private server (GDPR), (2) assign a credential owner for the long term.
+### In one paragraph
+
+The hard work is done: the system already takes Quercus student data and
+generates everything needed for LDAP, Canvas, Google Workspace, OpenAthens,
+and the Library — automatically, with errors caught instead of silently
+skipped. The plan is to add a weekly "clock" on a private NCAD server that
+runs that same pipeline by itself: a file dropped into a watched folder, and
+everything after it happens automatically — with a practice-run mode and a
+review screen so nothing is ever sent without a person's say-so. Only one
+manual step genuinely cannot be automated (the Quercus export itself, about
+five minutes a month), and the automatic uploads to each system switch on one
+by one, as IT provides access. Three decisions are needed from the manager —
+the storage of student data, the automated passcode emails, and who owns the
+access keys long-term — and each is explained below in plain English.
+
+### The longer version — for the reader
+
+**What the system already does.** Today, when a Quercus export arrives, the
+system cleans the data (removes withdrawn students, duplicates, and external
+students), compares it against the saved baselines of all five systems, and
+works out exactly who is new. For each system it generates the correct file —
+LDAP files with word passcodes, the Canvas import, Google uploads with
+account reactivation, the OpenAthens template, and Library borrower records.
+Errors are no longer silent: if a file is missing a required column, the
+system either blocks with a clear message or warns the user in advance. All
+of this is already automated and regression-tested — it works today.
+
+**What the manager asked for.** The vision: the system should pull student
+data from Quercus, check for new students, add them to all five systems by
+itself, send the emails, and keep logs — running automatically every week,
+with no human in the loop.
+
+**The honest picture.** Almost all of that vision is achievable, with two
+realistic corrections. First, Quercus itself has no door for software to
+reach in (no API — see glossary): the export must be downloaded from the
+website by hand. That is the one step a person will always do — about five
+minutes a month. Second, the automatic uploads to each outside system cannot
+happen until that system's administrator gives us access credentials. Those
+arrive one by one, and each one turns off another manual upload the moment it
+arrives. Nothing breaks in between: if a credential never arrives, that step
+simply stays manual, exactly as it is today.
+
+**What "the rails" means.** A private, always-on server (the same kind NCAD
+already runs) gets an alarm clock (the scheduler): every Monday at a set
+time, it watches a drop-folder — a folder you put the Quercus export into.
+The moment the file is there, the pipeline runs end to end: intake → clean →
+diff → generate → deliver → notify → log. Every run is recorded in a run log
+(the diary: run number, step, counts, errors — never student names or
+passwords). Everything is generated in **dry-run mode** first — a practice
+run where nothing is sent — and a simple review screen shows what was
+prepared before a person clicks "send for real". The Triangle Service Desk
+confirmation keeps a human step by design: their receipt confirmation is
+their business process, so the system waits for a click-to-confirm.
+
+**The three decisions only the manager can make.**
+
+1. **Storing student data on the server.** Automation means student details
+   (names, dates of birth, emails — the baselines and run logs) live on a
+   server between runs. Under GDPR that is a formal, documented decision,
+   not a programming one. The proposal: storage on the private NCAD server
+   only, access limited to named staff, data stored scrambled (encrypted at
+   rest), and a retention policy — a rule for how long it is kept and when
+   it is deleted. The public demo stays as it is: it never stores student
+   data.
+
+2. **Passcode emails.** Student passwords are already sent by email today
+   (Thunderbird mail merge) — automation keeps that practice. The manager
+   signs off once on each email type — for example, "student passwords may
+   be emailed from the automated system to the student's personal address".
+   After that single decision, the weekly emails send themselves; there is
+   no per-email approval. Passwords are stored scrambled and never written
+   to the run log.
+
+3. **Credential ownership.** The access keys (Canvas token, Google service
+   account, SFTP credentials, SMTP details) will outlive any one person.
+   The manager names who owns them long-term and where they are kept
+   (an IT password manager or a secure store on the server — never in the
+   code repository).
+
+**What could go wrong, and how it is handled.**
+
+| If this happens | How the plan handles it |
+|---|---|
+| Credentials never arrive | Each step is optional; the manual path stays as it is today — the scheduler simply skips that step |
+| Quercus changes its export format | The schema registry (one central list of expected columns) is already built; a changed format is detected with a clear warning instead of silent wrong data |
+| A weekly run fails unnoticed | Failure alerts and a weekly summary email to IT (Phase 3); the run log shows every step's status |
+| Data-protection concerns | Manager sign-off, retention policy, private server, encryption — the public demo never stores student data |
+| The process owner's knowledge is lost | This document, the ONBOARDING and MANUAL_TESTING guides, and a completed Credentials & Access Checklist are the handover |
+| "Just automate everything" keeps growing | This roadmap is the agreed scope; any change to it goes through this document |
+
+**The golden rule.** Every integration in this plan is **additive and
+reversible**. If a credential is unavailable, the scheduler skips that step
+and today's manual path still works. Nothing the automation does can break
+what already works by hand — the automation only ever replaces steps the
+moment they are ready to be replaced.
