@@ -94,10 +94,12 @@ All pipelines (except Library) compare Quercus data against a system-specific ba
 Covers: setup, every file in the codebase, pipeline architecture, API details with input/output schemas, 13 key design decisions, how to add a new pipeline, common gotchas.
 
 Additional docs:
+- [`docs/AUTOMATION_ROADMAP.md`](docs/AUTOMATION_ROADMAP.md) — **project document**: end goal (weekly zero-touch automation), scheduler concept, harsh realities/blockers, phased plan, and the Ask-John sheet (who to ask, where to get credentials, fallbacks)
 - [`docs/architecture.md`](docs/architecture.md) — original design document
 - [`docs/MANUAL_PROCESS.md`](docs/MANUAL_PROCESS.md) — the legacy manual process this system replaces
 - [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) — step-by-step tutorial for non-IT staff using the system
 - [`docs/AUTOMATION_STRATEGY.md`](docs/AUTOMATION_STRATEGY.md) — what else can be automated and in what order
+- [`docs/MANUAL_TESTING.md`](docs/MANUAL_TESTING.md) — step-by-step manual test guide with input-file scenarios
 - [`backend/README.md`](backend/README.md) — backend specifics
 - [`frontend/README.md`](frontend/README.md) — frontend specifics
 

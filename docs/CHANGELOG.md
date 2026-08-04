@@ -19,6 +19,9 @@
 ### Testing
 - Added `docs/MANUAL_TESTING.md` — step-by-step manual test guide (what to change in input files to trigger each scenario), linked from the in-app `/about` page
 
+### Planning
+- Added `docs/AUTOMATION_ROADMAP.md` — master project document for the manager: end goal (weekly zero-touch automation), scheduler concept, harsh realities/blockers with workarounds, phased plan, and a credentials & access checklist (what credentials are needed, who to ask, where to get them, fallbacks)
+
 ## 2026-07-28
 
 ### UX & Documentation

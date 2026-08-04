@@ -24,7 +24,7 @@ We could try to automate this with a robot browser script (like Puppeteer or Pla
 | **Canvas SIS Import** | Canvas REST API | API token from Canvas Admin settings |
 | **Google Workspace account creation** | Google Admin SDK Directory API | Google service account with domain-wide delegation |
 | **OpenAthens bulk upload** | OpenAthens Management API (needs verification) | API credentials |
-| **Notify Rene (after Canvas upload)** | SMTP — same as email system above | Rene's email address |
+| **Notify the Canvas administrator (after Canvas upload)** | SMTP — same as email system above | Their email address |
 
 ---
 
@@ -41,7 +41,7 @@ After Phase A, the only manual steps are: download Quercus CSVs (5 min), upload 
 ### Phase B — Next (needs Canvas Admin token)
 
 4. Canvas SIS Import via API — eliminates the Canvas manual upload
-5. Auto-email Rene after successful Canvas upload (reuses SMTP from Phase A)
+5. Auto-email the Canvas administrator after successful Canvas upload (reuses SMTP from Phase A)
 
 ### Phase C — Later (needs Google Admin access)
 

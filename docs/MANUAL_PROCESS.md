@@ -321,10 +321,10 @@ Example: `20260618_canvas` / `20260618_canvas.csv`
 Upload the prepared CSV file using the **SIS Import** tool.
 This creates new student accounts in Canvas.
 
-### Notify Rene
+### Notify the Canvas Administrator
 After the SIS import is complete:
 1. Upload the file using: filesender2.heanet.ie
-2. Send the file to Rene.
+2. Send the file to the Canvas administrator.
 3. State in the email that the password is the same as previously used.
 
 ### Post-Import Verification
@@ -421,7 +421,7 @@ Verify:
 
 ### Upload File
 Upload `20260618_library.csv` using the Library SFTP process.
-Separate SFTP instructions will be provided by John.
+Separate SFTP instructions will be provided by IT support.
 
 **Note:** The Library system automatically patches existing users and creates new users as required. Therefore, no comparison with previous Library uploads is required.
 
@@ -487,7 +487,7 @@ Wait for confirmation from the **Triangle Service Desk** that the LDAP accounts 
 
 ### Access Thunderbird
 1. Open **Thunderbird**.
-2. Use the account provided by John.
+2. Use the account provided by IT support.
 3. Open the **LDAP email template**.
 
 ### Prepare Recipient List
@@ -507,7 +507,7 @@ Use the LDAP file: `YYYYMMDD_ldap.csv` as the source of student email addresses.
 
 ### Access Thunderbird
 1. Open **Thunderbird**.
-2. Use the account provided by John.
+2. Use the account provided by IT support.
 3. Open the **Eduroam email template**.
 
 ### Prepare Recipient List
@@ -527,7 +527,7 @@ Use the same LDAP file: `YYYYMMDD_ldap.csv` as the source of student email addre
 
 ### Access Thunderbird
 1. Open **Thunderbird**.
-2. Use the account provided by John.
+2. Use the account provided by IT support.
 3. Open the **student email template**.
 
 ### Prepare Recipient List

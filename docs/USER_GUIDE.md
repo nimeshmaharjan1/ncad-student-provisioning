@@ -129,7 +129,7 @@ the manual steps needed to complete it.
 4. Log into **Canvas** administration
 5. Navigate to **SIS Import** and upload `YYYYMMDD_canvas.csv`
 6. Confirm the import completes without errors
-7. Upload the file via https://filesender2.heanet.ie and notify **Rene**
+7. Upload the file via https://filesender2.heanet.ie and notify **the Canvas administrator**
 8. Verify no duplicate accounts exist
 
 ---
@@ -201,7 +201,7 @@ The Library page is standalone (no pipeline dependency). Access it from the home
 
 **Once the file is downloaded:**
 
-4. Open your SFTP client and connect using the Library SFTP credentials (provided by John)
+4. Open your SFTP client and connect using the Library SFTP credentials (provided by IT support)
 5. Upload `YYYYMMDD_library.csv`
 6. The Library system handles merging automatically
 
@@ -211,7 +211,7 @@ The Library page is standalone (no pipeline dependency). Access it from the home
 
 The system does **not** send emails. You use **Thunderbird with the Mail Merge add-on** for 3 separate email campaigns.
 
-All instructions assume Thunderbird is set up with the NCAD email account (provided by John).
+All instructions assume Thunderbird is set up with the NCAD email account (provided by IT support).
 
 #### Email 1: LDAP Credentials
 
