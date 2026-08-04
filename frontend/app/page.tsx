@@ -14,6 +14,7 @@ import { useEffect } from "react"
 import Link from "next/link"
 import { Database, BookOpen } from "lucide-react"
 import { usePipeline } from "@/lib/pipeline-context"
+import { PrivacyNotice } from "@/components/privacy-notice"
 
 export default function HomePage() {
   const { step1Done } = usePipeline()
@@ -30,6 +31,8 @@ export default function HomePage() {
           Upload Quercus student data, then generate downstream system exports.
         </p>
       </div>
+
+      <PrivacyNotice />
 
       <div className="flex flex-col gap-4">
         <Link

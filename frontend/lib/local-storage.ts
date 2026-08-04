@@ -2,6 +2,7 @@ const GDPR_NOTICE_KEY = "_gdpr_notice"
 const GDPR_NOTICE_VALUE = "Only non-personal metadata is stored on this device (pipeline progress, export timestamps, row counts, file names). No student or staff personal data is ever saved."
 const STORAGE_VERSION_KEY = "_storage_version"
 const STORAGE_VERSION = 1
+const PRIVACY_NOTICE_HIDDEN_KEY = "_privacy_notice_hidden"
 
 export interface ExportHistoryEntry {
   ts: string
@@ -117,4 +118,18 @@ export function clearAllLocalData(): void {
 
 export function getGdprNoticeText(): string {
   return GDPR_NOTICE_VALUE
+}
+
+export function isPrivacyNoticeHidden(): boolean {
+  ensureGdprNotice()
+  return getItem<boolean>(PRIVACY_NOTICE_HIDDEN_KEY, false)
+}
+
+export function hidePrivacyNotice(): void {
+  ensureGdprNotice()
+  setItem(PRIVACY_NOTICE_HIDDEN_KEY, true)
+}
+
+export function showPrivacyNotice(): void {
+  removeItem(PRIVACY_NOTICE_HIDDEN_KEY)
 }

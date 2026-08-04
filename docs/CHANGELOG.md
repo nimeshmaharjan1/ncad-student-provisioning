@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-04
+
+### UX & Privacy
+- Added "Privacy at a glance" informational card on the home page (dismissible, no consent tracking)
+- Card explains what is/isn't stored and why public hosting is safe (transient processing, no database)
+- Added "Show privacy notice again" restore link in the `/about` Privacy section
+
 ## 2026-07-28
 
 ### UX & Documentation
