@@ -1,7 +1,7 @@
 # Automation Roadmap — From Manual to Zero-Touch Provisioning
 
 > Project document for the NCAD Student Provisioning system.
-sophos> Audience: the department head (manager), the current process owner (IT
+> Audience: the department head (manager), the current process owner (IT
 > support), and any future developer or IT support person who inherits this
 > project.
 
