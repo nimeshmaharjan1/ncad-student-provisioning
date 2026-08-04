@@ -6,11 +6,8 @@ import pandas as pd
 import io
 import zipfile
 from app.services.quercus_preprocess import preprocess_quercus
-from app.services.canvas_service import (
-    generate_canvas_comparison_exports,
-    CANVAS_QUERCUS_REQUIRED_COLUMNS,
-    CANVAS_QUERCUS_OPTIONAL_COLUMNS,
-)
+from app.services.canvas_service import generate_canvas_comparison_exports
+from app.core.quercus_schema import check_columns, missing_required_response
 from app.utils.date_utils import date_suffix
 
 logger = logging.getLogger(__name__)
@@ -33,28 +30,14 @@ async def export_canvas(baseline: UploadFile = File(...), quercus: UploadFile = 
         baseline_df.columns = baseline_df.columns.str.strip()
         quercus_df.columns = quercus_df.columns.str.strip()
 
-        # --- Schema validation ---
-        quercus_cols = set(quercus_df.columns)
-        missing_required = [col for col in CANVAS_QUERCUS_REQUIRED_COLUMNS if col not in quercus_cols]
-        missing_optional = [col for col in CANVAS_QUERCUS_OPTIONAL_COLUMNS if col not in quercus_cols]
+        # --- Schema validation with structured error response ---
+        check = check_columns("canvas", quercus_df.columns)
+        if check["missing_required"]:
+            logger.warning("Canvas export rejected — missing required Quercus columns: %s", check["missing_required"])
+            return missing_required_response("canvas", check)
 
-        if missing_required:
-            logger.warning("Canvas export rejected — missing required Quercus columns: %s", missing_required)
-            return JSONResponse(
-                status_code=422,
-                content={
-                    "detail": f"Missing required columns: {', '.join(missing_required)}",
-                    "error_code": "missing_required_columns",
-                    "missing_required": missing_required,
-                    "missing_optional": missing_optional,
-                    "present_columns": sorted(quercus_cols),
-                    "all_required": CANVAS_QUERCUS_REQUIRED_COLUMNS,
-                    "all_optional": CANVAS_QUERCUS_OPTIONAL_COLUMNS,
-                },
-            )
-
-        if missing_optional:
-            logger.info("Optional Quercus columns missing (will be left blank): %s", missing_optional)
+        if check["missing_optional"]:
+            logger.info("Optional Quercus columns missing (will be left blank): %s", check["missing_optional"])
 
         cleaned_quercus_df = preprocess_quercus(quercus_df)
 

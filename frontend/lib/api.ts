@@ -6,11 +6,18 @@ export interface AuditInfo {
   duplicate_rows_detected: number
 }
 
+export interface MissingColumnsByFile {
+  filename: string
+  missing: string[]
+}
+
 export interface UploadQuercusResult {
   cleanedQuercusFile: File
   auditInfo: AuditInfo
   sampleRows: Record<string, unknown>[]
   uploadedFiles: string[]
+  missingColumns: string[]
+  missingColumnsByFile: MissingColumnsByFile[]
 }
 
 export async function uploadQuercus(files: File[]): Promise<UploadQuercusResult> {
@@ -56,6 +63,8 @@ export async function uploadQuercus(files: File[]): Promise<UploadQuercusResult>
     },
     sampleRows: uploadJson.sample_rows,
     uploadedFiles: uploadJson.uploaded_files,
+    missingColumns: uploadJson.missing_columns ?? [],
+    missingColumnsByFile: uploadJson.missing_columns_by_file ?? [],
   }
 }
 

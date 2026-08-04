@@ -7,6 +7,18 @@
 - Card explains what is/isn't stored and why public hosting is safe (transient processing, no database)
 - Added "Show privacy notice again" restore link in the `/about` Privacy section
 
+### Quercus Schema Registry & Missing-Column Warnings
+- Added `backend/app/core/quercus_schema.py` — single source of truth for all systems' required/optional Quercus columns
+- All 5 export endpoints (LDAP, Canvas, Google, OpenAthens, Library) refactored to use the registry (removed ~30 duplicated lines each)
+- Added two validation modes: STRICT (exports → 422) and WARN (Quercus upload → warning card, never blocks)
+- Quercus upload now returns `missing_columns` + `missing_columns_by_file` — per-file missing column warnings
+- Added `ColumnWarning` component — amber card listing which files are missing which columns, with a "recheck before continuing" tip
+- Added `warning` toast type; Quercus step shows "processed with warnings" toast when columns are missing
+- "How to add a new system" = add one entry to `SCHEMAS` — validation and upload warnings pick it up automatically (documented in backend README)
+
+### Testing
+- Added `docs/MANUAL_TESTING.md` — step-by-step manual test guide (what to change in input files to trigger each scenario), linked from the in-app `/about` page
+
 ## 2026-07-28
 
 ### UX & Documentation

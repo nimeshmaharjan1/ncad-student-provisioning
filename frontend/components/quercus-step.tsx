@@ -8,7 +8,8 @@ import { DataTable } from "@/components/data-table"
 import { AuditSummary } from "@/components/audit-summary"
 import { ProcessingProgress } from "@/components/processing-progress"
 import { ExportError } from "@/components/export-error"
-import { uploadQuercus, type AuditInfo } from "@/lib/api"
+import { ColumnWarning } from "@/components/column-warning"
+import { uploadQuercus, type AuditInfo, type MissingColumnsByFile } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
 import { useToast } from "@/lib/toast-context"
 import { addExportHistoryEntry } from "@/lib/local-storage"
@@ -19,6 +20,8 @@ export function QuercusStep() {
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [missingColumns, setMissingColumns] = useState<string[]>([])
+  const [missingColumnsByFile, setMissingColumnsByFile] = useState<MissingColumnsByFile[]>([])
   const [result, setResult] = useState<{
     sampleRows: Record<string, unknown>[]
     auditInfo: AuditInfo
@@ -28,9 +31,13 @@ export function QuercusStep() {
     if (files.length === 0) return
     setLoading(true)
     setError(null)
+    setMissingColumns([])
+    setMissingColumnsByFile([])
     try {
       const data = await uploadQuercus(files)
       setResult({ sampleRows: data.sampleRows, auditInfo: data.auditInfo })
+      setMissingColumns(data.missingColumns)
+      setMissingColumnsByFile(data.missingColumnsByFile)
       setQuercusData({
         cleanedQuercusFile: data.cleanedQuercusFile,
         sampleRows: data.sampleRows,
@@ -51,11 +58,20 @@ export function QuercusStep() {
         rowCount: data.auditInfo.cleaned_row_count,
         fileCount: data.uploadedFiles.length,
       })
-      addToast({
-        type: "success",
-        title: "Quercus data processed",
-        description: `${data.auditInfo.cleaned_row_count} cleaned rows from ${data.uploadedFiles.length} file(s)`,
-      })
+      if (data.missingColumns.length > 0) {
+        addToast({
+          type: "warning",
+          title: "Quercus processed with warnings",
+          description: `Missing columns: ${data.missingColumns.join(", ")}. Recheck your Quercus export settings before continuing.`,
+          duration: 8000,
+        })
+      } else {
+        addToast({
+          type: "success",
+          title: "Quercus data processed",
+          description: `${data.auditInfo.cleaned_row_count} cleaned rows from ${data.uploadedFiles.length} file(s)`,
+        })
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to process Quercus files"
       setError(message)
@@ -81,6 +97,12 @@ export function QuercusStep() {
   if (step1Done && result) {
     return (
       <div className="space-y-4">
+        {missingColumns.length > 0 && (
+          <ColumnWarning
+            missingColumns={missingColumns}
+            missingColumnsByFile={missingColumnsByFile}
+          />
+        )}
         <AuditSummary audit={result.auditInfo} />
         <div>
           <p className="mb-2 text-sm text-muted-foreground">
@@ -121,6 +143,12 @@ export function QuercusStep() {
       {error && <ExportError message={error} detail={null} />}
       {result && !loading && (
         <>
+          {missingColumns.length > 0 && (
+            <ColumnWarning
+              missingColumns={missingColumns}
+              missingColumnsByFile={missingColumnsByFile}
+            />
+          )}
           <AuditSummary audit={result.auditInfo} />
           <div>
             <p className="mb-2 text-sm text-muted-foreground">

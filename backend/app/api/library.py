@@ -5,19 +5,11 @@ from fastapi.responses import StreamingResponse, JSONResponse
 import pandas as pd
 import io
 from app.services.library_service import clean_library_data, build_library_template
+from app.core.quercus_schema import check_columns, missing_required_response
 from app.utils.date_utils import date_suffix
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-LIBRARY_QUERCUS_REQUIRED_COLUMNS = [
-    "ID Number",
-]
-
-LIBRARY_QUERCUS_OPTIONAL_COLUMNS = [
-    "First Name", "Last Name", "Gender", "Course Code",
-    "Course Instance Start Date", "Course Instance End Date",
-]
 
 
 @router.post("/export")
@@ -32,28 +24,13 @@ async def export_library(files: list[UploadFile] = File(...)):
 
         # --- Schema validation (first file is representative) ---
         if dfs:
-            first_df = dfs[0]
-            quercus_cols = set(first_df.columns)
-            missing_required = [col for col in LIBRARY_QUERCUS_REQUIRED_COLUMNS if col not in quercus_cols]
-            missing_optional = [col for col in LIBRARY_QUERCUS_OPTIONAL_COLUMNS if col not in quercus_cols]
+            check = check_columns("library", dfs[0].columns)
+            if check["missing_required"]:
+                logger.warning("Library export rejected — missing required columns: %s", check["missing_required"])
+                return missing_required_response("library", check)
 
-            if missing_required:
-                logger.warning("Library export rejected — missing required columns: %s", missing_required)
-                return JSONResponse(
-                    status_code=422,
-                    content={
-                        "detail": f"Missing required columns: {', '.join(missing_required)}",
-                        "error_code": "missing_required_columns",
-                        "missing_required": missing_required,
-                        "missing_optional": missing_optional,
-                        "present_columns": sorted(quercus_cols),
-                        "all_required": LIBRARY_QUERCUS_REQUIRED_COLUMNS,
-                        "all_optional": LIBRARY_QUERCUS_OPTIONAL_COLUMNS,
-                    },
-                )
-
-            if missing_optional:
-                logger.info("Optional columns missing (will be left blank): %s", missing_optional)
+            if check["missing_optional"]:
+                logger.info("Optional columns missing (will be left blank): %s", check["missing_optional"])
 
         cleaned = clean_library_data(*dfs)
         final = build_library_template(cleaned)

@@ -32,6 +32,7 @@ Next.js 16 UI with shadcn/ui components. Tailwind CSS v4.
 | `AuditSummary` | `audit-summary.tsx` | Row count summary display |
 | `ProcessingProgress` | `processing-progress.tsx` | Animated indeterminate progress bar |
 | `ExportError` | `export-error.tsx` | Rich error card showing required/optional/missing columns |
+| `ColumnWarning` | `column-warning.tsx` | Amber warning card for Quercus uploads with missing columns (per-file list) — never blocks, just warns |
 | `SuccessCard` | `success-card.tsx` | Animated green success card after export |
 | `PipelineStepper` | `pipeline-stepper.tsx` | 6-step visual status dashboard (Quercus → Library) |
 | `ExportHistory` | `export-history.tsx` | Collapsible export history log with GDPR notice |
@@ -57,7 +58,7 @@ Persists across page navigation via React state. Also syncs to localStorage for 
 ## API Layer
 
 `lib/api.ts` — typed fetch wrappers for every backend endpoint.
-- `uploadQuercus(files)` — POST `/quercus/upload` → returns JSON + triggers `/quercus/download` for the cleaned CSV
+- `uploadQuercus(files)` — POST `/quercus/upload` → returns JSON + triggers `/quercus/download` for the cleaned CSV. Response includes `missingColumns` (union) and `missingColumnsByFile` (per-file missing expected columns) — the Quercus backend never blocks on missing columns, it warns.
 - `downloadLdapExport(baseline, quercusFile)` — POST `/ldap/download?format=zip`
 - `downloadCanvasExport(baseline, quercusFile)` — POST `/canvas/export`
 - `downloadGoogleExport(baseline, quercusFile)` — POST `/google/export`
@@ -82,7 +83,7 @@ export class ExportError extends Error {
 `lib/toast-context.tsx` + `components/toast-viewport.tsx`:
 - `ToastProvider` wraps the app in `layout.tsx`
 - `useToast()` hook returns `{ addToast, removeToast, toasts }`
-- `addToast({ type: "success" | "error" | "info", title, description, duration? })`
+- `addToast({ type: "success" | "error" | "warning" | "info", title, description, duration? })`
 - Toasts auto-dismiss after `duration` ms (default 4000)
 - Rendered as animated slide-in cards via `ToastViewport` (fixed position, top-right on desktop)
 

@@ -1,0 +1,108 @@
+# Manual Testing Guide
+
+How to manually test every feature of the NCAD Student Provisioning app,
+including what to change in your input files to trigger each scenario.
+
+All sample files referenced below live in the repo's `samples/` folder:
+
+- Quercus uploads: `quercus_2025.csv`, `quercus_2026.csv`
+- Baselines (NEVER modify these — they have fixed system schemas):
+  `baseline_ldap.csv`, `baseline_canvas.csv`, `baseline_google.csv`, `baseline_athens.csv`
+
+## Setup
+
+1. Backend: `cd backend` → activate venv → `uvicorn app.main:app --reload --port 8000`
+2. Frontend: `cd frontend` → `npm run dev` → http://localhost:3000
+3. Make sure `frontend/.env` points at the LOCAL backend
+   (`NEXT_PUBLIC_API_URL=http://127.0.0.1:8000`), not the demo URL.
+
+## Test 1 — Happy path (regression check)
+
+| Step | Action | Expect |
+|------|--------|--------|
+| Quercus | Upload `quercus_2025.csv` + `quercus_2026.csv` | Green success toast, cleaned CSV downloads, stepper "Quercus" turns done, **no warning card** |
+| LDAP | Upload `baseline_ldap.csv` + the **cleaned file from the Quercus step** | ZIP with `new_students.csv` + `updated_baseline.csv`, success card |
+| Canvas / Google / Athens | Same pattern with their baseline files | ZIP downloads, all steps done |
+| Library | Upload the two Quercus files directly | ZIP with cleaned + 46-column template |
+| Anywhere | Open Export History | Entries with timestamps / row counts |
+
+Key detail: at the LDAP / Canvas / Google / Athens steps you upload the
+**cleaned** Quercus file (it gains `Term Email` + `Type`). At the Library step
+you upload the raw files. Baselines are immutable — never edit them.
+
+## Test 2 — Quercus missing-column warning (warns, never blocks)
+
+1. Copy `quercus_2025.csv`, delete the **`Date of Birth`** column (header +
+   all values), save as `2025-without-dob.csv`.
+2. Upload it **together with** the unmodified `quercus_2026.csv`.
+3. Expect:
+   - Processing succeeds — download happens, step still "done".
+   - Amber warning card **"Processed with warnings — missing columns"**
+     with a row: `2025-without-dob.csv → Date of Birth` (the 2026 file is
+     absent from the list — it has all columns).
+   - Amber warning toast and the "Recheck before continuing" tip.
+
+More warning scenarios (each = copy the file, delete one column, upload alone):
+
+| Delete column | Expect |
+|---------------|--------|
+| `Date of Birth` | Warning (LDAP export would reject it) |
+| `Status` | Warning (preprocessing's status filter would be silently skipped) |
+| `LDAP ID` | Warning (LDAP export would reject it) |
+| `Home Mobile Phone` | **No warning** — it is optional now |
+| `Gender`, `Course Instance Start Date`, `Course Instance End Date` | **No warning** (optional for Library) |
+
+The full expected-column list is computed from the schema registry:
+`backend/app/core/quercus_schema.py` (`SOURCE_WARN_COLUMNS`). Adding/removing
+a system there changes what upload warns about automatically.
+
+## Test 3 — Strict 422 at export steps (unchanged behavior)
+
+Use the **cleaned file from Test 1**, then:
+
+| Test | Remove column from cleaned file | Expect |
+|------|-------------------------------|--------|
+| LDAP step | `Date of Birth` | Red "Export Failed" card, Missing Required badge, present columns, tip. **No ZIP.** |
+| Canvas step | `First Name` | Same red card |
+| Google step | `Last Name` | Same red card |
+| Athens step | `Last Name` | Same red card |
+| Library step | `ID Number` | Same red card |
+
+This is the STRICT mode — missing required columns block the export with a
+structured 422. Missing OPTIONAL columns (e.g. `Home Mobile Phone` at the LDAP
+step) never block; they are left blank.
+
+## Test 4 — Privacy notice (informational only)
+
+- Home page: blue "Privacy at a glance" card is visible.
+- Click the × — the card hides (display preference only, no consent tracked).
+- "Learn more" → `/about#privacy`.
+- On the About page, "Show privacy notice again" restores the card.
+
+## Test 5 — Full pipeline regression (strongest proof)
+
+With the venv activated:
+
+```bash
+cd backend
+python samples/test_pipelines.py
+```
+
+Asserts exact row counts for the whole pipeline (5 cleaned Quercus rows,
+3 new LDAP / Canvas / Athens students, 3 Google uploads + 1 reactivation,
+rerun produces 0 new). Must end with `ALL PIPELINE SMOKE TESTS PASSED`.
+
+## Test 6 — Error handling fallbacks
+
+- Stop the backend, try an export → frontend shows a friendly error
+  ("Export failed: ..." / "unexpected error"), no crash.
+- Restart backend: everything works again; nothing was persisted server-side.
+
+## Gotchas
+
+- The Quercus upload warning (`Test 2`) is the WARN mode; export validation
+  (`Test 3`) is the STRICT mode. Both read from the same registry — the
+  warning tells you in advance exactly which exports will fail if you
+  continue without fixing the file.
+- `npx next build` in `frontend/` and the compile check in `backend/` must
+  stay green after any code change.

@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 
 export interface Toast {
   id: string
-  type: "success" | "error" | "info"
+  type: "success" | "error" | "warning" | "info"
   title: string
   description?: string
   duration?: number

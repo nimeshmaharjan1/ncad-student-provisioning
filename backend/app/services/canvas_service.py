@@ -5,6 +5,7 @@ from app.utils.df_utils import (
     detect_new_users,
     update_baseline_state,
 )
+from app.core.quercus_schema import SCHEMAS
 
 # ==============================================================================
 # NCAD CANVAS PROVISIONING PIPELINE
@@ -26,11 +27,10 @@ CANVAS_BASELINE_COLUMNS = [
     "short_name", "email", "status",
 ]
 
-CANVAS_QUERCUS_REQUIRED_COLUMNS = [
-    "ID Number", "First Name", "Last Name", "Term Email",
-]
-
-CANVAS_QUERCUS_OPTIONAL_COLUMNS: list[str] = []
+# Quercus-side schema for the Canvas system lives in the central registry
+# (app/core/quercus_schema.py) — single source of truth shared with the API layer.
+CANVAS_QUERCUS_REQUIRED_COLUMNS = SCHEMAS["canvas"].required
+CANVAS_QUERCUS_OPTIONAL_COLUMNS = SCHEMAS["canvas"].optional
 
 
 def map_quercus_to_canvas(quercus_df: pd.DataFrame) -> pd.DataFrame:

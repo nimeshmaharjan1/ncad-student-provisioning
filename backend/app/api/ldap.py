@@ -7,10 +7,9 @@ import io
 import zipfile
 from app.services.ldap_export import (
     generate_ldap_comparison_exports,
-    QUERCUS_SCHEMA_REQUIRED_COLUMNS,
-    QUERCUS_SCHEMA_OPTIONAL_COLUMNS,
     LDAP_SCHEMA_REQUIRED_COLUMNS,
 )
+from app.core.quercus_schema import check_columns, missing_required_response
 from app.services.quercus_preprocess import preprocess_quercus
 from app.utils.date_utils import date_suffix
 
@@ -41,31 +40,19 @@ async def download_ldap(
         quercus_df.columns = quercus_df.columns.str.strip()
 
         # --- Schema validation with structured error response ---
-        quercus_cols = set(quercus_df.columns)
-        missing_required = [col for col in QUERCUS_SCHEMA_REQUIRED_COLUMNS if col not in quercus_cols]
-        missing_optional = [col for col in QUERCUS_SCHEMA_OPTIONAL_COLUMNS if col not in quercus_cols]
-        present_columns = sorted(quercus_cols)
-
-        if missing_required:
+        # Column lists live in app/core/quercus_schema.py (single source of truth).
+        check = check_columns("ldap", quercus_df.columns)
+        if check["missing_required"]:
             logger.warning(
-                "LDAP export rejected — missing required Quercus columns: %s", missing_required
+                "LDAP export rejected — missing required Quercus columns: %s",
+                check["missing_required"],
             )
-            return JSONResponse(
-                status_code=422,
-                content={
-                    "detail": f"Missing required columns: {', '.join(missing_required)}",
-                    "error_code": "missing_required_columns",
-                    "missing_required": missing_required,
-                    "missing_optional": missing_optional,
-                    "present_columns": present_columns,
-                    "all_required": QUERCUS_SCHEMA_REQUIRED_COLUMNS,
-                    "all_optional": QUERCUS_SCHEMA_OPTIONAL_COLUMNS,
-                },
-            )
+            return missing_required_response("ldap", check)
 
-        if missing_optional:
+        if check["missing_optional"]:
             logger.info(
-                "Optional Quercus columns missing (will be left blank): %s", missing_optional
+                "Optional Quercus columns missing (will be left blank): %s",
+                check["missing_optional"],
             )
 
         cleaned_quercus_df = preprocess_quercus(quercus_df)

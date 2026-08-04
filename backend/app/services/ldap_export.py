@@ -11,6 +11,7 @@ from app.utils.df_utils import (
     detect_new_users,
     update_baseline_state,
 )
+from app.core.quercus_schema import SCHEMAS
 
 # ==============================================================================
 # NCAD LDAP PROVISIONING SYSTEM CONTRACT:
@@ -27,16 +28,10 @@ from app.utils.df_utils import (
 
 LDAP_EMAIL_PRIORITY = ["Email_address", "Term Email"]
 
-QUERCUS_SCHEMA_REQUIRED_COLUMNS = [
-    "ID Number", "Course Code", "Course Description",
-    "Course Instance Course Year", "Type", "First Name",
-    "Last Name", "Date of Birth",
-    "Term Email", "LDAP ID"
-]
-
-QUERCUS_SCHEMA_OPTIONAL_COLUMNS = [
-    "Home Mobile Phone",
-]
+# Quercus-side schema for the LDAP system lives in the central registry
+# (app/core/quercus_schema.py) — single source of truth shared with the API layer.
+QUERCUS_SCHEMA_REQUIRED_COLUMNS = SCHEMAS["ldap"].required
+QUERCUS_SCHEMA_OPTIONAL_COLUMNS = SCHEMAS["ldap"].optional
 
 LDAP_SCHEMA_REQUIRED_COLUMNS = [
     "Student ID", "Code", "Description", "Year", "Code (UG/PG/E)",

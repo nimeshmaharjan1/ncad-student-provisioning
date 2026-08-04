@@ -32,8 +32,8 @@ const systems = [
     icon: FileText,
     title: "Quercus",
     description: "Source of Truth — Upload and clean student data.",
-    required: ["ID Number", "Course Code", "Course Description", "Course Instance Course Year", "Status", "First Name", "Last Name", "Date of Birth", "Home Mobile Phone"],
-    optional: [],
+    required: ["ID Number", "Course Code", "Course Description", "Course Instance Course Year", "Status", "First Name", "Last Name", "Date of Birth"],
+    optional: ["Home Mobile Phone"],
     output: "A cleaned, deduplicated CSV with Term Email generated. Feeds all downstream exports.",
   },
   {
@@ -261,7 +261,7 @@ export default function AboutPage() {
         <div className="rounded-xl border bg-card">
           <div className="max-h-80 overflow-y-auto divide-y">
             {[
-              { date: "2026-08-04", changes: ["Added Privacy at a glance card on the home page — informational, dismissible, no consent tracking", "Explains why public hosting is safe: no database, transient processing"] },
+              { date: "2026-08-04", changes: ["Added Privacy at a glance card on the home page — informational, dismissible, no consent tracking", "Explains why public hosting is safe: no database, transient processing", "Added missing-column warnings on Quercus upload — files missing expected columns (e.g. Date of Birth) still process, but a warning card lists exactly which columns are missing from which files so you can recheck before continuing", "Centralised all required/optional column lists into one registry (backend/app/core/quercus_schema.py) — adding a new system is now a one-entry change"] },
               { date: "2026-07-28", changes: ["Added in-app System Guide page (/about)", "Added Pipeline Status Dashboard with visual stepper", "Added Export History log with GDPR-safe localStorage", "Added Toast notifications for exports", "Added Success Cards replacing plain green text", "Added structured error handling (422) for all 5 system endpoints", "Added schema validation with required/optional column checking", "Made Home Mobile Phone column optional in LDAP export", "Added global exception handler with logging", "Added session persistence (pipeline state survives page refresh)", "Added Start Over button on pipeline page"] },
               { date: "2026-07-28 (earlier)", changes: ["Initial structured error handling for LDAP endpoint", "ExportError component for rich error displays", "Fixed frontend pointing to demo backend instead of local"] },
               { date: "Previous releases", changes: ["Initial application with Quercus preprocessing", "LDAP, Canvas, Google, OpenAthens, Library pipelines", "Baseline comparison and diff detection", "Audit summary and data preview"] },
@@ -290,7 +290,13 @@ export default function AboutPage() {
             <ExternalLink className="size-4" />
             Full User Guide
           </Link>
-
+          <Link
+            href="https://github.com/nimeshmaharjan1/ncad-student-provisioning/blob/main/docs/MANUAL_TESTING.md"
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+          >
+            <ExternalLink className="size-4" />
+            Manual Testing Guide
+          </Link>
         </div>
       </section>
     </div>

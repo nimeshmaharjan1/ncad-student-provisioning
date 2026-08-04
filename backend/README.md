@@ -47,31 +47,27 @@ Every export endpoint follows the same pattern:
 
 ### 1. Schema Validation (before processing)
 
-Each endpoint defines required and optional Quercus column lists. Before any processing, the route handler checks the uploaded CSV columns:
+All required/optional column lists live in ONE place: `app/core/quercus_schema.py`
+(the **Quercus Schema Registry**). Endpoints call `check_columns()` and only decide
+what to do with the result:
 
 ```python
-quercus_cols = set(quercus_df.columns)
-missing_required = [col for col in REQUIRED_COLS if col not in quercus_cols]
-missing_optional = [col for col in OPTIONAL_COLS if col not in quercus_cols]
+from app.core.quercus_schema import check_columns, missing_required_response
 
-if missing_required:
-    return JSONResponse(
-        status_code=422,
-        content={
-            "detail": f"Missing required columns: {', '.join(missing_required)}",
-            "error_code": "missing_required_columns",
-            "missing_required": missing_required,
-            "missing_optional": missing_optional,
-            "present_columns": sorted(quercus_cols),
-            "all_required": REQUIRED_COLS,
-            "all_optional": OPTIONAL_COLS,
-        },
-    )
+check = check_columns("ldap", quercus_df.columns)   # system key, see SCHEMAS
+if check["missing_required"]:
+    return missing_required_response("ldap", check)  # structured 422
+if check["missing_optional"]:
+    logger.info("Optional columns missing (will be left blank): %s", check["missing_optional"])
 ```
 
 If required columns are missing → **422** with structured JSON listing exactly what's needed.
 
 If only optional columns are missing → logs a warning, proceeds with processing (columns are left blank).
+
+The Quercus upload step (`api/quercus.py`) uses **WARN mode** instead: `check_source_columns()`
+never blocks — it returns the missing columns so the frontend can show a warning card asking
+the user to recheck their Quercus export settings before continuing.
 
 ### 2. Try/Except Blocks
 
@@ -106,42 +102,33 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
 - `logger.exception()` — in except blocks (logs traceback automatically)
 - `logger.info()` — for missing optional columns
 
-## Required / Optional Columns per System
+## Quercus Schema Registry (`app/core/quercus_schema.py`)
 
-### LDAP (`api/ldap.py`, `services/ldap_export.py`)
+The single source of truth for every system's Quercus column contract. Read the
+module docstring — it documents the design decisions in full.
 
-| Type | Columns |
-|------|---------|
-| Required | `ID Number`, `Course Code`, `Course Description`, `Course Instance Course Year`, `Type`, `First Name`, `Last Name`, `Date of Birth`, `Term Email`, `LDAP ID` |
-| Optional | `Home Mobile Phone` |
+| System key | Display name | Required (Quercus) | Optional (Quercus) |
+|------------|--------------|--------------------|--------------------|
+| `ldap` | LDAP | `ID Number`, `Course Code`, `Course Description`, `Course Instance Course Year`, `Type`, `First Name`, `Last Name`, `Date of Birth`, `Term Email`, `LDAP ID` | `Home Mobile Phone` |
+| `canvas` | Canvas | `ID Number`, `First Name`, `Last Name`, `Term Email` | (none) |
+| `google` | Google Workspace | `ID Number`, `First Name`, `Last Name` | (none) |
+| `athens` | OpenAthens | `ID Number`, `First Name`, `Last Name` | (none) |
+| `library` | Library | `ID Number` | `First Name`, `Last Name`, `Gender`, `Course Code`, `Course Instance Start Date`, `Course Instance End Date` |
 
-### Canvas (`api/canvas.py`, `services/canvas_service.py`)
+### Two validation modes
 
-| Type | Columns |
-|------|---------|
-| Required | `ID Number`, `First Name`, `Last Name`, `Term Email` |
-| Optional | (none) |
+- **STRICT** (export endpoints): `check_columns(system_key, columns)` + `missing_required_response(system_key, check)` → missing required columns return a structured 422.
+- **WARN** (Quercus upload step): `check_source_columns(columns)` → never blocks, returns missing columns for the frontend warning card. The warn list is computed automatically from the union of all `required` lists minus columns `preprocess_quercus()` generates (`Term Email`, `Type`), plus `EXTRA_SOURCE_WARN_COLUMNS` (`Status` — silently skipped filtering otherwise).
 
-### Google Workspace (`api/google.py`, `services/google_service.py`)
+### How to add a new system (e.g. Moodle)
 
-| Type | Columns |
-|------|---------|
-| Required | `ID Number`, `First Name`, `Last Name` |
-| Optional | (none) |
+1. Add one `SystemSchema` entry to `SCHEMAS` in `app/core/quercus_schema.py`.
+2. In the new API endpoint, replace inline validation with `check_columns("moodle", ...)` / `missing_required_response("moodle", check)`.
+3. Done — the Quercus upload warning list picks up the new system's required columns automatically.
 
-### OpenAthens (`api/athens.py`, `services/athens_service.py`)
+### How to change existing columns
 
-| Type | Columns |
-|------|---------|
-| Required | `ID Number`, `First Name`, `Last Name` |
-| Optional | (none) |
-
-### Library (`api/library.py`, `services/library_service.py`)
-
-| Type | Columns |
-|------|---------|
-| Required | `ID Number` |
-| Optional | `First Name`, `Last Name`, `Gender`, `Course Code`, `Course Instance Start Date`, `Course Instance End Date` |
+Edit the relevant `SCHEMAS` entry. Every endpoint and the upload warning read from this module, so the change applies everywhere. If you remove a column from a `required` tuple, also review `EXTRA_SOURCE_WARN_COLUMNS` to decide whether upload should still warn about it.
 
 ## Service Files (what each does)
 
