@@ -31,7 +31,7 @@ a word you forgot, come back here.
 | **Admin token** / **service account** | A secret key that an administrator of an outside system (e.g. Canvas or Google) creates so that our program alone may use that system's door. It can be limited and revoked at any time |
 | **Scheduler** (cron / Windows Task Scheduler) | An alarm clock built into the server: "every Monday at 9 a.m., run the provisioning pipeline". The alarm clock fires, the pipeline runs, nobody has to be there |
 | **Drop-folder** | A special folder on the server that the system watches. You (or the Quercus export, if it can be scheduled) put the exported file in it; the system notices the new file and does everything else by itself |
-| **Always-on private server** | A quiet computer, owned by NCAD, that stays switched on and is only reachable by NCAD staff. Unlike the current public demo hosting (Vercel / Render) — free-tier services that switch themselves off when unused ("instances sleep") and are visible to anyone on the internet |
+| **Always-on private server** | A quiet computer, owned by NCAD, that stays switched on and is only reachable by NCAD staff. Unlike the public demo deployments (Vercel / Render) — free-tier services that switch themselves off when unused ("instances sleep") and are visible to anyone on the internet |
 | **Dry-run** | A practice run: the system generates everything exactly as it would for a real week — files, emails, logs — but sends nothing. A person reviews the practice output, then clicks "send for real" |
 | **Approval gate** / **click-to-confirm** / **human-in-the-loop** | A small review screen: the system prepares everything and then stops, waiting for a person to click "yes" before anything is sent. Used only for the few steps that need a human decision |
 | **Encryption (at rest)** | Storing student data and passwords in scrambled form on the server's disk. Even if the disk were stolen, the data would be unreadable without the secret key |
@@ -134,7 +134,7 @@ works.
 | 2 | **GDPR posture flips**. Automation requires storing student PII server-side (baselines, run logs). The current app explicitly promises transient processing | Storing student names/details (PII — see glossary) on a server is a data-protection decision (GDPR, DPIA — see glossary), not a code decision | Documented decision required from the manager: secure storage, access control, encryption, retention policy (all in the glossary). The public demo stays transient; the scheduler runs on a private server only |
 | 3 | **Triangle Service Desk is a human gate**. Their confirmation is their business process | The confirmation step cannot be auto-approved | Auto-SFTP the LDAP files + auto-email the Service Desk, then **wait for a click-to-confirm** (see glossary: a review screen where a person clicks "yes") — human decision for this one step only |
 | 4 | **APIs/credentials may not exist yet**: Canvas admin token, Google service account, OpenAthens API, SMTP details | Each push integration needs an administrator to create/issue credentials | Ship integrations **per system, in order of credential availability** (Credentials & Access Checklist, section 7). No credential → that step stays manual |
-| 5 | **Hosting reality**. Current deployments are Vercel + Render — public, ephemeral, free-tier (instances sleep — see glossary: free hosting switches itself off when unused) | Not suitable as a scheduler host; also public by design | Dedicated always-on private server for the scheduler (Checklist #4). Demo deployments stay as they are — harmless and useful for demos |
+| 5 | **Hosting reality**. The Vercel + Render deployments are public demo environments — free-tier and ephemeral (instances sleep — see glossary: free hosting switches itself off when unused). They are not NCAD's production hosting and are not suitable for the scheduler | Not suitable as a scheduler host; also public by design | Dedicated always-on private server for the scheduler (Checklist #4). Demo deployments stay as they are — harmless and useful for demos, and can be taken down once the private server is running |
 | 6 | **Passcodes are sensitive**. Emails carry generated credentials | Automated emails carrying student passwords need rules (who may receive them, how they are protected) — a policy decision, not just a technical one. It matters more now because automation sends them in bulk, every week | We **already** send passcodes by email today (Thunderbird mail merge) — automation keeps that practice, it does not invent a new one. The manager signs off **ONCE** per email type, e.g. "student passwords may be emailed from the automated system, to the student's personal address". After that single decision, the weekly emails send themselves — there is **no per-email approval step**. Passwords are stored scrambled (encrypted at rest) and never appear in run logs (logs record only run numbers, counts, and statuses) |
 | 7 | **Ownership & maintenance**. No deadline ≠ no risk | After the current process owner leaves, someone must own credentials, API changes, failed runs, renewals | This repo is the handover: everything documented (this file, ONBOARDING, MANUAL_TESTING). Manager assigns an owner for credentials and monitoring |
 | 8 | **Half-failed runs**. A weekly run that dies mid-way must not send 2 of 5 exports | Silent partial provisioning is worse than no automation | Per-step status + **dry-run mode** (default) + explicit approval gate before any email/SFTP push; failure alerts to IT |
@@ -305,3 +305,128 @@ reversible**. If a credential is unavailable, the scheduler skips that step
 and today's manual path still works. Nothing the automation does can break
 what already works by hand — the automation only ever replaces steps the
 moment they are ready to be replaced.
+
+---
+
+## 9. What Happens Next — the Coming Weeks and Phases
+
+This section is written for BOTH readers: the manager (decisions and
+approvals) and the developer (what to build and verify). Every step says who
+does it, what to do, and why it is better than today.
+
+### The next seven days
+
+| # | Who | What to do | Why it is better |
+|---|-----|-----------|------------------|
+| 1 | Developer | Finish the manual test pass in MANUAL_TESTING.md (happy path, warnings, gated download, Start over, privacy card) | The app is verified end to end before it is shown to anyone |
+| 2 | Both | Walk through Section 7 (Credentials & Access Checklist) with the current process owner and the manager | You learn exactly which credentials exist, so the phases reorder themselves around reality |
+| 3 | Manager | Make the three decisions in Section 8 (student-data storage, passcode emails, credential owner) | They unlock the automated parts; until then the manual path continues to work |
+| 4 | Developer | Ask IT about an always-on server (Checklist #4) | Even a "no" is fine — Phase 1 can be built and proven on a workstation with Task Scheduler first |
+
+### After that — phase by phase
+
+**Phase 1 — The Rails (build first; no credentials needed)**
+
+- Developer: scheduler skeleton (cron / Windows Task Scheduler) on the
+  private server — or a workstation to start; drop-folder intake; persistent
+  run log; dry-run mode. Reuse the existing backend services unchanged; test
+  with the sample files in dry-run mode.
+- Manager: nothing to decide in this phase — it only generates and logs;
+  nothing is sent.
+- Why it is better: this is the visible proof of the vision — the system
+  runs itself every week, everything is generated and logged, and nothing
+  goes anywhere until a person reviews it.
+
+**Phase 2 — Push integrations (one per credential obtained)**
+
+- Recommended order: Library SFTP first (credentials already exist with the
+  current process owner) → Triangle LDAP SFTP + auto-email with
+  click-to-confirm → Canvas SIS via API → Google Workspace
+  auto-provisioning → OpenAthens (check the subscription includes API
+  access).
+- Manager / IT: obtain each credential from Section 7 and hand it over.
+- Developer: build each connector so it is additive and reversible; test in
+  dry-run before any real upload; nothing breaks if a credential never
+  arrives.
+- Why it is better: every credential switches off one manual upload,
+  permanently.
+
+**Phase 3 — Email & notifications**
+
+- Manager: one-time sign-off per email type (Harsh Reality #6).
+- Developer: SMTP setup (Checklist #1); passcode emails; failure alerts and
+  weekly summary to IT; never log passcodes or student details.
+- Why it is better: no more Thunderbird mail merge; a failed run is noticed
+  the same day instead of the next month.
+
+**Phase 4 — Human-in-the-loop approval UI**
+
+- Developer: review-and-confirm screen for the Triangle confirmation and the
+  final "send emails" trigger.
+- Manager: names the person(s) who click "yes" each week.
+- Why it is better: automation with a safety rail — the system prepares
+  everything, and a person still gives the final go.
+
+**Phase 5 — Never (documented rejection)**
+
+- UI-robots for Quercus (fragile, breaks silently) — see
+  AUTOMATION_STRATEGY.md.
+
+### Things the developer can improve along the way (no manager needed)
+
+- GitHub Actions CI: run the pipeline regression tests automatically on
+  every push — a change can never silently break the logic again.
+- Dependabot (or equivalent): automatic security alerts for the libraries in
+  use — free, and better than discovering an outdated dependency later.
+- Run-log dashboard: a simple screen to read past runs without digging
+  through raw logs.
+- More tests: extend the regression suite to cover the scheduler's dry-run
+  mode.
+- Security hygiene: rotate tokens when staff change; enforce the retention
+  policy (auto-delete old logs); keep ONBOARDING and MANUAL_TESTING current.
+- Keep the demo deployments current so the newest version is always visible
+  at the demo URL.
+
+### For the manager — why the code is on a public personal GitHub, and what stays private
+
+The code lives on the developer's personal GitHub account, publicly. This is
+a deliberate and safe arrangement, based on facts that are already true in
+this repository:
+
+- **No secrets.** Environment files (`.env`) and the passcode word list are
+  excluded from the repository by design (`.gitignore`). The code reads
+  exactly one setting from the environment (where the word list lives).
+  Access keys and credentials never appear in the code — they live in the IT
+  password manager / a secure store on the private server (Checklist #6).
+- **No real student data.** The repository ignores all `*.csv` and `*.xlsx`
+  files except the sanitized samples folder. Real baselines, real exports
+  and run logs never enter the repository. The app itself is transient — it
+  has no database and stores nothing between runs.
+- **No internal names.** The documentation uses roles ("current process
+  owner", "Canvas administrator"), not real staff names.
+- **It costs nothing.** GitHub, Vercel and Render free tiers are all
+  zero-cost.
+- **It buys a lot:** a live demo URL that can be opened at any time; an
+  offsite backup with full history; a handover that any future IT person can
+  read; and a public example of the developer's work.
+- **The license is MIT.** Anyone may use the code, including NCAD, freely,
+  with attribution. This does not weaken security: the protection comes from
+  the credentials and the private server, not from hiding the code.
+
+What must NEVER go into this repository: real Quercus exports, real
+baselines, run logs, and any credential. Those live only on the private
+server, in the secure store, under the retention policy.
+
+One honest consideration: the repository sits on a personal account. If the
+developer ever leaves, the repository can be transferred to an NCAD
+organisation account or forked in minutes — and this document, ONBOARDING.md
+and MANUAL_TESTING.md are the handover that make the code understandable to
+whoever inherits it.
+
+### Guardrails
+
+Two rules hold the whole plan together. First, everything is **additive and
+reversible** — if a credential is unavailable, the scheduler skips that step
+and today's manual path still works. Second, the scope is what this document
+says: any new idea ("just automate everything") goes through this roadmap
+before it becomes work.
