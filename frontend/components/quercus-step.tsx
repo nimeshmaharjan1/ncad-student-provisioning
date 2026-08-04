@@ -48,6 +48,7 @@ export function QuercusStep() {
   const [missingColumns, setMissingColumns] = useState<string[]>([])
   const [missingColumnsByFile, setMissingColumnsByFile] = useState<MissingColumnsByFile[]>([])
   const [processedFiles, setProcessedFiles] = useState<File[]>([])
+  const [reUploadFiles, setReUploadFiles] = useState<File[]>([])
   const [downloading, setDownloading] = useState(false)
   const [downloaded, setDownloaded] = useState(false)
   const [result, setResult] = useState<{
@@ -79,16 +80,16 @@ export function QuercusStep() {
     }
   }
 
-  const handleProcess = async () => {
-    if (files.length === 0) return
+  const handleProcess = async (processFiles: File[] = files) => {
+    if (processFiles.length === 0) return
     setLoading(true)
     setError(null)
     setMissingColumns([])
     setMissingColumnsByFile([])
     setDownloaded(false)
     try {
-      const data = await uploadQuercus(files)
-      setProcessedFiles(files)
+      const data = await uploadQuercus(processFiles)
+      setProcessedFiles(processFiles)
       setResult({ sampleRows: data.sampleRows, auditInfo: data.auditInfo })
       setMissingColumns(data.missingColumns)
       setMissingColumnsByFile(data.missingColumnsByFile)
@@ -114,7 +115,7 @@ export function QuercusStep() {
           duration: 8000,
         })
       } else {
-        const { blob, filename } = await downloadQuercus(files)
+        const { blob, filename } = await downloadQuercus(processFiles)
         saveBlobDownload(blob, filename)
         setDownloaded(true)
         addToast({
@@ -166,6 +167,25 @@ export function QuercusStep() {
                 </p>
               </div>
             )}
+            <div className="rounded-xl border border-border bg-muted/30 px-4 py-4">
+              <p className="text-sm font-semibold">Upload corrected files</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Re-export the CSV with the missing columns included, then process it here to replace the current data.
+              </p>
+              <div className="mt-3 space-y-3">
+                <FileUpload
+                  label="Upload corrected Quercus CSV files"
+                  multiple
+                  onFilesSelected={setReUploadFiles}
+                />
+                <Button
+                  onClick={() => handleProcess(reUploadFiles)}
+                  disabled={reUploadFiles.length === 0 || loading}
+                >
+                  {loading ? "Processing..." : "Process Corrected Files"}
+                </Button>
+              </div>
+            </div>
           </>
         )}
         <AuditSummary audit={result.auditInfo} />
@@ -199,7 +219,7 @@ export function QuercusStep() {
         multiple
         onFilesSelected={setFiles}
       />
-      <Button onClick={handleProcess} disabled={files.length === 0 || loading}>
+      <Button onClick={() => handleProcess()} disabled={files.length === 0 || loading}>
         {loading ? "Processing..." : "Process Quercus Files"}
       </Button>
       <AnimatePresence>

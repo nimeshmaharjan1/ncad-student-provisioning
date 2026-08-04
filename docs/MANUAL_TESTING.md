@@ -47,7 +47,12 @@ you upload the raw files. Baselines are immutable — never edit them.
      warnings exist). Before clicking, a note says "Processing finished —
      download the cleaned file when you're ready".
    - Amber warning toast and the "Recheck before continuing" tip.
-4. Click "Start over" → the upload area is fully empty (no preview, no
+4. In the same warning view, an **"Upload corrected files"** area is
+   available — no need to click "Start over". Upload the unmodified
+   `quercus_2025.csv` + `quercus_2026.csv` and click **"Process Corrected
+   Files"** → the warning disappears and the cleaned CSV auto-downloads
+   (happy path).
+5. Click "Start over" → the upload area is fully empty (no preview, no
    audit summary, no file names in the dropzone, no warnings) — a full
    remount clears all previous state.
 
