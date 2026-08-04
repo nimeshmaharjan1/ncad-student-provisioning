@@ -12,11 +12,13 @@ interface ColumnWarningProps {
  * Warning card shown after a successful Quercus upload when one or more
  * expected columns are missing from the uploaded files.
  *
- * This is a WARNING, not an error: processing completed and the download
- * happened. The message tells the user to recheck their Quercus export
- * settings before running downstream exports, because those exports
- * (LDAP, Canvas, Google, OpenAthens, Library) will reject the file or
- * produce incomplete output without these columns.
+ * This is a WARNING, not an error: processing completed and the cleaned file
+ * can still be downloaded (via the "Download cleaned file anyway" button — the
+ * auto-download is intentionally skipped when warnings exist). The message
+ * tells the user to recheck their Quercus export settings before running
+ * downstream exports, because those exports (LDAP, Canvas, Google, OpenAthens,
+ * Library) will reject the file or produce incomplete output without these
+ * columns.
  */
 export function ColumnWarning({ missingColumns, missingColumnsByFile }: ColumnWarningProps) {
   return (

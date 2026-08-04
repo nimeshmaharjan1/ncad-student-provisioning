@@ -32,15 +32,24 @@ you upload the raw files. Baselines are immutable — never edit them.
 
 ## Test 2 — Quercus missing-column warning (warns, never blocks)
 
-1. Copy `quercus_2025.csv`, delete the **`Date of Birth`** column (header +
-   all values), save as `2025-without-dob.csv`.
+1. Use the provided `quercus_2025_without_dob.csv` (a copy of
+   `quercus_2025.csv` with the **`Date of Birth`** column deleted) — or make
+   your own by copying `quercus_2025.csv` and deleting that column.
 2. Upload it **together with** the unmodified `quercus_2026.csv`.
 3. Expect:
-   - Processing succeeds — download happens, step still "done".
+   - Processing succeeds — the step is still "done" and the audit summary /
+     preview render, but **no automatic download** happens.
    - Amber warning card **"Processed with warnings — missing columns"**
-     with a row: `2025-without-dob.csv → Date of Birth` (the 2026 file is
-     absent from the list — it has all columns).
+     with a row: `quercus_2025_without_dob.csv → Date of Birth` (the 2026
+     file is absent from the list — it has all columns).
+   - A **"Download cleaned file anyway"** button below the card; clicking it
+     downloads the cleaned CSV (this is the only way to download when
+     warnings exist). Before clicking, a note says "Processing finished —
+     download the cleaned file when you're ready".
    - Amber warning toast and the "Recheck before continuing" tip.
+4. Click "Start over" → the upload area is fully empty (no preview, no
+   audit summary, no file names in the dropzone, no warnings) — a full
+   remount clears all previous state.
 
 More warning scenarios (each = copy the file, delete one column, upload alone):
 
@@ -100,6 +109,9 @@ rerun produces 0 new). Must end with `ALL PIPELINE SMOKE TESTS PASSED`.
 
 ## Gotchas
 
+- Test on **localhost:3000**, not the public onrender URL — the deployed app
+  runs older code until main is pushed and auto-deploy runs, so new features
+  (like the missing-column warning) will not appear there.
 - The Quercus upload warning (`Test 2`) is the WARN mode; export validation
   (`Test 3`) is the STRICT mode. Both read from the same registry — the
   warning tells you in advance exactly which exports will fail if you

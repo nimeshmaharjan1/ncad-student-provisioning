@@ -534,7 +534,7 @@ export default function GuidePage() {
           {[
             { icon: Upload, text: "Upload your CSV files", detail: 'Drag 2025_all_students.csv + 2026_all_students.csv into the upload area on the Quercus card' },
             { icon: Play, text: "Click Process Quercus Files", detail: "Wait for the progress bar to complete" },
-            { icon: FileText, text: "Review the results", detail: "Audit summary, preview table, and automatic download of the cleaned CSV" },
+            { icon: FileText, text: "Review the results", detail: "Audit summary and preview table; the cleaned CSV downloads automatically (if expected columns are missing, download it with the warning card's button instead)" },
             { icon: Download, text: "Keep the downloaded file", detail: "This is your processed Quercus data — save it for reference" },
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-3">

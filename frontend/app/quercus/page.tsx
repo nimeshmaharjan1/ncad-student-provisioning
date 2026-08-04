@@ -52,7 +52,7 @@ function Card({
 }
 
 export default function QuercusPage() {
-  const { step1Done, cleanedQuercusFile, uploadedFileNames, stepStatuses, setStepStatus, reset } = usePipeline()
+  const { step1Done, cleanedQuercusFile, uploadedFileNames, stepStatuses, setStepStatus, reset, resetCount } = usePipeline()
 
   useEffect(() => {
     document.title = "Provisioning Pipeline — NCAD Student Provisioning"
@@ -120,7 +120,7 @@ export default function QuercusPage() {
         title="Quercus — Source of Truth"
         description="Upload and clean student data. Feeds all pipeline exports below."
       >
-        <QuercusStep />
+        <QuercusStep key={resetCount} />
       </Card>
 
       {/* Downstream export cards — visible only after Quercus is processed */}

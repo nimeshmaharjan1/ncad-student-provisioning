@@ -109,6 +109,14 @@ async function downloadExport(url: string, formData: FormData): Promise<{ blob: 
   return { blob, filename }
 }
 
+export function downloadQuercus(files: File[]): Promise<{ blob: Blob; filename: string }> {
+  const formData = new FormData()
+  for (const f of files) {
+    formData.append("files", f)
+  }
+  return downloadExport("/quercus/download", formData)
+}
+
 export function downloadLdapExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
   const formData = new FormData()
   formData.append("baseline", baseline)

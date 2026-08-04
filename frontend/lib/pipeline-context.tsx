@@ -21,6 +21,7 @@ interface PipelineState {
     uploadedFileNames?: string[]
   }) => void
   reset: () => void
+  resetCount: number
 }
 
 const PipelineContext = createContext<PipelineState | null>(null)
@@ -33,6 +34,7 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
   const [auditInfo, setAuditInfo] = useState<AuditInfo | null>(null)
   const [uploadedFileNames, setUploadedFileNames] = useState<string[]>([])
   const [stepStatuses, setStepStatuses] = useState<Record<string, StepStatus>>({})
+  const [resetCount, setResetCount] = useState(0)
 
   useEffect(() => {
     const saved = loadPipelineState()
@@ -74,6 +76,7 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
     setAuditInfo(null)
     setUploadedFileNames([])
     setStepStatuses({})
+    setResetCount((c) => c + 1)
     clearStorage()
   }, [])
 
@@ -89,6 +92,7 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
         setStepStatus,
         setQuercusData,
         reset,
+        resetCount,
       }}
     >
       {children}

@@ -9,10 +9,35 @@ import { AuditSummary } from "@/components/audit-summary"
 import { ProcessingProgress } from "@/components/processing-progress"
 import { ExportError } from "@/components/export-error"
 import { ColumnWarning } from "@/components/column-warning"
-import { uploadQuercus, type AuditInfo, type MissingColumnsByFile } from "@/lib/api"
+import { uploadQuercus, downloadQuercus, type AuditInfo, type MissingColumnsByFile } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
 import { useToast } from "@/lib/toast-context"
 import { addExportHistoryEntry } from "@/lib/local-storage"
+import { Download } from "lucide-react"
+
+function saveBlobDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function DownloadAnywayButton({
+  downloading,
+  onDownload,
+}: {
+  downloading: boolean
+  onDownload: () => void
+}) {
+  return (
+    <Button onClick={onDownload} disabled={downloading} variant="secondary" size="sm">
+      <Download className="size-4" />
+      {downloading ? "Preparing download..." : "Download cleaned file anyway"}
+    </Button>
+  )
+}
 
 export function QuercusStep() {
   const { step1Done, setQuercusData, setStepStatus } = usePipeline()
@@ -22,10 +47,37 @@ export function QuercusStep() {
   const [error, setError] = useState<string | null>(null)
   const [missingColumns, setMissingColumns] = useState<string[]>([])
   const [missingColumnsByFile, setMissingColumnsByFile] = useState<MissingColumnsByFile[]>([])
+  const [processedFiles, setProcessedFiles] = useState<File[]>([])
+  const [downloading, setDownloading] = useState(false)
+  const [downloaded, setDownloaded] = useState(false)
   const [result, setResult] = useState<{
     sampleRows: Record<string, unknown>[]
     auditInfo: AuditInfo
   } | null>(null)
+
+  const handleDownloadNow = async () => {
+    if (processedFiles.length === 0) return
+    setDownloading(true)
+    try {
+      const { blob, filename } = await downloadQuercus(processedFiles)
+      saveBlobDownload(blob, filename)
+      setDownloaded(true)
+      addToast({
+        type: "success",
+        title: "Cleaned file downloaded",
+        description: filename,
+      })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to download the cleaned file"
+      addToast({
+        type: "error",
+        title: "Download failed",
+        description: message,
+      })
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   const handleProcess = async () => {
     if (files.length === 0) return
@@ -33,8 +85,10 @@ export function QuercusStep() {
     setError(null)
     setMissingColumns([])
     setMissingColumnsByFile([])
+    setDownloaded(false)
     try {
       const data = await uploadQuercus(files)
+      setProcessedFiles(files)
       setResult({ sampleRows: data.sampleRows, auditInfo: data.auditInfo })
       setMissingColumns(data.missingColumns)
       setMissingColumnsByFile(data.missingColumnsByFile)
@@ -44,12 +98,6 @@ export function QuercusStep() {
         auditInfo: data.auditInfo,
         uploadedFileNames: data.uploadedFiles,
       })
-      const url = URL.createObjectURL(data.cleanedQuercusFile)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = data.cleanedQuercusFile.name
-      a.click()
-      URL.revokeObjectURL(url)
       setStepStatus("quercus", "done")
       addExportHistoryEntry({
         ts: new Date().toISOString(),
@@ -66,6 +114,9 @@ export function QuercusStep() {
           duration: 8000,
         })
       } else {
+        const { blob, filename } = await downloadQuercus(files)
+        saveBlobDownload(blob, filename)
+        setDownloaded(true)
         addToast({
           type: "success",
           title: "Quercus data processed",
@@ -95,13 +146,27 @@ export function QuercusStep() {
   }
 
   if (step1Done && result) {
+    const hasWarnings = missingColumns.length > 0
     return (
       <div className="space-y-4">
-        {missingColumns.length > 0 && (
-          <ColumnWarning
-            missingColumns={missingColumns}
-            missingColumnsByFile={missingColumnsByFile}
-          />
+        {hasWarnings && (
+          <>
+            <ColumnWarning
+              missingColumns={missingColumns}
+              missingColumnsByFile={missingColumnsByFile}
+            />
+            {!downloaded && (
+              <div className="flex flex-wrap items-center gap-3">
+                <DownloadAnywayButton
+                  downloading={downloading}
+                  onDownload={handleDownloadNow}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Processing finished — download the cleaned file when you're ready.
+                </p>
+              </div>
+            )}
+          </>
         )}
         <AuditSummary audit={result.auditInfo} />
         <div>
@@ -110,8 +175,18 @@ export function QuercusStep() {
           </p>
           <DataTable rows={result.sampleRows} />
         </div>
-        <p className="text-sm text-green-600 dark:text-green-400">
-          Quercus data processed and downloaded.
+        <p
+          className={
+            hasWarnings
+              ? "text-sm text-amber-600 dark:text-amber-400"
+              : "text-sm text-green-600 dark:text-green-400"
+          }
+        >
+          {hasWarnings
+            ? downloaded
+              ? "Cleaned file downloaded — review the warnings above before continuing."
+              : "Quercus data processed — review the warnings above, then download the cleaned file."
+            : "Quercus data processed and downloaded."}
         </p>
       </div>
     )
@@ -144,10 +219,18 @@ export function QuercusStep() {
       {result && !loading && (
         <>
           {missingColumns.length > 0 && (
-            <ColumnWarning
-              missingColumns={missingColumns}
-              missingColumnsByFile={missingColumnsByFile}
-            />
+            <>
+              <ColumnWarning
+                missingColumns={missingColumns}
+                missingColumnsByFile={missingColumnsByFile}
+              />
+              {!downloaded && (
+                <DownloadAnywayButton
+                  downloading={downloading}
+                  onDownload={handleDownloadNow}
+                />
+              )}
+            </>
           )}
           <AuditSummary audit={result.auditInfo} />
           <div>
