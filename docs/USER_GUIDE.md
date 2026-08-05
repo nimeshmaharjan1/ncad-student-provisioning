@@ -170,9 +170,11 @@ Go to **Staff** in the top navigation and open the **Library** tab.
 
 **In the system:**
 
-1. Fill in one row per staff member: name, library card number, and an
-   optional gender (blank = `UNKNOWN`)
-2. Pick the **registration date** (required) and an optional **expiration date**
+1. Fill in one row per staff member: name, library card number, optional
+   gender (blank = `UNKNOWN`), that person's **registration date** and an
+   optional **expiration date**
+2. Leave the registration date blank if unknown — the row is still generated
+   with a warning so it can be completed before upload
 3. Click **Generate rows** — each row becomes a library patron row
 4. Review the preview table
 5. Click **Download TXT (SFTP)** — get `YYYYMMDDlibrary.txt`, tab-delimited and
@@ -181,20 +183,21 @@ Go to **Staff** in the top navigation and open the **Library** tab.
 
 **How a row is built (46-column library schema, same as the student export):**
 
-| Typed name | Given name | Family name | Barcode | idAtSource / email | Category |
-| --- | --- | --- | --- | --- | --- |
-| `Cian Delaney Byrne` | Cian | Delaney Byrne | `26132290` | `delaneybyrnec@staff.ncad.ie` | FTS |
-| `Roisin Quigley` | Roisin | Quigley | `12345678` | `quigleyr@staff.ncad.ie` | FTS |
+| Typed name | Given name | Family name | Barcode | Registration date | Expiration date | idAtSource / email | Category |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `Cian Delaney Byrne` | Cian | Delaney Byrne | `26132290` | `2026-07-14` | | `delaneybyrnec@staff.ncad.ie` | FTS |
+| `Roisin Quigley` | Roisin | Quigley | `12345678` | `2026-09-01` | `2027-01-30` | `quigleyr@staff.ncad.ie` | FTS |
 
 - Fixed values: `institutionId = 46722`, `sourceSystem = https://idp.ncad.ie/idp/shibboleth`,
   `borrowerCategory = FTS`, `homeBranch = 266006`, `gender = UNKNOWN` when left blank
-- `circRegistrationDate` and `oclcExpirationDate` come from the date pickers
-  and are always written as `YYYY-MM-DD`
+- `circRegistrationDate` and `oclcExpirationDate` are taken from each row's
+  date pickers and always written as `YYYY-MM-DD`
 - The **CSV is for review only** — Excel / Google Sheets may re-format dates
   to their platform defaults. The **TXT keeps `YYYY-MM-DD` untouched** and is
   the file to upload via SFTP
-- Missing card number or missing last name → the row is still generated, with
-  a warning telling you to complete it before the SFTP upload
+- Missing card number, missing last name or missing registration date → the
+  row is still generated, with a warning telling you to complete it before the
+  SFTP upload
 - Nothing is stored — rows are generated from what you type and are gone when you leave the page
 
 ---

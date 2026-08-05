@@ -134,25 +134,25 @@ rerun produces 0 new). Must end with `ALL PIPELINE SMOKE TESTS PASSED`.
 ## Test 8 — Library staff tool
 
 - Open **Staff** (top navigation) → **Library** tab.
-- Add a row: name `Cian Delaney Byrne`, card number `26132290`, gender `Male`.
-  Pick a registration date (e.g. today) and an expiration date → **Generate rows**.
+- Add a row: name `Cian Delaney Byrne`, card number `26132290`, gender `Male`,
+  registration date `2026-07-14`, expiration date `2028-07-13` → **Generate rows**.
   - Preview must show: given `Cian`, family `Delaney Byrne`, gender `Male`,
     institutionId `46722`, barcode `26132290`, idAtSource `delaneybyrnec`,
     sourceSystem `https://idp.ncad.ie/idp/shibboleth`, borrowerCategory `FTS`,
-    `circRegistrationDate` = the picked date in `YYYY-MM-DD`, `oclcExpirationDate` =
-    the picked date, homeBranch `266006`, email `delaneybyrnec@staff.ncad.ie`,
-    username blank.
-- Leave **gender blank** on a second row (`Roisin Quigley`, no card number) →
-  generate → gender shows `UNKNOWN`; the amber warning card + warning toast
-  appear ("no library card number").
-- Single-word name `Liam` with a card number → generated with a warning
-  (blank last name); email `liam@staff.ncad.ie`.
+    `circRegistrationDate` = `2026-07-14`, `oclcExpirationDate` = `2028-07-13`,
+    homeBranch `266006`, email `delaneybyrnec@staff.ncad.ie`, username blank.
+- Add a second row `Roisin Quigley`, card number `12345678`, no gender,
+  registration date `2026-09-01`, no expiration date → generate →
+  gender shows `UNKNOWN`; `circRegistrationDate = 2026-09-01`,
+  `oclcExpirationDate` blank, email `quigleyr@staff.ncad.ie`.
+- Missing values warn without blocking: a row with no card number, and a
+  single-word name `Liam` with no registration date → both rows are still
+  generated, `circRegistrationDate` blank for Liam, email `liam@staff.ncad.ie`; the
+  amber warning card + warning toast list what's missing.
 - Click **Download CSV (review)** → downloads `YYYYMMDD_library.csv` with the
   46-column header and one row per staff member.
 - Click **Download TXT (SFTP)** → downloads `YYYYMMDDlibrary.txt`, tab-delimited
   (open in Notepad to confirm tabs and `YYYY-MM-DD` dates are intact).
-- Missing registration date + generate → error toast "Registration date
-  required", no request.
 - Row without a name + generate → error toast "No staff members entered".
 - Remove-row button is disabled when only one row remains; **Add row** appends a blank row.
 

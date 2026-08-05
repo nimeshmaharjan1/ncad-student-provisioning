@@ -16,19 +16,26 @@ class LibraryStaffPerson(BaseModel):
     name: str
     barcode: str = ""
     gender: str = ""
-
-
-class LibraryStaffRequest(BaseModel):
-    people: list[LibraryStaffPerson] = Field(default_factory=list)
     registration_date: str = ""
     expiration_date: str = ""
 
 
+class LibraryStaffRequest(BaseModel):
+    people: list[LibraryStaffPerson] = Field(default_factory=list)
+
+
 def _rows_or_exception(request: LibraryStaffRequest):
     return build_library_staff_rows(
-        [(person.name, person.barcode, person.gender) for person in request.people],
-        request.registration_date,
-        request.expiration_date,
+        [
+            (
+                person.name,
+                person.barcode,
+                person.gender,
+                person.registration_date,
+                person.expiration_date,
+            )
+            for person in request.people
+        ]
     )
 
 

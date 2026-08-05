@@ -18,6 +18,8 @@ interface EditorRow {
   name: string
   barcode: string
   gender: string
+  registrationDate: string
+  expirationDate: string
 }
 
 let nextRowId = 1
@@ -31,11 +33,18 @@ function saveBlobDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+const emptyRow = (): EditorRow => ({
+  id: nextRowId++,
+  name: "",
+  barcode: "",
+  gender: "",
+  registrationDate: "",
+  expirationDate: "",
+})
+
 export function StaffLibraryStep() {
   const { addToast } = useToast()
-  const [rows, setRows] = useState<EditorRow[]>([{ id: 0, name: "", barcode: "", gender: "" }])
-  const [registrationDate, setRegistrationDate] = useState("")
-  const [expirationDate, setExpirationDate] = useState("")
+  const [rows, setRows] = useState<EditorRow[]>([emptyRow()])
   const [generated, setGenerated] = useState<GenerateLibraryStaffResult | null>(null)
   const [generatedPeople, setGeneratedPeople] = useState<LibraryStaffPerson[]>([])
   const [generating, setGenerating] = useState(false)
@@ -47,7 +56,7 @@ export function StaffLibraryStep() {
   }
 
   const addRow = () => {
-    setRows((prev) => [...prev, { id: nextRowId++, name: "", barcode: "", gender: "" }])
+    setRows((prev) => [...prev, emptyRow()])
   }
 
   const removeRow = (id: number) => {
@@ -56,7 +65,13 @@ export function StaffLibraryStep() {
 
   const validPeople = rows
     .filter((row) => row.name.trim() !== "")
-    .map((row) => ({ name: row.name.trim(), barcode: row.barcode.trim(), gender: row.gender.trim() }))
+    .map((row) => ({
+      name: row.name.trim(),
+      barcode: row.barcode.trim(),
+      gender: row.gender.trim(),
+      registrationDate: row.registrationDate,
+      expirationDate: row.expirationDate,
+    }))
 
   const handleGenerate = async () => {
     if (validPeople.length === 0) {
@@ -67,24 +82,16 @@ export function StaffLibraryStep() {
       })
       return
     }
-    if (!registrationDate) {
-      addToast({
-        type: "error",
-        title: "Registration date required",
-        description: "Pick the registration date — it becomes circRegistrationDate.",
-      })
-      return
-    }
     setGenerating(true)
     try {
-      const result = await generateLibraryStaff(validPeople, registrationDate, expirationDate)
+      const result = await generateLibraryStaff(validPeople)
       setGenerated(result)
       setGeneratedPeople(validPeople)
       if (result.warnings.length > 0) {
         addToast({
           type: "warning",
           title: `${result.count} row${result.count === 1 ? "" : "s"} generated with warnings`,
-          description: "One or more rows are missing a barcode or last name. Review the warnings below.",
+          description: "One or more rows are missing a barcode, last name or registration date. Review the warnings below.",
           duration: 8000,
         })
       } else {
@@ -110,11 +117,7 @@ export function StaffLibraryStep() {
     if (generatedPeople.length === 0) return
     setDownloadingCsv(true)
     try {
-      const { blob, filename } = await downloadLibraryStaffExport(
-        generatedPeople,
-        registrationDate,
-        expirationDate,
-      )
+      const { blob, filename } = await downloadLibraryStaffExport(generatedPeople)
       saveBlobDownload(blob, filename)
       addToast({
         type: "success",
@@ -137,11 +140,7 @@ export function StaffLibraryStep() {
     if (generatedPeople.length === 0) return
     setDownloadingTxt(true)
     try {
-      const { blob, filename } = await downloadLibraryStaffText(
-        generatedPeople,
-        registrationDate,
-        expirationDate,
-      )
+      const { blob, filename } = await downloadLibraryStaffText(generatedPeople)
       saveBlobDownload(blob, filename)
       addToast({
         type: "success",
@@ -171,6 +170,8 @@ export function StaffLibraryStep() {
                 <th className="px-3 py-2 font-medium text-muted-foreground">Name</th>
                 <th className="px-3 py-2 font-medium text-muted-foreground">Library card number</th>
                 <th className="px-3 py-2 font-medium text-muted-foreground">Gender (optional)</th>
+                <th className="px-3 py-2 font-medium text-muted-foreground">Registration date</th>
+                <th className="px-3 py-2 font-medium text-muted-foreground">Expiration date (optional)</th>
                 <th className="w-10 px-3 py-2" />
               </tr>
             </thead>
@@ -201,6 +202,22 @@ export function StaffLibraryStep() {
                       className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </td>
+                  <td className="px-3 py-1.5">
+                    <input
+                      type="date"
+                      value={row.registrationDate}
+                      onChange={(e) => updateRow(row.id, "registrationDate", e.target.value)}
+                      className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <input
+                      type="date"
+                      value={row.expirationDate}
+                      onChange={(e) => updateRow(row.id, "expirationDate", e.target.value)}
+                      className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </td>
                   <td className="px-3 py-1.5 text-right">
                     <Button
                       size="icon-sm"
@@ -228,41 +245,8 @@ export function StaffLibraryStep() {
             delaneybyrnec@staff.ncad.ie
           </code>
           ). Borrower category is always <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">FTS</code>.
+          Registration and expiration dates apply to each staff member separately.
         </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <label htmlFor="lib-reg-date" className="block text-sm font-medium">
-            Registration date <span className="text-destructive">*</span>
-          </label>
-          <input
-            id="lib-reg-date"
-            type="date"
-            value={registrationDate}
-            onChange={(e) => setRegistrationDate(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          <p className="text-xs text-muted-foreground">
-            Becomes <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">circRegistrationDate</code>.
-          </p>
-        </div>
-        <div className="space-y-1.5">
-          <label htmlFor="lib-exp-date" className="block text-sm font-medium">
-            Expiration date (optional)
-          </label>
-          <input
-            id="lib-exp-date"
-            type="date"
-            value={expirationDate}
-            onChange={(e) => setExpirationDate(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          <p className="text-xs text-muted-foreground">
-            Becomes <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">oclcExpirationDate</code>.{" "}
-            Left blank if unset.
-          </p>
-        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -303,7 +287,7 @@ export function StaffLibraryStep() {
             </div>
             <div className="space-y-1.5">
               <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                Generated with warnings — missing barcodes or last names
+                Generated with warnings — missing barcodes, last names or registration dates
               </p>
               {generated.warnings.map((warning, i) => (
                 <p key={i} className="text-xs text-amber-700 dark:text-amber-400">

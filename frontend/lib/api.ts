@@ -243,6 +243,8 @@ export interface LibraryStaffPerson {
   name: string
   barcode: string
   gender: string
+  registrationDate: string
+  expirationDate: string
 }
 
 export interface GenerateLibraryStaffResult {
@@ -251,24 +253,22 @@ export interface GenerateLibraryStaffResult {
   warnings: string[]
 }
 
-function libraryStaffPayload(
-  people: LibraryStaffPerson[],
-  registrationDate: string,
-  expirationDate: string,
-) {
+function libraryStaffPayload(people: LibraryStaffPerson[]) {
   return {
-    people,
-    registration_date: registrationDate,
-    expiration_date: expirationDate,
+    people: people.map((person) => ({
+      name: person.name,
+      barcode: person.barcode,
+      gender: person.gender,
+      registration_date: person.registrationDate,
+      expiration_date: person.expirationDate,
+    })),
   }
 }
 
 export function generateLibraryStaff(
   people: LibraryStaffPerson[],
-  registrationDate: string,
-  expirationDate: string,
 ): Promise<GenerateLibraryStaffResult> {
-  return postJson("/staff/library/generate", libraryStaffPayload(people, registrationDate, expirationDate))
+  return postJson("/staff/library/generate", libraryStaffPayload(people))
 }
 
 async function downloadJsonExport(
@@ -300,24 +300,20 @@ async function downloadJsonExport(
 
 export function downloadLibraryStaffExport(
   people: LibraryStaffPerson[],
-  registrationDate: string,
-  expirationDate: string,
 ): Promise<{ blob: Blob; filename: string }> {
   return downloadJsonExport(
     "/staff/library/export",
-    libraryStaffPayload(people, registrationDate, expirationDate),
+    libraryStaffPayload(people),
     "library.csv",
   )
 }
 
 export function downloadLibraryStaffText(
   people: LibraryStaffPerson[],
-  registrationDate: string,
-  expirationDate: string,
 ): Promise<{ blob: Blob; filename: string }> {
   return downloadJsonExport(
     "/staff/library/export-text",
-    libraryStaffPayload(people, registrationDate, expirationDate),
+    libraryStaffPayload(people),
     "library.txt",
   )
 }
