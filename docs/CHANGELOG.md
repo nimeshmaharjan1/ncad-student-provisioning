@@ -10,6 +10,14 @@
 - Output uses the same 11-column Canvas schema as the student pipeline; nothing is stored server-side
 - Added Canvas staff assertions to `backend/samples/test_pipelines.py`
 
+### Library Staff Tool
+- Added `POST /staff/library/generate` (preview JSON), `POST /staff/library/export` (review CSV) and `POST /staff/library/export-text` (tab-delimited `.txt` for SFTP) endpoints
+- New **Library** tab on the `/staff` page: row editor with name, library card number (barcode) and optional gender per staff member; registration date picker (required) + optional expiration date picker
+- Output reuses the 46-column library schema from the student pipeline: `borrowerCategory = FTS`, `idAtSource` = login, `emailAddress` = `login@staff.ncad.ie`, `gender` = typed value or `UNKNOWN` when blank, dates always written `YYYY-MM-DD`
+- Downloads: `YYYYMMDD_library.csv` (for review — spreadsheet apps may re-format dates) and `YYYYMMDDlibrary.txt` (tab-delimited, dates untouched, ready for SFTP)
+- Missing barcode or missing last name → row generated with a warning, so it can be completed before the SFTP upload
+- Added Library staff assertions to `backend/samples/test_pipelines.py`
+
 ## 2026-08-04
 
 ### UX & Privacy

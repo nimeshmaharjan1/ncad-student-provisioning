@@ -93,6 +93,48 @@ assert staff1.iloc[0]["last_name"] == ""
 assert staff1.iloc[0]["login_id"] == "cian@staff.ncad.ie", f"Expected cian@staff.ncad.ie; got {staff1.iloc[0]['login_id']}"
 assert staff1.iloc[0]["sortable_name"] == "Cian"
 
+# --- LIBRARY STAFF ---
+from app.services.library_staff_service import build_library_staff_rows
+from app.services.library_service import LIBRARY_OUTPUT_COLUMNS
+people = [
+    ("Cian Delaney Byrne", "26132290", "Male"),
+    ("Roisin Quigley", "", ""),
+    ("Liam", "12345678", ""),
+]
+lib_staff, lib_warnings = build_library_staff_rows(
+    people, "2026-08-05", "2028-08-05"
+)
+print(f"\nLibrary staff: {len(lib_staff)} rows, {len(lib_warnings)} warnings")
+assert len(lib_staff) == 3, f"Expected 3 library staff rows; got {len(lib_staff)}"
+assert list(lib_staff.columns) == LIBRARY_OUTPUT_COLUMNS, "Library staff columns must match LIBRARY_OUTPUT_COLUMNS"
+assert lib_staff.iloc[0]["givenName"] == "Cian"
+assert lib_staff.iloc[0]["familyName"] == "Delaney Byrne"
+assert lib_staff.iloc[0]["gender"] == "Male"
+assert lib_staff.iloc[0]["institutionId"] == "46722"
+assert lib_staff.iloc[0]["barcode"] == "26132290"
+assert lib_staff.iloc[0]["idAtSource"] == "delaneybyrnec"
+assert lib_staff.iloc[0]["sourceSystem"] == "https://idp.ncad.ie/idp/shibboleth"
+assert lib_staff.iloc[0]["borrowerCategory"] == "FTS"
+assert lib_staff.iloc[0]["circRegistrationDate"] == "2026-08-05"
+assert lib_staff.iloc[0]["oclcExpirationDate"] == "2028-08-05"
+assert lib_staff.iloc[0]["homeBranch"] == "266006"
+assert lib_staff.iloc[0]["emailAddress"] == "delaneybyrnec@staff.ncad.ie"
+assert lib_staff.iloc[0]["username"] == ""
+# Blank gender -> UNKNOWN, missing barcode -> warning
+assert lib_staff.iloc[1]["gender"] == "UNKNOWN", "Blank gender must become UNKNOWN"
+assert lib_staff.iloc[1]["emailAddress"] == "quigleyr@staff.ncad.ie"
+# Single-word name -> warning; no-surname login = the name itself
+assert len(lib_warnings) == 2, f"Expected 2 warnings (no barcode + no last name); got {lib_warnings}"
+assert lib_staff.iloc[2]["emailAddress"] == "liam@staff.ncad.ie"
+assert lib_staff.iloc[2]["barcode"] == "12345678"
+
+# Bad date -> rejected
+try:
+    build_library_staff_rows(people, "05-08-2026")
+    raise AssertionError("Expected ValueError for non-YYYY-MM-DD registration date")
+except ValueError:
+    pass
+
 print("\n" + "=" * 60)
 print("ALL PIPELINE SMOKE TESTS PASSED")
 print("=" * 60)

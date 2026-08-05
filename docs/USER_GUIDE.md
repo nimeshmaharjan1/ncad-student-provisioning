@@ -163,6 +163,42 @@ Go to **Staff** in the top navigation and open the **Canvas** tab.
 
 ---
 
+#### Library Staff
+
+A tool for **staff library accounts** — not part of the student pipeline.
+Go to **Staff** in the top navigation and open the **Library** tab.
+
+**In the system:**
+
+1. Fill in one row per staff member: name, library card number, and an
+   optional gender (blank = `UNKNOWN`)
+2. Pick the **registration date** (required) and an optional **expiration date**
+3. Click **Generate rows** — each row becomes a library patron row
+4. Review the preview table
+5. Click **Download TXT (SFTP)** — get `YYYYMMDDlibrary.txt`, tab-delimited and
+   ready to upload via SFTP. Click **Download CSV (review)** if you want to
+   check the data in a spreadsheet first
+
+**How a row is built (46-column library schema, same as the student export):**
+
+| Typed name | Given name | Family name | Barcode | idAtSource / email | Category |
+| --- | --- | --- | --- | --- | --- |
+| `Cian Delaney Byrne` | Cian | Delaney Byrne | `26132290` | `delaneybyrnec@staff.ncad.ie` | FTS |
+| `Roisin Quigley` | Roisin | Quigley | `12345678` | `quigleyr@staff.ncad.ie` | FTS |
+
+- Fixed values: `institutionId = 46722`, `sourceSystem = https://idp.ncad.ie/idp/shibboleth`,
+  `borrowerCategory = FTS`, `homeBranch = 266006`, `gender = UNKNOWN` when left blank
+- `circRegistrationDate` and `oclcExpirationDate` come from the date pickers
+  and are always written as `YYYY-MM-DD`
+- The **CSV is for review only** — Excel / Google Sheets may re-format dates
+  to their platform defaults. The **TXT keeps `YYYY-MM-DD` untouched** and is
+  the file to upload via SFTP
+- Missing card number or missing last name → the row is still generated, with
+  a warning telling you to complete it before the SFTP upload
+- Nothing is stored — rows are generated from what you type and are gone when you leave the page
+
+---
+
 #### Google Workspace
 
 **In the system:**

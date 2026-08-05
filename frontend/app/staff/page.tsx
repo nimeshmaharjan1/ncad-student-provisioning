@@ -4,13 +4,14 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Users } from "lucide-react"
 import { StaffCanvasStep } from "@/components/staff-canvas-step"
+import { StaffLibraryStep } from "@/components/staff-library-step"
 import { cn } from "@/lib/utils"
 
 type ToolId = "canvas" | "library"
 
 const tools: { id: ToolId; label: string; available: boolean }[] = [
   { id: "canvas", label: "Canvas", available: true },
-  { id: "library", label: "Library", available: false },
+  { id: "library", label: "Library", available: true },
 ]
 
 export default function StaffPage() {
@@ -75,11 +76,7 @@ export default function StaffPage() {
 
         <div className="px-5 py-4">
           {active === "canvas" && <StaffCanvasStep />}
-          {active === "library" && (
-            <p className="text-sm text-muted-foreground">
-              The Library staff tool will appear here.
-            </p>
-          )}
+          {active === "library" && <StaffLibraryStep />}
         </div>
       </div>
     </div>

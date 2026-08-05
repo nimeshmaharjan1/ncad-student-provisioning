@@ -238,3 +238,86 @@ export async function downloadCanvasStaffExport(
   const blob = await res.blob()
   return { blob, filename }
 }
+
+export interface LibraryStaffPerson {
+  name: string
+  barcode: string
+  gender: string
+}
+
+export interface GenerateLibraryStaffResult {
+  rows: Record<string, string>[]
+  count: number
+  warnings: string[]
+}
+
+function libraryStaffPayload(
+  people: LibraryStaffPerson[],
+  registrationDate: string,
+  expirationDate: string,
+) {
+  return {
+    people,
+    registration_date: registrationDate,
+    expiration_date: expirationDate,
+  }
+}
+
+export function generateLibraryStaff(
+  people: LibraryStaffPerson[],
+  registrationDate: string,
+  expirationDate: string,
+): Promise<GenerateLibraryStaffResult> {
+  return postJson("/staff/library/generate", libraryStaffPayload(people, registrationDate, expirationDate))
+}
+
+async function downloadJsonExport(
+  url: string,
+  body: unknown,
+  fallbackFilename: string,
+): Promise<{ blob: Blob; filename: string }> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    let errorBody: ExportErrorDetail | null = null
+    try {
+      errorBody = await res.json()
+    } catch {
+      // response body isn't JSON — fall back to status-only error
+    }
+    const message = errorBody?.detail ?? `Export failed: ${res.status}`
+    throw new ExportError(res.status, message, errorBody)
+  }
+  const disposition = res.headers.get("Content-Disposition") ?? ""
+  const match = disposition.match(/filename="?(.+?)"?$/)
+  const filename = match ? match[1] : fallbackFilename
+  const blob = await res.blob()
+  return { blob, filename }
+}
+
+export function downloadLibraryStaffExport(
+  people: LibraryStaffPerson[],
+  registrationDate: string,
+  expirationDate: string,
+): Promise<{ blob: Blob; filename: string }> {
+  return downloadJsonExport(
+    "/staff/library/export",
+    libraryStaffPayload(people, registrationDate, expirationDate),
+    "library.csv",
+  )
+}
+
+export function downloadLibraryStaffText(
+  people: LibraryStaffPerson[],
+  registrationDate: string,
+  expirationDate: string,
+): Promise<{ blob: Blob; filename: string }> {
+  return downloadJsonExport(
+    "/staff/library/export-text",
+    libraryStaffPayload(people, registrationDate, expirationDate),
+    "library.txt",
+  )
+}
