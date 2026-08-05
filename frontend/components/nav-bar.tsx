@@ -10,6 +10,7 @@ const links = [
   { href: "/library", label: "Library" },
   { href: "/about", label: "About" },
   { href: "/guide", label: "Guide" },
+  { href: "/docs", label: "Docs" },
 ]
 
 export function NavBar() {

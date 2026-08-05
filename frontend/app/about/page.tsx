@@ -291,18 +291,25 @@ export default function AboutPage() {
             Full User Guide
           </Link>
           <Link
-            href="https://github.com/nimeshmaharjan1/ncad-student-provisioning/blob/main/docs/MANUAL_TESTING.md"
+            href="/docs/manual-testing"
             className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
           >
-            <ExternalLink className="size-4" />
+            <FileText className="size-4" />
             Manual Testing Guide
           </Link>
           <Link
-            href="https://github.com/nimeshmaharjan1/ncad-student-provisioning/blob/main/docs/AUTOMATION_ROADMAP.md"
+            href="/docs/automation-roadmap"
             className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
           >
-            <ExternalLink className="size-4" />
+            <FileText className="size-4" />
             Automation Roadmap
+          </Link>
+          <Link
+            href="/docs"
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+          >
+            <BookOpen className="size-4" />
+            All Documentation
           </Link>
         </div>
       </section>

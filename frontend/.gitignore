@@ -15,6 +15,9 @@
 /.next/
 /out/
 
+# docs synced from ../docs by scripts/sync-docs.mjs (predev/prebuild)
+/docs/
+
 # production
 /build
 
