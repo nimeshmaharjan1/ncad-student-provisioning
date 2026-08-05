@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-05
+
+### Canvas Staff Tool
+- Added `POST /staff/canvas/generate` (preview JSON) and `POST /staff/canvas/export` (CSV download) endpoints
+- New `/staff` page with tool tabs: type staff names one per line, preview the Canvas rows, download `YYYYMMDD_canvas_staff.csv`
+- Login rule: surname(s) + first initial, letters only, lowercased (e.g. `Cian Delaney Byrne` → `delaneybyrnec@staff.ncad.ie`)
+- Single-word names (no last name) are generated with a warning and blank last name (login = name lowercased) instead of being rejected
+- Output uses the same 11-column Canvas schema as the student pipeline; nothing is stored server-side
+- Added Canvas staff assertions to `backend/samples/test_pipelines.py`
+
 ## 2026-08-04
 
 ### UX & Privacy

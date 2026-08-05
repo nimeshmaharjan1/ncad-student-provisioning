@@ -170,3 +170,71 @@ export async function downloadLibraryExport(files: File[]): Promise<{ blob: Blob
   const blob = await res.blob()
   return { blob, filename }
 }
+
+export interface CanvasStaffRow {
+  user_id: string
+  integration_id: string
+  login_id: string
+  password: string
+  first_name: string
+  last_name: string
+  full_name: string
+  sortable_name: string
+  short_name: string
+  email: string
+  status: string
+}
+
+export interface GenerateCanvasStaffResult {
+  rows: CanvasStaffRow[]
+  count: number
+  warnings: string[]
+}
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    let errorBody: ExportErrorDetail | null = null
+    try {
+      errorBody = await res.json()
+    } catch {
+      // response body isn't JSON — fall back to status-only error
+    }
+    const message = errorBody?.detail ?? `Request failed: ${res.status}`
+    throw new ExportError(res.status, message, errorBody)
+  }
+  return res.json()
+}
+
+export function generateCanvasStaff(names: string[]): Promise<GenerateCanvasStaffResult> {
+  return postJson("/staff/canvas/generate", { names })
+}
+
+export async function downloadCanvasStaffExport(
+  names: string[],
+): Promise<{ blob: Blob; filename: string }> {
+  const res = await fetch("/staff/canvas/export", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ names }),
+  })
+  if (!res.ok) {
+    let errorBody: ExportErrorDetail | null = null
+    try {
+      errorBody = await res.json()
+    } catch {
+      // response body isn't JSON — fall back to status-only error
+    }
+    const message = errorBody?.detail ?? `Canvas staff export failed: ${res.status}`
+    throw new ExportError(res.status, message, errorBody)
+  }
+  const disposition = res.headers.get("Content-Disposition") ?? ""
+  const match = disposition.match(/filename="?(.+?)"?$/)
+  const filename = match ? match[1] : "canvas_staff.csv"
+  const blob = await res.blob()
+  return { blob, filename }
+}

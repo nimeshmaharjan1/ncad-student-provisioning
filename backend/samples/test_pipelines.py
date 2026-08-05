@@ -65,6 +65,34 @@ new_ldap2, _, audit2 = generate_ldap_comparison_exports(updated_ldap, cleaned)
 print(f"\nRerun test (LDAP): {audit2['new_students_count']} new -> should be 0")
 assert audit2['new_students_count'] == 0, f"Rerun should produce 0 new students; got {audit2['new_students_count']}"
 
+# --- CANVAS STAFF ---
+from app.services.canvas_staff_service import build_canvas_staff_rows
+staff, staff_warnings = build_canvas_staff_rows(["Cian Delaney Byrne", "Roisin Quigley"])
+print(f"\nCanvas staff: {len(staff)} rows")
+assert len(staff) == 2, f"Expected 2 staff rows; got {len(staff)}"
+assert staff_warnings == [], f"Expected no warnings for full names; got {staff_warnings}"
+assert staff.iloc[0]["login_id"] == "delaneybyrnec@staff.ncad.ie", f"Expected delaneybyrnec@staff.ncad.ie; got {staff.iloc[0]['login_id']}"
+assert staff.iloc[0]["user_id"] == "delaneybyrnec"
+assert staff.iloc[0]["first_name"] == "Cian"
+assert staff.iloc[0]["last_name"] == "Delaney Byrne"
+assert staff.iloc[0]["full_name"] == "Cian Delaney Byrne"
+assert staff.iloc[0]["sortable_name"] == "Delaney Byrne, Cian"
+assert staff.iloc[0]["email"] == "delaneybyrnec@staff.ncad.ie"
+assert staff.iloc[0]["status"] == "active"
+assert staff.iloc[1]["login_id"] == "quigleyr@staff.ncad.ie", f"Expected quigleyr@staff.ncad.ie; got {staff.iloc[1]['login_id']}"
+assert staff.iloc[1]["first_name"] == "Roisin"
+assert staff.iloc[1]["last_name"] == "Quigley"
+
+# Single-word name: accepted with a warning, login = the name itself
+staff1, staff_warnings1 = build_canvas_staff_rows(["Cian"])
+print(f"Canvas staff (single word): {len(staff1)} row, {len(staff_warnings1)} warning")
+assert len(staff1) == 1
+assert len(staff_warnings1) == 1, f"Expected 1 warning for single-word name; got {staff_warnings1}"
+assert staff1.iloc[0]["first_name"] == "Cian"
+assert staff1.iloc[0]["last_name"] == ""
+assert staff1.iloc[0]["login_id"] == "cian@staff.ncad.ie", f"Expected cian@staff.ncad.ie; got {staff1.iloc[0]['login_id']}"
+assert staff1.iloc[0]["sortable_name"] == "Cian"
+
 print("\n" + "=" * 60)
 print("ALL PIPELINE SMOKE TESTS PASSED")
 print("=" * 60)

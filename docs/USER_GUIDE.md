@@ -134,6 +134,35 @@ the manual steps needed to complete it.
 
 ---
 
+#### Canvas Staff
+
+A separate tool for **staff** accounts — not part of the student pipeline.
+Go to **Staff** in the top navigation and open the **Canvas** tab.
+
+**In the system:**
+
+1. Type staff names into the text box, one per line (e.g. `Cian Delaney Byrne`)
+2. Click **Generate rows** — each name becomes a Canvas-ready row
+3. Review the preview table
+4. Click **Download CSV** — get `YYYYMMDD_canvas_staff.csv`, ready for Canvas SIS Import
+
+**How a name becomes a row:**
+
+| Typed name | First name | Last name | Login / email | Sortable name |
+| --- | --- | --- | --- | --- |
+| `Cian Delaney Byrne` | Cian | Delaney Byrne | `delaneybyrnec@staff.ncad.ie` | Delaney Byrne, Cian |
+| `Roisin Quigley` | Roisin | Quigley | `quigleyr@staff.ncad.ie` | Quigley, Roisin |
+
+- Login = surname(s) + first initial, letters only, lowercased
+- A single-word name has no last name — the row is still generated with a
+  warning and a blank last name (login = the name itself, e.g. `Cian` →
+  `cian@staff.ncad.ie`). Enter the full name where possible, because Canvas
+  imports expect first and last names.
+- `user_id`, `integration_id`, `password`, `short_name` and `status` follow the same Canvas schema as the student export
+- Nothing is stored — rows are generated from what you type and are gone when you leave the page
+
+---
+
 #### Google Workspace
 
 **In the system:**

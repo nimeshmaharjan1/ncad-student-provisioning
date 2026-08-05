@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
       { source: "/ldap/:path*", destination: `${API_URL}/ldap/:path*` },
       { source: "/google/:path*", destination: `${API_URL}/google/:path*` },
       { source: "/canvas/:path*", destination: `${API_URL}/canvas/:path*` },
+      { source: "/staff/canvas/:path*", destination: `${API_URL}/staff/canvas/:path*` },
       { source: "/library/:path*", destination: `${API_URL}/library/:path*` },
       { source: "/athens/:path*", destination: `${API_URL}/athens/:path*` },
     ];

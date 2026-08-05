@@ -112,6 +112,25 @@ rerun produces 0 new). Must end with `ALL PIPELINE SMOKE TESTS PASSED`.
   ("Export failed: ..." / "unexpected error"), no crash.
 - Restart backend: everything works again; nothing was persisted server-side.
 
+## Test 7 — Canvas staff tool
+
+- Open **Staff** (top navigation) → **Canvas** tab.
+- Type `Cian Delaney Byrne` on one line → **Generate rows**.
+  - Preview row must show: first `Cian`, last `Delaney Byrne`,
+    login/email `delaneybyrnec@staff.ncad.ie`, sortable `Delaney Byrne, Cian`,
+    status `active`.
+- Add a second line `Roisin Quigley` → generate again → 2 rows, second email
+  `quigleyr@staff.ncad.ie`.
+- Click **Download CSV** → downloads `YYYYMMDD_canvas_staff.csv` with the
+  11-column header (`user_id, integration_id, login_id, ...`) and one row per
+  name. Open it in Excel/Notepad to confirm.
+- Empty textarea + generate → error toast "No names entered", no request.
+- Single word `Cian` + generate → a row is generated with a warning: login
+  `cian@staff.ncad.ie`, blank last name; the amber warning card + warning toast
+  appear above the preview.
+- Names with apostrophes/hyphens are accepted (`Liam O'Shea` →
+  `osheal@staff.ncad.ie`).
+
 ## Gotchas
 
 - Test on **localhost:3000**, not the public onrender URL — the deployed app
