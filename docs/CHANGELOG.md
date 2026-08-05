@@ -2,6 +2,11 @@
 
 ## 2026-08-05
 
+### Home Page & Privacy
+- "Privacy at a glance" card now shows on **every page load** — dismissing it hides it for the current session only; nothing is persisted in localStorage anymore
+- Removed the "Show privacy notice again" button on `/about` (no longer needed)
+- Home page redesigned: featured **Provisioning Pipeline** card + two-card grid for **Library Export** and **Staff Provisioning** (new)
+
 ### Canvas Staff Tool
 - Added `POST /staff/canvas/generate` (preview JSON) and `POST /staff/canvas/export` (CSV download) endpoints
 - New `/staff` page with tool tabs: type staff names one per line, preview the Canvas rows, download `YYYYMMDD_canvas_staff.csv`

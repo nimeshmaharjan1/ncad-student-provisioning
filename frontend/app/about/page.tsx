@@ -3,7 +3,6 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { ArrowLeft, Server, Palette, Globe, BookOpen, Shield, FileText, AlertTriangle, Info, ExternalLink } from "lucide-react"
-import { showPrivacyNotice } from "@/lib/local-storage"
 
 const section = "flex flex-col gap-1.5"
 
@@ -243,13 +242,6 @@ export default function AboutPage() {
                 <li><strong>Clear all stored data.</strong> Click "Start over" on the pipeline page or "Clear all stored data" in the Export History section at any time to delete everything saved on your computer.</li>
                 <li><strong>Server logs.</strong> The backend writes operational logs (errors, warnings). No names, emails, or ID numbers are included in these logs.</li>
               </ul>
-              <button
-                type="button"
-                onClick={() => showPrivacyNotice()}
-                className="mt-2 text-xs font-medium text-amber-700 underline-offset-4 hover:underline dark:text-amber-300"
-              >
-                Show privacy notice again on the home page
-              </button>
             </div>
           </div>
         </div>

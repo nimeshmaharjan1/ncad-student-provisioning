@@ -89,9 +89,10 @@ step) never block; they are left blank.
 ## Test 4 — Privacy notice (informational only)
 
 - Home page: blue "Privacy at a glance" card is visible.
-- Click the × — the card hides (display preference only, no consent tracked).
+- Click the × — the card hides for the current session only (display
+  preference, no consent tracked, nothing persisted).
+- Reload the page → the card is visible again (it always shows on every load).
 - "Learn more" → `/about#privacy`.
-- On the About page, "Show privacy notice again" restores the card.
 
 ## Test 5 — Full pipeline regression (strongest proof)
 

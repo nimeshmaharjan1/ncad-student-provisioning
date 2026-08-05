@@ -1,28 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "motion/react"
 import { Shield, X } from "lucide-react"
-import { isPrivacyNoticeHidden, hidePrivacyNotice } from "@/lib/local-storage"
 
 export function PrivacyNotice() {
   const [hidden, setHidden] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setHidden(isPrivacyNoticeHidden())
-    setMounted(true)
-  }, [])
 
   const handleDismiss = () => {
-    hidePrivacyNotice()
     setHidden(true)
   }
 
   return (
     <AnimatePresence>
-      {mounted && !hidden && (
+      {!hidden && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -39,13 +31,13 @@ export function PrivacyNotice() {
                 </p>
                 <ul className="list-inside list-disc space-y-1 text-sm text-blue-800 dark:text-blue-400">
                   <li>
-                    <strong>Your uploaded data is never saved.</strong> The
+                    <strong>Your uploaded data is never saved.</strong>{" "}The
                     system reads your CSV, processes it, and sends the result
                     back as a download — then it&apos;s gone. Nothing is written
                     to disk or stored in a database.
                   </li>
                   <li>
-                    <strong>Only simple progress notes</strong> (timestamps,
+                    <strong>Only simple progress notes</strong>{" "} (timestamps,
                     row counts, system names) are kept on this computer so you
                     don&apos;t lose your place. No names, emails, or ID numbers
                     are ever stored.
