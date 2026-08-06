@@ -97,7 +97,7 @@ assert staff1.iloc[0]["sortable_name"] == "Cian"
 from app.services.library_staff_service import build_library_staff_rows
 from app.services.library_service import LIBRARY_OUTPUT_COLUMNS
 people = [
-    ("Cian Delaney Byrne", "26132290", "Male", "2026-08-05", "2028-08-05"),
+    ("Cian Delaney Byrne", "12345678", "Male", "2026-08-05", "2028-08-05"),
     ("Roisin Quigley", "", "", "2026-09-01", "2027-01-30"),
     ("Liam", "12345678", "", "", ""),
 ]
@@ -109,7 +109,7 @@ assert lib_staff.iloc[0]["givenName"] == "Cian"
 assert lib_staff.iloc[0]["familyName"] == "Delaney Byrne"
 assert lib_staff.iloc[0]["gender"] == "Male"
 assert lib_staff.iloc[0]["institutionId"] == "46722"
-assert lib_staff.iloc[0]["barcode"] == "26132290"
+assert lib_staff.iloc[0]["barcode"] == "12345678"
 assert lib_staff.iloc[0]["idAtSource"] == "delaneybyrnec"
 assert lib_staff.iloc[0]["sourceSystem"] == "https://idp.ncad.ie/idp/shibboleth"
 assert lib_staff.iloc[0]["borrowerCategory"] == "FTS"
@@ -131,7 +131,7 @@ assert lib_staff.iloc[2]["barcode"] == "12345678"
 
 # Bad date -> rejected
 try:
-    build_library_staff_rows([("Cian Delaney Byrne", "26132290", "", "05-08-2026", "")])
+    build_library_staff_rows([("Cian Delaney Byrne", "12345678", "", "05-08-2026", "")])
     raise AssertionError("Expected ValueError for non-YYYY-MM-DD registration date")
 except ValueError:
     pass

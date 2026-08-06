@@ -190,7 +190,7 @@ export function StaffLibraryStep() {
                     <input
                       value={row.barcode}
                       onChange={(e) => updateRow(row.id, "barcode", e.target.value)}
-                      placeholder="e.g. 26132290"
+                      placeholder="e.g. 12345678"
                       className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </td>

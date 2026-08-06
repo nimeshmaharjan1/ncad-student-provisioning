@@ -135,10 +135,10 @@ rerun produces 0 new). Must end with `ALL PIPELINE SMOKE TESTS PASSED`.
 ## Test 8 — Library staff tool
 
 - Open **Staff** (top navigation) → **Library** tab.
-- Add a row: name `Cian Delaney Byrne`, card number `26132290`, gender `Male`,
+- Add a row: name `Cian Delaney Byrne`, card number `12345678`, gender `Male`,
   registration date `2026-07-14`, expiration date `2028-07-13` → **Generate rows**.
   - Preview must show: given `Cian`, family `Delaney Byrne`, gender `Male`,
-    institutionId `46722`, barcode `26132290`, idAtSource `delaneybyrnec`,
+    institutionId `46722`, barcode `12345678`, idAtSource `delaneybyrnec`,
     sourceSystem `https://idp.ncad.ie/idp/shibboleth`, borrowerCategory `FTS`,
     `circRegistrationDate` = `2026-07-14`, `oclcExpirationDate` = `2028-07-13`,
     homeBranch `266006`, email `delaneybyrnec@staff.ncad.ie`, username blank.
