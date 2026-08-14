@@ -20,12 +20,15 @@ All route handlers also have per-endpoint try/except blocks (see below). The glo
 ## Router Registration
 
 `app/api/routes.py` — every endpoint is registered here under a prefix:
+- `/admin` → `api/admin.py` (settings API)
 - `/quercus` → `api/quercus.py`
 - `/ldap` → `api/ldap.py`
 - `/canvas` → `api/canvas.py`
 - `/google` → `api/google.py`
 - `/athens` → `api/athens.py`
 - `/library` → `api/library.py`
+- `/staff/canvas` → `api/canvas_staff.py`
+- `/staff/library` → `api/library_staff.py`
 
 Add a new pipeline: create the API file → register it here.
 
@@ -48,26 +51,35 @@ Every export endpoint follows the same pattern:
 ### 1. Schema Validation (before processing)
 
 All required/optional column lists live in ONE place: `app/core/quercus_schema.py`
-(the **Quercus Schema Registry**). Endpoints call `check_columns()` and only decide
-what to do with the result:
+(the **Quercus Schema Registry**). Endpoints call `check_columns()` and decide what
+to do based on the **per-system validation mode** (`app/core/settings.py`):
 
 ```python
 from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.settings import get_validation_mode
+from app.utils.df_utils import backfill_missing_columns
 
 check = check_columns("ldap", quercus_df.columns)   # system key, see SCHEMAS
+missing_required_header = None
 if check["missing_required"]:
-    return missing_required_response("ldap", check)  # structured 422
-if check["missing_optional"]:
-    logger.info("Optional columns missing (will be left blank): %s", check["missing_optional"])
+    if get_validation_mode("ldap") == "strict":
+        return missing_required_response("ldap", check)  # structured 422
+    # warn mode: proceed with blank columns + response header
+    quercus_df = backfill_missing_columns(quercus_df, check["missing_required"])
+    missing_required_header = ", ".join(check["missing_required"])
+# ... then attach X-Missing-Required header when set
 ```
 
-If required columns are missing → **422** with structured JSON listing exactly what's needed.
+- **warn** (default): missing required columns are added as empty columns and
+  the export proceeds; the response carries `X-Missing-Required` so the
+  frontend can show a warning banner.
+- **strict**: missing required columns → **422** with structured JSON listing
+  exactly what's needed (the original behavior).
 
-If only optional columns are missing → logs a warning, proceeds with processing (columns are left blank).
+Missing optional columns are never blocked — they are left blank in both modes.
 
-The Quercus upload step (`api/quercus.py`) uses **WARN mode** instead: `check_source_columns()`
-never blocks — it returns the missing columns so the frontend can show a warning card asking
-the user to recheck their Quercus export settings before continuing.
+The Quercus upload step (`api/quercus.py`) always uses `check_source_columns()` —
+it never blocks and returns the missing columns for the frontend warning card.
 
 ### 2. Try/Except Blocks
 
@@ -87,7 +99,7 @@ except Exception:
 
 | HTTP Code | When | Frontend shows |
 |-----------|------|----------------|
-| **422** | Missing required columns | Rich error card with column lists |
+| **422** | Missing required columns **and** that system is in strict mode | Rich error card with column lists |
 | **400** | Bad request / missing column in service | Error message from the backend |
 | **500** | Unexpected error | "Unexpected server error" + terminal traceback |
 
@@ -115,10 +127,45 @@ module docstring — it documents the design decisions in full.
 | `athens` | OpenAthens | `ID Number`, `First Name`, `Last Name` | (none) |
 | `library` | Library | `ID Number` | `First Name`, `Last Name`, `Gender`, `Course Code`, `Course Instance Start Date`, `Course Instance End Date` |
 
-### Two validation modes
+### Validation modes (`app/core/settings.py`)
 
-- **STRICT** (export endpoints): `check_columns(system_key, columns)` + `missing_required_response(system_key, check)` → missing required columns return a structured 422.
-- **WARN** (Quercus upload step): `check_source_columns(columns)` → never blocks, returns missing columns for the frontend warning card. The warn list is computed automatically from the union of all `required` lists minus columns `preprocess_quercus()` generates (`Term Email`, `Type`), plus `EXTRA_SOURCE_WARN_COLUMNS` (`Status` — silently skipped filtering otherwise).
+Per-system validation mode — `warn` (proceed, export missing columns as
+blank) or `strict` (reject with a structured 422) — controls export behavior
+when required columns are missing. Resolution order:
+
+1. Env var `VALIDATION_MODE_<SYSTEM>` (e.g. `VALIDATION_MODE_LDAP=warn`)
+2. `app/core/settings.json` (persisted via `PUT /admin/settings`, gitignored)
+3. Default: **`ldap` → `strict`, all other systems → `warn`**
+
+The LDAP default is strict deliberately: per the LDAP admin's requirement
+(email from John O Donnell, 2026-08-13) a *missing* required column (e.g.
+`Date of Birth`, since the Quercus Discoverer report no longer exports it)
+must block the export — while a column *present with empty cells* is fine and
+never blocked. Other systems default to warn until a similar decision is made
+for them.
+
+The settings file path can be overridden with `NCAD_SETTINGS_FILE`. Note the
+file is per-deployment state — on Render it resets when the service is
+redeployed, so use an env var for a permanent override.
+
+**Why the mode is stored server-side (not in the browser):** enforcement
+happens here — the export endpoints decide warn vs 422 based on this
+registry. The backend cannot read a browser's localStorage, so a client-side
+setting would only restyle the UI while leaving real behavior unchanged, and
+would be trivially bypassed (edit localStorage, different browser). Server-side
+state also guarantees every staff member gets identical behavior from the same
+deployment. The frontend Settings page is therefore only a remote control for
+this registry, and localStorage stays limited to presentation preferences
+(e.g. dismissing the privacy banner).
+
+API: `GET /admin/settings` (effective modes + source per system),
+`PUT /admin/settings` with `{"validation_modes": {"ldap": "strict"}}`.
+
+The Quercus upload step (`api/quercus.py`) always uses `check_source_columns()` — it
+never blocks and returns the missing columns for the frontend warning card. The
+warn list is computed automatically from the union of all `required` lists minus
+columns `preprocess_quercus()` generates (`Term Email`, `Type`), plus
+`EXTRA_SOURCE_WARN_COLUMNS` (`Status` — silently skipped filtering otherwise).
 
 ### How to add a new system (e.g. Moodle)
 

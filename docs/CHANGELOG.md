@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-14
+
+### Per-System Validation Modes (Warn vs Block)
+- Added `backend/app/core/settings.py` — per-system validation mode registry: `warn` / `strict`
+- `warn` mode: exports **proceed** when required Quercus columns are missing — the missing columns are added as blank and the response carries an `X-Missing-Required` header; the export step shows an amber warning banner
+- `strict` mode: the original behavior — missing required columns reject the export with a structured 422
+- **Defaults are per-system: `ldap` → `strict` (Block), all other systems → `warn`.** LDAP blocks by default per the LDAP admin: a *missing* column must never go out blank — while a DOB column **present with empty cells** is fine and never blocks
+- Mode resolution order: env var `VALIDATION_MODE_<SYSTEM>` → `backend/app/core/settings.json` → per-system default; settings file path overridable via `NCAD_SETTINGS_FILE`
+- Added `GET/PUT /admin/settings` API (registered under `/admin`) and a new `/settings` page with a Warn/Block toggle per system (LDAP, Canvas, Google, OpenAthens, Library) + a "source" badge (default / saved / env override)
+- All 5 export endpoints use the mode gate; added `backfill_missing_columns()` to `df_utils.py`; services unchanged
+- **Date of Birth**: the new Quercus Discoverer report no longer includes DOB (GDPR). The LDAP output keeps the `Date of Birth` column when warn is enabled (blank values); with LDAP's default Block mode a missing column rejects the export. The Settings page can toggle LDAP to Warn if blank DOB is accepted
+- `settings.json` is gitignored (per-deployment state; resets on redeploy unless an env var is set)
+- Added `backend/samples/test_settings.py` — 22 assertions for per-system defaults, persistence, env precedence, validation, and corrupt-file degradation
+
 ## 2026-08-05
 
 ### Home Page & Privacy

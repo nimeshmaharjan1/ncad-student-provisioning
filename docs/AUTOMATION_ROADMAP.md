@@ -61,7 +61,7 @@ This repo already automates the **entire generation layer**:
 | Google upload + reactivation | Manual | 24-col upload + suspended-account reactivation detection |
 | OpenAthens template | Manual | 21-col template |
 | Library borrower records | Manual | 46-col template |
-| Error handling | Silent failures | Structured 422 errors + schema registry + warning cards |
+| Error handling | Silent failures | Structured errors + schema registry + per-system warn/block validation modes (Settings page) |
 | Documentation | In the process owner's head | ONBOARDING.md, USER_GUIDE.md, MANUAL_TESTING.md, in-app /about |
 
 **Key point for the manager:** the hard logic (diffing, cleaning, generating)
@@ -234,8 +234,10 @@ works out exactly who is new. For each system it generates the correct file —
 LDAP files with word passcodes, the Canvas import, Google uploads with
 account reactivation, the OpenAthens template, and Library borrower records.
 Errors are no longer silent: if a file is missing a required column, the
-system either blocks with a clear message or warns the user in advance. All
-of this is already automated and regression-tested — it works today.
+system either blocks with a clear message (LDAP's default strict mode — e.g.
+the GDPR-removed Date of Birth) or warns the user and exports the column blank
+(warn mode, default for the other systems). All of this is already automated
+and regression-tested — it works today.
 
 **What the manager asked for.** The vision: the system should pull student
 data from Quercus, check for new students, add them to all five systems by

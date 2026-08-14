@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
       { source: "/staff/library/:path*", destination: `${API_URL}/staff/library/:path*` },
       { source: "/library/:path*", destination: `${API_URL}/library/:path*` },
       { source: "/athens/:path*", destination: `${API_URL}/athens/:path*` },
+      { source: "/admin/:path*", destination: `${API_URL}/admin/:path*` },
     ];
   },
 };

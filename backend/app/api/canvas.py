@@ -8,7 +8,9 @@ import zipfile
 from app.services.quercus_preprocess import preprocess_quercus
 from app.services.canvas_service import generate_canvas_comparison_exports
 from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.settings import get_validation_mode
 from app.utils.date_utils import date_suffix
+from app.utils.df_utils import backfill_missing_columns
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -32,9 +34,18 @@ async def export_canvas(baseline: UploadFile = File(...), quercus: UploadFile = 
 
         # --- Schema validation with structured error response ---
         check = check_columns("canvas", quercus_df.columns)
+        missing_required_header = None
         if check["missing_required"]:
-            logger.warning("Canvas export rejected — missing required Quercus columns: %s", check["missing_required"])
-            return missing_required_response("canvas", check)
+            if get_validation_mode("canvas") == "strict":
+                logger.warning("Canvas export rejected — missing required Quercus columns: %s", check["missing_required"])
+                return missing_required_response("canvas", check)
+            logger.warning(
+                "Canvas export proceeding in warn mode — missing required columns "
+                "exported as blank: %s",
+                check["missing_required"],
+            )
+            quercus_df = backfill_missing_columns(quercus_df, check["missing_required"])
+            missing_required_header = ", ".join(check["missing_required"])
 
         if check["missing_optional"]:
             logger.info("Optional Quercus columns missing (will be left blank): %s", check["missing_optional"])
@@ -51,10 +62,16 @@ async def export_canvas(baseline: UploadFile = File(...), quercus: UploadFile = 
             zf.writestr(f"{ds}_canvas_all_pre.csv", updated_baseline_df.to_csv(index=False))
         zip_buffer.seek(0)
 
+        headers = {
+            "Content-Disposition": f"attachment; filename=\"{ds}_canvas_export.zip\"",
+        }
+        if missing_required_header:
+            headers["X-Missing-Required"] = missing_required_header
+
         return StreamingResponse(
             zip_buffer,
             media_type="application/zip",
-            headers={"Content-Disposition": f"attachment; filename=\"{ds}_canvas_export.zip\""},
+            headers=headers,
         )
 
     except ValueError as e:

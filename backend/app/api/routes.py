@@ -1,8 +1,9 @@
 from fastapi import APIRouter
-from app.api import quercus, ldap, google, canvas, canvas_staff, library, library_staff, athens
+from app.api import quercus, ldap, google, canvas, canvas_staff, library, library_staff, athens, admin
 
 router = APIRouter()
 
+router.include_router(admin.router, prefix="/admin")
 router.include_router(quercus.router, prefix="/quercus")
 router.include_router(ldap.router, prefix="/ldap")
 router.include_router(google.router, prefix="/google")

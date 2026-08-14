@@ -6,7 +6,9 @@ import pandas as pd
 import io
 from app.services.library_service import clean_library_data, build_library_template
 from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.settings import get_validation_mode
 from app.utils.date_utils import date_suffix
+from app.utils.df_utils import backfill_missing_columns
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -23,11 +25,20 @@ async def export_library(files: list[UploadFile] = File(...)):
             dfs.append(df)
 
         # --- Schema validation (first file is representative) ---
+        missing_required_header = None
         if dfs:
             check = check_columns("library", dfs[0].columns)
             if check["missing_required"]:
-                logger.warning("Library export rejected — missing required columns: %s", check["missing_required"])
-                return missing_required_response("library", check)
+                if get_validation_mode("library") == "strict":
+                    logger.warning("Library export rejected — missing required columns: %s", check["missing_required"])
+                    return missing_required_response("library", check)
+                logger.warning(
+                    "Library export proceeding in warn mode — missing required columns "
+                    "exported as blank: %s",
+                    check["missing_required"],
+                )
+                dfs = [backfill_missing_columns(df, check["missing_required"]) for df in dfs]
+                missing_required_header = ", ".join(check["missing_required"])
 
             if check["missing_optional"]:
                 logger.info("Optional columns missing (will be left blank): %s", check["missing_optional"])
@@ -47,12 +58,16 @@ async def export_library(files: list[UploadFile] = File(...)):
 
         zip_buffer.seek(0)
 
+        headers = {
+            "Content-Disposition": f"attachment; filename=\"{ds}_library_export.zip\"",
+        }
+        if missing_required_header:
+            headers["X-Missing-Required"] = missing_required_header
+
         return StreamingResponse(
             zip_buffer,
             media_type="application/zip",
-            headers={
-                "Content-Disposition": f"attachment; filename=\"{ds}_library_export.zip\""
-            },
+            headers=headers,
         )
 
     except ValueError as e:

@@ -143,6 +143,22 @@ def update_baseline_state(
     return combined
 
 
+def backfill_missing_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """
+    Add missing columns as empty strings (WARN-mode behavior).
+
+    Used by export endpoints when validation mode is "warn": instead of
+    rejecting the request, missing required columns are added so downstream
+    services see a complete column set and simply produce blank values.
+    """
+    if not columns:
+        return df
+    df_copy = df.copy()
+    for col in columns:
+        df_copy[col] = ""
+    return df_copy
+
+
 def sanitize_records(df: pd.DataFrame) -> list[dict]:
     """
     Convert a DataFrame to list-of-dicts, replacing NaN/None with Python None

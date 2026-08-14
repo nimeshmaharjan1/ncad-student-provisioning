@@ -8,7 +8,9 @@ import zipfile
 from app.services.quercus_preprocess import preprocess_quercus
 from app.services.athens_service import run_athens_pipeline
 from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.settings import get_validation_mode
 from app.utils.date_utils import date_suffix
+from app.utils.df_utils import backfill_missing_columns
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -31,9 +33,18 @@ async def export_athens(baseline: UploadFile = File(...), quercus: UploadFile = 
         quercus_df.columns = quercus_df.columns.str.strip()
 
         check = check_columns("athens", quercus_df.columns)
+        missing_required_header = None
         if check["missing_required"]:
-            logger.warning("OpenAthens export rejected — missing required Quercus columns: %s", check["missing_required"])
-            return missing_required_response("athens", check)
+            if get_validation_mode("athens") == "strict":
+                logger.warning("OpenAthens export rejected — missing required Quercus columns: %s", check["missing_required"])
+                return missing_required_response("athens", check)
+            logger.warning(
+                "OpenAthens export proceeding in warn mode — missing required columns "
+                "exported as blank: %s",
+                check["missing_required"],
+            )
+            quercus_df = backfill_missing_columns(quercus_df, check["missing_required"])
+            missing_required_header = ", ".join(check["missing_required"])
 
         if check["missing_optional"]:
             logger.info("Optional Quercus columns missing (will be left blank): %s", check["missing_optional"])
@@ -50,10 +61,16 @@ async def export_athens(baseline: UploadFile = File(...), quercus: UploadFile = 
             zf.writestr(f"{ds}_athens.csv", upload_df.to_csv(index=False))
         zip_buffer.seek(0)
 
+        headers = {
+            "Content-Disposition": f"attachment; filename=\"{ds}_athens_export.zip\"",
+        }
+        if missing_required_header:
+            headers["X-Missing-Required"] = missing_required_header
+
         return StreamingResponse(
             zip_buffer,
             media_type="application/zip",
-            headers={"Content-Disposition": f"attachment; filename=\"{ds}_athens_export.zip\""},
+            headers=headers,
         )
 
     except ValueError as e:

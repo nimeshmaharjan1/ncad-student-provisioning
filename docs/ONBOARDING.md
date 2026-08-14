@@ -368,6 +368,25 @@ Gender validation: blanks → UNKNOWN, Male/Female → MALE/FEMALE.
 #### `utils/passcode_generator.py`
 Generates passcodes in the format `WordWordWordWordWordNN` (5 title-cased words + 2-digit number, e.g., `RiverForestCrystalStormFalcon42`). To allow public hosting of this repository, the 1,668-word list is gitignored and loaded dynamically at runtime from `words.txt` or the `PASSCODE_WORD_FILE` environment variable, falling back to a minimal 15-word list if neither is found.
 
+#### `core/settings.py`
+Per-system validation-mode registry (`warn` / `strict`). Export
+endpoints resolve the mode and either proceed with blank columns + an
+`X-Missing-Required` response header (warn) or return a structured 422
+(strict). Resolution order: env var `VALIDATION_MODE_<SYSTEM>` → `settings.json`
+(managed via `GET/PUT /admin/settings`, gitignored) → default. The file path is
+overridable with `NCAD_SETTINGS_FILE`. `test_settings.py` covers all paths.
+
+Defaults are per-system: **`ldap` → `strict`, all others → `warn`** — the LDAP
+admin requires a missing required column (e.g. `Date of Birth`, dropped from
+Quercus Discoverer for GDPR) to block the export, while a DOB column present
+with empty cells is fine and never blocked.
+
+Why server-side and not localStorage: enforcement happens in the export
+endpoints, which cannot read the browser — a client-side setting would only
+restyle the UI, be bypassable, and differ per browser. Server-side state gives
+every user of a deployment identical, enforced behavior. The frontend `/settings`
+page is just a remote control for this registry.
+
 ---
 
 ### Frontend

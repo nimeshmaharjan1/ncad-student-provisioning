@@ -156,6 +156,14 @@ Example: `17/06/2001`
 
 Ensure all Date of Birth values are displayed in this format before proceeding.
 
+> **Quercus Discoverer note (2026-08):** since the GDPR removal of Date of
+> Birth from the Quercus report, the automated LDAP export **blocks** (its
+> default strict mode) when the column is missing — nothing downloads until DOB
+> is restored to the report or LDAP is toggled to **Warn** on the Settings page.
+> Under Warn, the file keeps the DOB column with blank values (13-column schema
+> intact); a DOB column present with empty cells never blocks in either mode.
+> Fill DOB in manually after export.
+
 ### Generate Passcodes
 Open the following website:
 https://www.correcthorsebatterystaple.net/index.html

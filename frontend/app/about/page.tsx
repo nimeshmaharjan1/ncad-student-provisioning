@@ -207,16 +207,23 @@ export default function AboutPage() {
         <div className={section}>
           <h3 className={subheading}>Missing Columns</h3>
           <p className={body}>
-            If your CSV file is missing a required column, the system returns a clear error
-            message listing exactly which columns are missing, which are present, and which
-            are optional. You will see:
+            Each system has a validation mode (see{" "}
+            <Link href="/settings" className="text-primary underline underline-offset-2">Settings</Link>):
           </p>
           <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-            <li><strong>Missing Required Columns</strong> (red) — these must be added to your Quercus export settings</li>
-            <li><strong>Missing Optional Columns</strong> (amber) — these will be left blank, no action needed</li>
-            <li><strong>Present Columns</strong> (green) — already in your file</li>
-            <li>A tip explaining how to fix the issue</li>
+            <li><strong>Warn</strong> — exports proceed; the missing columns are added as <strong>blank</strong> and an amber banner lists them, so you can recheck your Quercus export settings. The upload step always shows a warning card for missing expected columns regardless of mode.</li>
+            <li><strong>Block (strict)</strong> — missing required columns reject the export with a clear error listing exactly which columns are missing, which are present, and which are optional. This is the <strong>default for LDAP</strong>; the other systems default to Warn.</li>
+            <li><strong>Missing Optional Columns</strong> (amber) — these are always left blank, no action needed</li>
           </ul>
+          <p className={body}>
+            Note: the Quercus Discoverer report no longer includes{" "}
+            <strong>Date of Birth</strong> (GDPR), and LDAP blocks by default
+            when the column is missing. A <strong>Date of Birth column present
+            with empty cells</strong> is fine and never blocks — it is the
+            agreed format, not an error. Toggle LDAP to Warn on the{" "}
+            <Link href="/settings" className="text-primary underline underline-offset-2">Settings</Link>{" "}
+            page if you want blank DOB columns to export anyway.
+          </p>
         </div>
         <div className={section}>
           <h3 className={subheading}>Unexpected Errors</h3>
@@ -253,6 +260,7 @@ export default function AboutPage() {
         <div className="rounded-xl border bg-card">
           <div className="max-h-80 overflow-y-auto divide-y">
             {[
+              { date: "2026-08-14", changes: ["Added per-system validation modes (Warn/Block) on a new Settings page — warn mode exports missing required columns as blank with a warning banner; block mode restores the 422 rejection", "LDAP now defaults to Block: the Quercus Discoverer report no longer exports Date of Birth (GDPR), and a missing column must block rather than go out blank — a DOB column present with empty cells is fine and never blocks (per LDAP admin)", "Added /admin/settings API with env-var override (VALIDATION_MODE_<SYSTEM>)"] },
               { date: "2026-08-04", changes: ["Added Privacy at a glance card on the home page — informational, dismissible, no consent tracking", "Explains why public hosting is safe: no database, transient processing", "Added missing-column warnings on Quercus upload — files missing expected columns (e.g. Date of Birth) still process, but a warning card lists exactly which columns are missing from which files so you can recheck before continuing", "Centralised all required/optional column lists into one registry (backend/app/core/quercus_schema.py) — adding a new system is now a one-entry change"] },
               { date: "2026-07-28", changes: ["Added in-app System Guide page (/about)", "Added Pipeline Status Dashboard with visual stepper", "Added Export History log with GDPR-safe localStorage", "Added Toast notifications for exports", "Added Success Cards replacing plain green text", "Added structured error handling (422) for all 5 system endpoints", "Added schema validation with required/optional column checking", "Made Home Mobile Phone column optional in LDAP export", "Added global exception handler with logging", "Added session persistence (pipeline state survives page refresh)", "Added Start Over button on pipeline page"] },
               { date: "2026-07-28 (earlier)", changes: ["Initial structured error handling for LDAP endpoint", "ExportError component for rich error displays", "Fixed frontend pointing to demo backend instead of local"] },

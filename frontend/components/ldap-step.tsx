@@ -8,6 +8,7 @@ import { ProcessingProgress } from "@/components/processing-progress"
 import { WorkflowChips } from "@/components/workflow-chips"
 import { ExportError } from "@/components/export-error"
 import { SuccessCard } from "@/components/success-card"
+import { WarnBanner } from "@/components/warn-banner"
 import { downloadLdapExport, ExportError as ExportErrorClass } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
 import { useToast } from "@/lib/toast-context"
@@ -23,16 +24,18 @@ export function LdapStep() {
   const [errorDetail, setErrorDetail] = useState<ExportErrorClass | null>(null)
   const [done, setDone] = useState(false)
   const [doneTs, setDoneTs] = useState<Date | null>(null)
+  const [warnings, setWarnings] = useState<string[]>([])
 
   const handleRun = async () => {
     if (!baselineFile || !cleanedQuercusFile) return
     setLoading(true)
     setError(null)
     setErrorDetail(null)
+    setWarnings([])
     setDone(false)
     setDoneTs(null)
     try {
-      const { blob, filename } = await downloadLdapExport(baselineFile, cleanedQuercusFile)
+      const { blob, filename, missingRequired } = await downloadLdapExport(baselineFile, cleanedQuercusFile)
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
@@ -54,6 +57,7 @@ export function LdapStep() {
         title: "LDAP export successful",
         description: filename,
       })
+      setWarnings(missingRequired)
     } catch (e) {
       const message = e instanceof Error ? e.message : "LDAP export failed"
       if (e instanceof ExportErrorClass) {
@@ -113,6 +117,9 @@ export function LdapStep() {
           message={error}
           detail={errorDetail?.exportError ?? null}
         />
+      )}
+      {warnings.length > 0 && (
+        <WarnBanner missingColumns={warnings} system="LDAP" />
       )}
       {done && doneTs && (
         <SuccessCard

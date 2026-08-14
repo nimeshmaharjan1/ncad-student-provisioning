@@ -8,7 +8,9 @@ import zipfile
 from app.services.quercus_preprocess import preprocess_quercus
 from app.services.google_service import run_google_pipeline
 from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.settings import get_validation_mode
 from app.utils.date_utils import date_suffix
+from app.utils.df_utils import backfill_missing_columns
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -32,9 +34,18 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
 
         # --- Schema validation ---
         check = check_columns("google", quercus_df.columns)
+        missing_required_header = None
         if check["missing_required"]:
-            logger.warning("Google export rejected — missing required Quercus columns: %s", check["missing_required"])
-            return missing_required_response("google", check)
+            if get_validation_mode("google") == "strict":
+                logger.warning("Google export rejected — missing required Quercus columns: %s", check["missing_required"])
+                return missing_required_response("google", check)
+            logger.warning(
+                "Google export proceeding in warn mode — missing required columns "
+                "exported as blank: %s",
+                check["missing_required"],
+            )
+            quercus_df = backfill_missing_columns(quercus_df, check["missing_required"])
+            missing_required_header = ", ".join(check["missing_required"])
 
         if check["missing_optional"]:
             logger.info("Optional Quercus columns missing (will be left blank): %s", check["missing_optional"])
@@ -51,10 +62,16 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
             zf.writestr(f"{ds}_google_reactivate.csv", reactivation_df.to_csv(index=False))
         zip_buffer.seek(0)
 
+        headers = {
+            "Content-Disposition": f"attachment; filename=\"{ds}_google_export.zip\"",
+        }
+        if missing_required_header:
+            headers["X-Missing-Required"] = missing_required_header
+
         return StreamingResponse(
             zip_buffer,
             media_type="application/zip",
-            headers={"Content-Disposition": f"attachment; filename=\"{ds}_google_export.zip\""},
+            headers=headers,
         )
 
     except ValueError as e:

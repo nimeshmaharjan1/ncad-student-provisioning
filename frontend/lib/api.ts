@@ -90,7 +90,23 @@ export class ExportError extends Error {
   }
 }
 
-async function downloadExport(url: string, formData: FormData): Promise<{ blob: Blob; filename: string }> {
+export interface ExportResult {
+  blob: Blob
+  filename: string
+  /** Required Quercus columns that were missing and exported as blank (warn mode). */
+  missingRequired: string[]
+}
+
+function parseMissingRequired(res: Response): string[] {
+  const header = res.headers.get("X-Missing-Required")
+  if (!header) return []
+  return header
+    .split(",")
+    .map((col) => col.trim())
+    .filter(Boolean)
+}
+
+async function downloadExport(url: string, formData: FormData): Promise<ExportResult> {
   const res = await fetch(url, { method: "POST", body: formData })
   if (!res.ok) {
     let errorBody: ExportErrorDetail | null = null
@@ -106,10 +122,10 @@ async function downloadExport(url: string, formData: FormData): Promise<{ blob: 
   const match = disposition.match(/filename="?(.+?)"?$/)
   const filename = match ? match[1] : "export.zip"
   const blob = await res.blob()
-  return { blob, filename }
+  return { blob, filename, missingRequired: parseMissingRequired(res) }
 }
 
-export function downloadQuercus(files: File[]): Promise<{ blob: Blob; filename: string }> {
+export function downloadQuercus(files: File[]): Promise<ExportResult> {
   const formData = new FormData()
   for (const f of files) {
     formData.append("files", f)
@@ -117,35 +133,35 @@ export function downloadQuercus(files: File[]): Promise<{ blob: Blob; filename: 
   return downloadExport("/quercus/download", formData)
 }
 
-export function downloadLdapExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
+export function downloadLdapExport(baseline: File, quercusFile: File): Promise<ExportResult> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
   return downloadExport("/ldap/download?format=zip", formData)
 }
 
-export function downloadGoogleExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
+export function downloadGoogleExport(baseline: File, quercusFile: File): Promise<ExportResult> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
   return downloadExport("/google/export", formData)
 }
 
-export function downloadAthensExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
+export function downloadAthensExport(baseline: File, quercusFile: File): Promise<ExportResult> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
   return downloadExport("/athens/export", formData)
 }
 
-export function downloadCanvasExport(baseline: File, quercusFile: File): Promise<{ blob: Blob; filename: string }> {
+export function downloadCanvasExport(baseline: File, quercusFile: File): Promise<ExportResult> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
   return downloadExport("/canvas/export", formData)
 }
 
-export async function downloadLibraryExport(files: File[]): Promise<{ blob: Blob; filename: string }> {
+export async function downloadLibraryExport(files: File[]): Promise<ExportResult> {
   const formData = new FormData()
   for (const f of files) {
     formData.append("files", f)
@@ -168,7 +184,7 @@ export async function downloadLibraryExport(files: File[]): Promise<{ blob: Blob
   const match = disposition.match(/filename="?(.+?)"?$/)
   const filename = match ? match[1] : "library_export.csv"
   const blob = await res.blob()
-  return { blob, filename }
+  return { blob, filename, missingRequired: parseMissingRequired(res) }
 }
 
 export interface CanvasStaffRow {
@@ -316,4 +332,41 @@ export function downloadLibraryStaffText(
     libraryStaffPayload(people),
     "library.txt",
   )
+}
+
+export type ValidationMode = "warn" | "strict"
+
+export interface ValidationSettings {
+  systems: string[]
+  modes: Record<string, ValidationMode>
+  sources: Record<string, "env" | "file" | "default">
+}
+
+export async function getValidationSettings(): Promise<ValidationSettings> {
+  const res = await fetch("/admin/settings")
+  if (!res.ok) {
+    throw new Error(`Failed to load settings: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function updateValidationSettings(
+  validationModes: Record<string, ValidationMode>,
+): Promise<ValidationSettings> {
+  const res = await fetch("/admin/settings", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ validation_modes: validationModes }),
+  })
+  if (!res.ok) {
+    let detail = `Failed to save settings: ${res.status}`
+    try {
+      const body = await res.json()
+      if (body?.detail) detail = body.detail
+    } catch {
+      // response body isn't JSON — fall back to status-only error
+    }
+    throw new Error(detail)
+  }
+  return res.json()
 }

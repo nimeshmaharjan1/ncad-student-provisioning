@@ -77,6 +77,7 @@ All pipelines (except Library) compare Quercus data against a system-specific ba
 
 | Path | What | Inputs |
 |------|------|--------|
+| `GET/PUT /admin/settings` | Per-system validation modes (warn/block) | JSON body on PUT |
 | `POST /quercus/upload` | Preview + audit | 1+ Quercus CSVs |
 | `POST /quercus/download` | Cleaned CSV | 1+ Quercus CSVs |
 | `POST /ldap/download` | ZIP (new + baseline) | baseline + quercus |
@@ -84,6 +85,8 @@ All pipelines (except Library) compare Quercus data against a system-specific ba
 | `POST /google/export` | ZIP (upload + reactivate) | baseline + quercus |
 | `POST /athens/export` | ZIP | baseline + quercus |
 | `POST /library/export` | ZIP (cleaned + template) | 1+ Quercus CSVs |
+| `POST /staff/canvas/*` | Staff Canvas generation/export | JSON names |
+| `POST /staff/library/*` | Staff Library generation/export | JSON people |
 
 ---
 
@@ -118,6 +121,7 @@ All outputs use `YYYYMMDD_<system>[_<description>].csv`. ZIP files use `YYYYMMDD
 - **Status filter before dedup**: A student may appear as Withdrawn AND Registered — filter status first.
 - **Library is standalone**: No baseline, no diff. Separate page. Reuses the same `preprocess_quercus()`.
 - **Baseline supports .xlsx**: Detected by file extension, read with `openpyxl`.
+- **Per-system validation modes**: missing required columns warn-and-proceed with blank columns (with an `X-Missing-Required` response header) unless a system is set to strict/block — configurable via `GET/PUT /admin/settings` and the `/settings` UI, with `VALIDATION_MODE_<SYSTEM>` env vars taking precedence. Defaults: **LDAP blocks** (a missing column must never go out blank), all other systems warn.
 
 See [ONBOARDING.md](docs/ONBOARDING.md) for the full list with rationale.
 

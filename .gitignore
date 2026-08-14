@@ -43,6 +43,9 @@ uvicorn.log
 # NCAD Specific Security Exclusions
 backend/app/utils/words.txt
 
+# Per-deployment settings (managed via the /admin/settings API)
+backend/app/core/settings.json
+
 # Student Data Exports (Ignore all data sheets except inside samples/)
 *.csv
 *.xlsx

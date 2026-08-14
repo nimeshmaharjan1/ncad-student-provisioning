@@ -9,6 +9,7 @@ const links = [
   { href: "/quercus", label: "Quercus" },
   { href: "/library", label: "Library" },
   { href: "/staff", label: "Staff" },
+  { href: "/settings", label: "Settings" },
   { href: "/about", label: "About" },
   { href: "/guide", label: "Guide" },
   { href: "/docs", label: "Docs" },
