@@ -1,7 +1,7 @@
 @echo off
 title NCAD Student Provisioning
 cd /d "%~dp0"
-
+:: .venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
 echo ============================================
 echo   NCAD Student Provisioning -- Launcher
 echo ============================================
