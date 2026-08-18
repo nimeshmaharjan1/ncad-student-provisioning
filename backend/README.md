@@ -129,20 +129,23 @@ module docstring — it documents the design decisions in full.
 
 ### Validation modes (`app/core/settings.py`)
 
-Per-system validation mode — `warn` (proceed, export missing columns as
+Per-system validation mode — `warn` (proceed, missing columns auto-added as
 blank) or `strict` (reject with a structured 422) — controls export behavior
 when required columns are missing. Resolution order:
 
-1. Env var `VALIDATION_MODE_<SYSTEM>` (e.g. `VALIDATION_MODE_LDAP=warn`)
+1. Env var `VALIDATION_MODE_<SYSTEM>` (e.g. `VALIDATION_MODE_LDAP=strict`)
 2. `app/core/settings.json` (persisted via `PUT /admin/settings`, gitignored)
-3. Default: **`ldap` → `strict`, all other systems → `warn`**
+3. Default: `warn` for every system
 
-The LDAP default is strict deliberately: per the LDAP admin's requirement
-(email from John O Donnell, 2026-08-13) a *missing* required column (e.g.
-`Date of Birth`, since the Quercus Discoverer report no longer exports it)
-must block the export — while a column *present with empty cells* is fine and
-never blocked. Other systems default to warn until a similar decision is made
-for them.
+**`Date of Birth` never blocks (LDAP):** the Quercus Discoverer report no
+longer exports DOB (GDPR, 2026-08) and the LDAP admin requires the DOB column
+to stay in the LDAP file with empty values allowed (email from John O
+Donnell, 2026-08-13). The schema registry therefore lists `Date of Birth` in
+`NON_BLOCKING_REQUIRED_COLUMNS` (`app/core/quercus_schema.py`) — even in
+strict mode a missing DOB column is auto-added as empty and the export
+proceeds; only the blocking subset (`blocking_missing_required()`) rejects.
+A DOB column present with empty cells never blocks either (no row-level
+validation).
 
 The settings file path can be overridden with `NCAD_SETTINGS_FILE`. Note the
 file is per-deployment state — on Render it resets when the service is

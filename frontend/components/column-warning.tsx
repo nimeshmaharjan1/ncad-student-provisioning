@@ -71,8 +71,10 @@ export function ColumnWarning({ missingColumns, missingColumnsByFile }: ColumnWa
             <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
               Open your Quercus export settings, make sure all expected columns
               are included, and re-export the CSV before moving on. Downstream
-              exports (LDAP, Canvas, Google, OpenAthens, Library) will reject
-              the file or produce incomplete output without them.
+              exports (LDAP, Canvas, Google, OpenAthens, Library) may reject
+              the file or auto-add the missing columns with empty values.
+              Date of Birth is expected to be absent from the Discoverer
+              report (GDPR) — it is always auto-added as an empty column.
             </p>
           </div>
         </div>

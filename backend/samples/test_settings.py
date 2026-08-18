@@ -5,7 +5,7 @@ Run from the backend/ directory:
     .venv\\Scripts\\python.exe samples\\test_settings.py
 
 Covers:
-  - Per-system defaults (ldap -> strict, everything else -> warn).
+  - Every system defaults to warn.
   - File persistence roundtrip (set_validation_mode -> settings.json -> read back).
   - Env var override takes precedence over the settings file.
   - Invalid systems/modes are rejected.
@@ -56,8 +56,7 @@ def main():
                 f"default {system} is {settings.DEFAULT_MODES[system]}",
                 settings.get_validation_mode(system) == settings.DEFAULT_MODES[system],
             )
-        check("ldap defaults to strict", settings.get_validation_mode("ldap") == "strict")
-        check("others default to warn", settings.get_validation_mode("canvas") == "warn")
+        check("ldap defaults to warn", settings.get_validation_mode("ldap") == "warn")
         check("source_of default", settings.source_of("ldap") == "default")
 
         # 2. File persistence roundtrip
@@ -98,11 +97,53 @@ def main():
         os.environ.pop("VALIDATION_MODE_CANVAS", None)
         with open(tmp_file, "w", encoding="utf-8") as f:
             f.write("{ not valid json")
-        check("corrupt file -> ldap default strict", settings.get_validation_mode("ldap") == "strict")
+        check("corrupt file -> ldap default warn", settings.get_validation_mode("ldap") == "warn")
         check("corrupt file -> canvas default warn", settings.get_validation_mode("canvas") == "warn")
         os.remove(tmp_file)
-        check("missing file -> ldap default strict", settings.get_validation_mode("ldap") == "strict")
+        check("missing file -> ldap default warn", settings.get_validation_mode("ldap") == "warn")
         check("missing file -> canvas default warn", settings.get_validation_mode("canvas") == "warn")
+
+        # 6. Non-blocking required columns (Date of Birth for LDAP)
+        print("Non-blocking columns:")
+        from app.core.quercus_schema import (
+            check_columns,
+            blocking_missing_required,
+            NON_BLOCKING_REQUIRED_COLUMNS,
+        )
+        check(
+            "ldap DOB is registered as non-blocking",
+            NON_BLOCKING_REQUIRED_COLUMNS["ldap"] == ("Date of Birth",),
+        )
+        ldap_missing_dob = check_columns(
+            "ldap",
+            [
+                "ID Number", "Course Code", "Course Description",
+                "Course Instance Course Year", "Type", "First Name",
+                "Last Name", "Term Email", "LDAP ID",
+            ],
+        )
+        check("DOB missing is still reported as missing", "Date of Birth" in ldap_missing_dob["missing_required"])
+        check(
+            "ldap DOB-only missing -> nothing blocks",
+            blocking_missing_required("ldap", ldap_missing_dob) == [],
+        )
+        ldap_missing_dob_and_id = check_columns(
+            "ldap",
+            [
+                "Course Code", "Course Description",
+                "Course Instance Course Year", "Type", "First Name",
+                "Last Name", "Term Email", "LDAP ID",
+            ],
+        )
+        check(
+            "ldap DOB + ID Number missing -> only ID Number blocks",
+            blocking_missing_required("ldap", ldap_missing_dob_and_id) == ["ID Number"],
+        )
+        canvas_missing_first = check_columns("canvas", ["ID Number", "Last Name", "Term Email"])
+        check(
+            "canvas missing column always blocks",
+            blocking_missing_required("canvas", canvas_missing_first) == ["First Name"],
+        )
 
     finally:
         if old_env_file is None:

@@ -126,6 +126,21 @@ PREPROCESS_GENERATED_COLUMNS = ("Term Email", "Type")
 #     withdrawn students could be exported. Warning is better than silent.
 EXTRA_SOURCE_WARN_COLUMNS = ("Status",)
 
+# Required columns that must NEVER reject an export when missing, even in
+# strict (Block) mode. The output file still contains the column — it is
+# auto-added with empty values and the response carries the X-Missing-Required
+# header so the frontend can show exactly what was blanked.
+#
+# ldap -> Date of Birth: the Quercus Discoverer report no longer exports DOB
+# (GDPR, August 2026) and the LDAP admin requires the DOB column to stay in
+# the LDAP file with empty values allowed (email from John O Donnell,
+# 2026-08-13: "leave the DOB column in place but we can leave it empty of
+# data"). A DOB column present with empty cells never blocks either — no
+# row-level validation exists.
+NON_BLOCKING_REQUIRED_COLUMNS: dict[str, tuple[str, ...]] = {
+    "ldap": ("Date of Birth",),
+}
+
 # Columns the raw Quercus source files are expected to contain. Computed as
 # the union of every system's required columns, minus columns that
 # preprocessing generates, plus EXTRA_SOURCE_WARN_COLUMNS. Kept in a stable
@@ -157,7 +172,9 @@ def check_columns(system_key: str, df_columns) -> dict:
         }
 
     The endpoint decides what to do with it — normally: if
-    ``missing_required`` is non-empty, return ``missing_required_response()``.
+    ``missing_required`` is non-empty, return ``missing_required_response()``,
+    unless ``blocking_missing_required()`` filters it down to the columns that
+    actually block (see NON_BLOCKING_REQUIRED_COLUMNS).
     """
     schema = SCHEMAS[system_key]
     cols = {str(c) for c in df_columns}
@@ -168,6 +185,17 @@ def check_columns(system_key: str, df_columns) -> dict:
         "all_required": list(schema.required),
         "all_optional": list(schema.optional),
     }
+
+
+def blocking_missing_required(system_key: str, check: dict) -> list[str]:
+    """Missing required columns that actually block an export in strict mode.
+
+    Columns in NON_BLOCKING_REQUIRED_COLUMNS are excluded: they stay required
+    (the output file keeps the column), but a missing one is auto-added as an
+    empty column instead of rejecting the export — see the rationale above.
+    """
+    non_blocking = set(NON_BLOCKING_REQUIRED_COLUMNS.get(system_key, ()))
+    return [c for c in check["missing_required"] if c not in non_blocking]
 
 
 def missing_required_response(system_key: str, check: dict) -> JSONResponse:

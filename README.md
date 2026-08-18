@@ -121,7 +121,7 @@ All outputs use `YYYYMMDD_<system>[_<description>].csv`. ZIP files use `YYYYMMDD
 - **Status filter before dedup**: A student may appear as Withdrawn AND Registered — filter status first.
 - **Library is standalone**: No baseline, no diff. Separate page. Reuses the same `preprocess_quercus()`.
 - **Baseline supports .xlsx**: Detected by file extension, read with `openpyxl`.
-- **Per-system validation modes**: missing required columns warn-and-proceed with blank columns (with an `X-Missing-Required` response header) unless a system is set to strict/block — configurable via `GET/PUT /admin/settings` and the `/settings` UI, with `VALIDATION_MODE_<SYSTEM>` env vars taking precedence. Defaults: **LDAP blocks** (a missing column must never go out blank), all other systems warn.
+- **Per-system validation modes**: missing required columns warn-and-proceed with the columns auto-added blank (with an `X-Missing-Required` response header) unless a system is set to strict/block — configurable via `GET/PUT /admin/settings` and the `/settings` UI, with `VALIDATION_MODE_<SYSTEM>` env vars taking precedence. All systems default to warn; `Date of Birth` (LDAP) never blocks in any mode — the Discoverer report no longer exports it (GDPR) and the LDAP admin allows empty values.
 
 See [ONBOARDING.md](docs/ONBOARDING.md) for the full list with rationale.
 

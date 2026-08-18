@@ -10,14 +10,14 @@ Controls what happens when a Quercus export is missing required columns:
 Resolution order (highest precedence first):
     1. Environment variable  VALIDATION_MODE_<SYSTEM>  (e.g. VALIDATION_MODE_LDAP)
     2. settings.json file   (managed via the /admin/settings API)
-    3. Default              (per-system: "ldap" defaults to "strict", all
-                             other systems default to "warn")
+    3. Default              ("warn" for every system)
 
-The ldap default is strict deliberately: the LDAP admin's requirement (email
-from John O Donnell, 2026-08-13) is that a missing required column must block
-the export rather than go out blank — a DOB column present with empty cells is
-fine, but a missing column is rejected. Other systems default to warn until a
-similar decision is made for them.
+LDAP defaults to warn like every other system. This is safe because the
+LDAP-specific agreement (email from John O Donnell, 2026-08-13) is baked into
+the schema registry: the Quercus Discoverer report no longer exports
+Date of Birth (GDPR), the LDAP output keeps that column with empty values,
+and the column is non-blocking even in strict mode (see
+NON_BLOCKING_REQUIRED_COLUMNS in app/core/quercus_schema.py).
 
 The settings file lives at app/core/settings.json by default (path overridable
 with the NCAD_SETTINGS_FILE env var) and is gitignored — it is per-deployment
@@ -37,7 +37,7 @@ VALID_SYSTEMS = ("ldap", "canvas", "google", "athens", "library")
 VALID_MODES = ("warn", "strict")
 DEFAULT_MODE = "warn"
 DEFAULT_MODES = {
-    "ldap": "strict",
+    "ldap": "warn",
     "canvas": "warn",
     "google": "warn",
     "athens": "warn",

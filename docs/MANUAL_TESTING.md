@@ -60,7 +60,7 @@ More warning scenarios (each = copy the file, delete one column, upload alone):
 
 | Delete column | Expect |
 |---------------|--------|
-| `Date of Birth` | Warning card (LDAP is **Block by default**, so the export itself is rejected until toggled to Warn — see Test 3) |
+| `Date of Birth` | Warning card (export proceeds with the column **auto-added blank** — DOB never blocks; see Test 3) |
 | `Status` | Warning (preprocessing's status filter would be silently skipped) |
 | `LDAP ID` | Warning (LDAP export proceeds with blank LDAP ID under warn mode) |
 | `Home Mobile Phone` | **No warning** — it is optional now |
@@ -70,49 +70,53 @@ The full expected-column list is computed from the schema registry:
 `backend/app/core/quercus_schema.py` (`SOURCE_WARN_COLUMNS`). Adding/removing
 a system there changes what upload warns about automatically.
 
-## Test 3 — Missing required columns at export steps (LDAP blocks by default, others warn)
+## Test 3 — Missing required columns at export steps (warn default; Date of Birth never blocks)
 
 Validation behavior is per-system, controlled from the `/settings` page:
-**Warn** = export proceeds, missing columns are added as **blank**, amber
-banner shown. **Block** (strict) = export rejected with structured 422.
-Defaults: **`ldap` → Block, all other systems → Warn** (LDAP's strict default
-matches the LDAP admin's requirement that a missing column never goes out
-blank — see below).
+**Warn** = export proceeds, missing columns are **auto-added with empty
+values**, amber banner shown. **Block** (strict) = export rejected with
+structured 422. **Every system defaults to Warn.** Exception baked into the
+schema registry: `Date of Birth` for LDAP is non-blocking in **any** mode —
+the Quercus Discoverer report no longer exports DOB (GDPR) and the LDAP
+admin requires the column to stay with empty values allowed.
 
-### Test 3a — Warn mode (behavior when enabled)
+### Test 3a — Warn mode (default behavior)
 
-1. Since LDAP now defaults to **Block**, first go to **Settings** and toggle
-   **LDAP → Warn**, then Save.
-2. Complete Test 1 to get the cleaned Quercus file, then make a copy and
+1. Complete Test 1 to get the cleaned Quercus file, then make a copy and
    delete the `Date of Birth` column (or use `samples/quercus_2025_without_dob.csv`
    at the Quercus step — the cleanest path, since the warning card appears there).
-3. At the **LDAP step**, upload `baseline_ldap.csv` + a cleaned file missing
+2. At the **LDAP step**, upload `baseline_ldap.csv` + a cleaned file missing
    `Date of Birth` (or just use the without-dob variant through the Quercus
    step first).
-4. Expect:
+3. Expect:
    - The ZIP **downloads** (no red card).
-   - **Amber banner** "LDAP export generated with warnings — missing required
-     columns were exported as blank: `Date of Birth` (and `Type` if the
-     without-dob raw file was used)."
+   - **Amber banner** "LDAP export generated with warnings — the system
+     auto-added the missing required columns with empty values: `Date of
+     Birth` (and `Type`, `Term Email` if the without-dob raw file was used)."
    - Unzip (or open the CSV): both files **still contain the `Date of Birth`
      column header**, with blank values.
-5. Toggle LDAP back to **Block** afterwards.
 
-### Test 3b — Strict mode (LDAP's default; toggle for other systems)
+### Test 3b — Strict mode (toggle it on)
 
-1. With LDAP on **Block** (its default) — or toggle any other system to Block.
-2. Repeat the LDAP export from Test 3a → expect the red "Export Failed"
-   card with Missing Required badge, present columns list, and **no ZIP**.
-3. The 422 body lists the affected systems the same way as before
-   (`error_code: missing_required_columns`).
-4. Toggle LDAP back to **Warn** and re-run → downloads again (warn behavior).
+1. Go to **Settings** and switch **LDAP → Block**, then Save.
+2. Repeat the LDAP export from Test 3a (file missing only `Date of Birth`) →
+   the ZIP **still downloads** with the amber banner: DOB is non-blocking even
+   in strict mode (see `NON_BLOCKING_REQUIRED_COLUMNS`).
+3. Now upload a cleaned file missing `First Name` instead → expect the red
+   "Export Failed" card with Missing Required badge, present columns list,
+   and **no ZIP**. The 422 body lists `First Name` (not DOB).
+4. Switch LDAP back to **Warn** and re-run → downloads again.
 
 ### Test 3c — Strict mode per system
 
-| Test | Remove column from cleaned file | Expect (with that system set to Block) |
+With each system set to **Block**, remove the column below from the cleaned
+file:
+
+| Test | Remove column from cleaned file | Expect |
 |------|-------------------------------|--------|
-| LDAP step | `Date of Birth` | Red "Export Failed" card, no download |
-| Canvas step | `First Name` | Same red card |
+| LDAP step | `First Name` | Red "Export Failed" card, no download |
+| LDAP step | `Date of Birth` | **Downloads** (DOB never blocks) |
+| Canvas step | `First Name` | Red "Export Failed" card, no download |
 | Google step | `Last Name` | Same red card |
 | Athens step | `Last Name` | Same red card |
 | Library step | `ID Number` | Same red card |
@@ -123,12 +127,13 @@ block in either mode; they are left blank.
 ### Test 3d — Settings page
 
 - Open `/settings` — one toggle row per system (LDAP, Canvas, Google,
-  OpenAthens, Library). **LDAP shows Block with a "Default" badge** (its
-  built-in default); the other four show **Warn** with a "Default" badge.
+  OpenAthens, Library); all five show **Warn** with a "Default" badge. The
+  LDAP row notes that Date of Birth is always auto-added with empty values
+  and never blocks.
 - Toggle one system → "Save changes" enables → toast "Settings saved".
 - Badge becomes **Saved**. Reload the page → the choice persists.
 - Delete `backend/app/core/settings.json` (or set a fresh
-  `NCAD_SETTINGS_FILE`) so no file overrides apply → LDAP shows **Block /
+  `NCAD_SETTINGS_FILE`) so no file overrides apply → all rows show **Warn /
   Default** again.
 - Reopen the Settings page after the backend restarts but with
   `VALIDATION_MODE_LDAP=strict` set in the environment → the LDAP row shows
@@ -162,7 +167,8 @@ Also run the settings registry tests (defaults, persistence, env precedence):
 python samples/test_settings.py
 ```
 
-Must end with `0 failed, 18 passed`.
+Must end with `0 failed, 26 passed` (per-system defaults, persistence, env
+precedence, and the non-blocking-column registry).
 
 ## Test 6 — Error handling fallbacks
 

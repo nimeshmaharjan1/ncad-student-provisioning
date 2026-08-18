@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-08-18
+
+### LDAP Date of Birth fix (auto-added blank column)
+- **LDAP defaults back to `warn`** (all systems warn by default again). The
+  Quercus Discoverer report never exports `Date of Birth` anymore, so blocking
+  rejected the weekly LDAP export every time.
+- Added `NON_BLOCKING_REQUIRED_COLUMNS` to `app/core/quercus_schema.py`:
+  `Date of Birth` (LDAP) is required **and never blocks**, in any mode — a
+  missing DOB column is always auto-added as an empty column and the export
+  proceeds. Rationale documented in-code (LDAP admin email, John O Donnell,
+  2026-08-13: column stays in place, empty values allowed). New
+  `blocking_missing_required()` helper; all 5 export endpoints now reject only
+  on the blocking subset of missing columns.
+- `X-Missing-Required` header still lists every auto-added column, so the
+  amber banner says exactly what the system blanked.
+- UI copy updated everywhere: banner says "the system auto-added the missing
+  required columns with empty values"; Settings page notes DOB never blocks
+  for LDAP; Quercus warning card explains the Discoverer/DOB situation.
+- `backend/samples/test_settings.py` now 26 assertions (non-blocking registry
+  covered); E2E verified: warn + missing DOB → download; strict + DOB-only
+  missing → still downloads; strict + missing `First Name` → 422.
+
 ## 2026-08-14
 
 ### Per-System Validation Modes (Warn vs Block)

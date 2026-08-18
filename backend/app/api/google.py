@@ -7,7 +7,11 @@ import io
 import zipfile
 from app.services.quercus_preprocess import preprocess_quercus
 from app.services.google_service import run_google_pipeline
-from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.quercus_schema import (
+    check_columns,
+    missing_required_response,
+    blocking_missing_required,
+)
 from app.core.settings import get_validation_mode
 from app.utils.date_utils import date_suffix
 from app.utils.df_utils import backfill_missing_columns
@@ -36,12 +40,12 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
         check = check_columns("google", quercus_df.columns)
         missing_required_header = None
         if check["missing_required"]:
-            if get_validation_mode("google") == "strict":
-                logger.warning("Google export rejected — missing required Quercus columns: %s", check["missing_required"])
-                return missing_required_response("google", check)
+            blocking = blocking_missing_required("google", check)
+            if blocking and get_validation_mode("google") == "strict":
+                logger.warning("Google export rejected — missing required Quercus columns: %s", blocking)
+                return missing_required_response("google", {**check, "missing_required": blocking})
             logger.warning(
-                "Google export proceeding in warn mode — missing required columns "
-                "exported as blank: %s",
+                "Google export proceeding — missing required columns auto-added as blank: %s",
                 check["missing_required"],
             )
             quercus_df = backfill_missing_columns(quercus_df, check["missing_required"])

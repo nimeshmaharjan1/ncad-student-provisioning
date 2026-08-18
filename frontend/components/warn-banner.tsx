@@ -9,9 +9,10 @@ interface WarnBannerProps {
 
 /**
  * Banner shown after a successful export that proceeded in warn mode:
- * required columns were missing from the Quercus file, so they were exported
- * as blank. Admonishes the admin to recheck the file or switch the system to
- * strict mode in Settings.
+ * required columns were missing from the Quercus file, so the system
+ * auto-added them as empty columns (e.g. Date of Birth, which the Quercus
+ * Discoverer report no longer exports). Admonishes the admin to recheck the
+ * file or switch the system to strict mode in Settings.
  */
 export function WarnBanner({ missingColumns, system }: WarnBannerProps) {
   return (
@@ -25,14 +26,17 @@ export function WarnBanner({ missingColumns, system }: WarnBannerProps) {
             {system} export generated with warnings
           </p>
           <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
-            Missing required columns were exported as blank:{" "}
-            <span className="font-medium">{missingColumns.join(", ")}</span>.
-            Recheck your Quercus export settings before uploading, or enable
-            strict mode for this system in{" "}
+            The system auto-added the missing required columns with empty
+            values: <span className="font-medium">{missingColumns.join(", ")}</span>.
+            Review the exported files before sending them on. Recheck your
+            Quercus export settings before uploading, or enable strict mode
+            for this system in{" "}
             <a href="/settings" className="underline underline-offset-2">
               Settings
             </a>{" "}
-            to block exports with missing columns.
+            to block exports with other missing columns. Date of Birth never
+            blocks — the LDAP admin requires the column to stay with empty
+            values allowed.
           </p>
         </div>
       </div>

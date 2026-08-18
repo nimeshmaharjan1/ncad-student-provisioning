@@ -211,18 +211,17 @@ export default function AboutPage() {
             <Link href="/settings" className="text-primary underline underline-offset-2">Settings</Link>):
           </p>
           <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-            <li><strong>Warn</strong> — exports proceed; the missing columns are added as <strong>blank</strong> and an amber banner lists them, so you can recheck your Quercus export settings. The upload step always shows a warning card for missing expected columns regardless of mode.</li>
-            <li><strong>Block (strict)</strong> — missing required columns reject the export with a clear error listing exactly which columns are missing, which are present, and which are optional. This is the <strong>default for LDAP</strong>; the other systems default to Warn.</li>
+            <li><strong>Warn</strong> (default for every system) — exports proceed; missing required columns are <strong>auto-added with empty values</strong> and an amber banner tells you exactly what was blanked, so you can recheck your Quercus export settings. The upload step always shows a warning card for missing expected columns regardless of mode.</li>
+            <li><strong>Block (strict)</strong> — missing required columns reject the export with a clear error listing exactly which columns are missing, which are present, and which are optional.</li>
             <li><strong>Missing Optional Columns</strong> (amber) — these are always left blank, no action needed</li>
           </ul>
           <p className={body}>
             Note: the Quercus Discoverer report no longer includes{" "}
-            <strong>Date of Birth</strong> (GDPR), and LDAP blocks by default
-            when the column is missing. A <strong>Date of Birth column present
-            with empty cells</strong> is fine and never blocks — it is the
-            agreed format, not an error. Toggle LDAP to Warn on the{" "}
-            <Link href="/settings" className="text-primary underline underline-offset-2">Settings</Link>{" "}
-            page if you want blank DOB columns to export anyway.
+            <strong>Date of Birth</strong> (GDPR). That is expected — the
+            system <strong>auto-adds the DOB column with empty values</strong>{" "}
+            in LDAP exports, per the LDAP admin's agreement. Date of Birth
+            never blocks an export, even in Block mode; a DOB column present
+            with empty cells is fine too.
           </p>
         </div>
         <div className={section}>
@@ -260,6 +259,7 @@ export default function AboutPage() {
         <div className="rounded-xl border bg-card">
           <div className="max-h-80 overflow-y-auto divide-y">
             {[
+              { date: "2026-08-18", changes: ["LDAP export no longer blocks on a missing Date of Birth column: the system auto-adds it with empty values and the export proceeds (per LDAP admin agreement — the Discoverer report no longer exports DOB due to GDPR). Date of Birth never blocks, even in Block mode; other missing required columns still reject under Block", "All systems default to Warn again; Block mode is now opt-in per system", "Amber banners now say explicitly that the system auto-added the missing columns with empty values"] },
               { date: "2026-08-14", changes: ["Added per-system validation modes (Warn/Block) on a new Settings page — warn mode exports missing required columns as blank with a warning banner; block mode restores the 422 rejection", "LDAP now defaults to Block: the Quercus Discoverer report no longer exports Date of Birth (GDPR), and a missing column must block rather than go out blank — a DOB column present with empty cells is fine and never blocks (per LDAP admin)", "Added /admin/settings API with env-var override (VALIDATION_MODE_<SYSTEM>)"] },
               { date: "2026-08-04", changes: ["Added Privacy at a glance card on the home page — informational, dismissible, no consent tracking", "Explains why public hosting is safe: no database, transient processing", "Added missing-column warnings on Quercus upload — files missing expected columns (e.g. Date of Birth) still process, but a warning card lists exactly which columns are missing from which files so you can recheck before continuing", "Centralised all required/optional column lists into one registry (backend/app/core/quercus_schema.py) — adding a new system is now a one-entry change"] },
               { date: "2026-07-28", changes: ["Added in-app System Guide page (/about)", "Added Pipeline Status Dashboard with visual stepper", "Added Export History log with GDPR-safe localStorage", "Added Toast notifications for exports", "Added Success Cards replacing plain green text", "Added structured error handling (422) for all 5 system endpoints", "Added schema validation with required/optional column checking", "Made Home Mobile Phone column optional in LDAP export", "Added global exception handler with logging", "Added session persistence (pipeline state survives page refresh)", "Added Start Over button on pipeline page"] },

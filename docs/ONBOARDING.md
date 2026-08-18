@@ -322,6 +322,16 @@ Identical pattern to ldap.py — read baseline + quercus → preprocess → call
 #### `api/library.py`
 Different: accepts multiple files (no baseline), calls `clean_library_data()` + `build_library_template()`. Returns ZIP with debug CSV.
 
+#### `core/quercus_schema.py` (SOURCE OF TRUTH for columns)
+The per-system column registry. One `SystemSchema` per system (`required` /
+`optional`), used by every endpoint and the Quercus upload warning list.
+Also defines `NON_BLOCKING_REQUIRED_COLUMNS` (`ldap` → `Date of Birth`):
+columns that stay required but never reject an export — missing ones are
+auto-added as empty (Discoverer report no longer exports DOB; LDAP admin
+allows empty values). `check_columns()` / `blocking_missing_required()` /
+`missing_required_response()` / `check_source_columns()` are the four
+validation entry points.
+
 #### `services/quercus_preprocess.py` (SOURCE OF TRUTH)
 The one preprocessing pipeline used by all 5 downstream services. Key functions:
 - `clean_id_number()` — zero-pads to 8 digits, strips `.0` floats
@@ -376,10 +386,12 @@ endpoints resolve the mode and either proceed with blank columns + an
 (managed via `GET/PUT /admin/settings`, gitignored) → default. The file path is
 overridable with `NCAD_SETTINGS_FILE`. `test_settings.py` covers all paths.
 
-Defaults are per-system: **`ldap` → `strict`, all others → `warn`** — the LDAP
-admin requires a missing required column (e.g. `Date of Birth`, dropped from
-Quercus Discoverer for GDPR) to block the export, while a DOB column present
-with empty cells is fine and never blocked.
+Every system defaults to `warn`. The safety valve lives one layer down: the
+schema registry's `NON_BLOCKING_REQUIRED_COLUMNS` (see `quercus_schema.py`) —
+LDAP's `Date of Birth` is required but never blocks, because the Discoverer
+report no longer exports it (GDPR) and the LDAP admin allows empty values
+(email from John O Donnell, 2026-08-13). `blocking_missing_required()` filters
+the blocking subset; exports only reject on that.
 
 Why server-side and not localStorage: enforcement happens in the export
 endpoints, which cannot read the browser — a client-side setting would only

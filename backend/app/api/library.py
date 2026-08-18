@@ -5,7 +5,11 @@ from fastapi.responses import StreamingResponse, JSONResponse
 import pandas as pd
 import io
 from app.services.library_service import clean_library_data, build_library_template
-from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.quercus_schema import (
+    check_columns,
+    missing_required_response,
+    blocking_missing_required,
+)
 from app.core.settings import get_validation_mode
 from app.utils.date_utils import date_suffix
 from app.utils.df_utils import backfill_missing_columns
@@ -29,12 +33,12 @@ async def export_library(files: list[UploadFile] = File(...)):
         if dfs:
             check = check_columns("library", dfs[0].columns)
             if check["missing_required"]:
-                if get_validation_mode("library") == "strict":
-                    logger.warning("Library export rejected — missing required columns: %s", check["missing_required"])
-                    return missing_required_response("library", check)
+                blocking = blocking_missing_required("library", check)
+                if blocking and get_validation_mode("library") == "strict":
+                    logger.warning("Library export rejected — missing required columns: %s", blocking)
+                    return missing_required_response("library", {**check, "missing_required": blocking})
                 logger.warning(
-                    "Library export proceeding in warn mode — missing required columns "
-                    "exported as blank: %s",
+                    "Library export proceeding — missing required columns auto-added as blank: %s",
                     check["missing_required"],
                 )
                 dfs = [backfill_missing_columns(df, check["missing_required"]) for df in dfs]

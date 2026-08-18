@@ -154,8 +154,10 @@ export default function SettingsPage() {
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {draft[system] === "warn"
-                        ? "Missing required columns export as blank, with a warning."
+                        ? "Missing required columns are auto-added as blank columns, with a warning."
                         : "Missing required columns block the export with an error."}
+                      {system === "ldap" &&
+                        " Date of Birth is always auto-added with empty values and never blocks (per LDAP admin)."}
                     </p>
                   </div>
 

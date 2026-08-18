@@ -234,10 +234,11 @@ works out exactly who is new. For each system it generates the correct file —
 LDAP files with word passcodes, the Canvas import, Google uploads with
 account reactivation, the OpenAthens template, and Library borrower records.
 Errors are no longer silent: if a file is missing a required column, the
-system either blocks with a clear message (LDAP's default strict mode — e.g.
-the GDPR-removed Date of Birth) or warns the user and exports the column blank
-(warn mode, default for the other systems). All of this is already automated
-and regression-tested — it works today.
+system either blocks with a clear message (strict mode) or warns the user and
+auto-adds the column with empty values (default warn mode). `Date of Birth`
+never blocks for LDAP — the Discoverer report no longer exports it (GDPR) and
+the LDAP admin allows empty values; the column is always auto-added blank.
+All of this is already automated and regression-tested — it works today.
 
 **What the manager asked for.** The vision: the system should pull student
 data from Quercus, check for new students, add them to all five systems by

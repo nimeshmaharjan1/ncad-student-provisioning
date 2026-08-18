@@ -108,10 +108,12 @@ the manual steps needed to complete it.
 - `YYYYMMDD_ldap_updated_baseline.csv` — save as your next baseline
 
 > **Date of Birth:** since the GDPR change, the Quercus Discoverer report no
-> longer exports `Date of Birth`, and LDAP's validation mode is **Block** by
-> default (per the LDAP admin) — so an LDAP export with the column missing is
-> rejected with a red error card. A `Date of Birth` column that is **present
-> but blank** never blocks. See **Validation Settings** below.
+> longer exports `Date of Birth`. This is expected: the system **auto-adds
+> the column with empty values** in the LDAP export (per the LDAP admin —
+> "leave the DOB column in place but we can leave it empty of data"), and an
+> amber banner tells you exactly that. Date of Birth never blocks an export,
+> even in Block mode; a column present with empty cells never blocks either.
+> See **Validation Settings** below.
 
 **Once the file is downloaded:**
 
@@ -337,13 +339,13 @@ required columns. Configure them on the **Settings** page (top navigation):
 
 | Mode | Behavior |
 |---|---|
-| **Warn** | The export runs. Missing required columns are added as **blank**, and an amber banner on the export step lists exactly which columns were missing. |
+| **Warn** | The export runs. Missing required columns are **auto-added with empty values**, and an amber banner on the export step lists exactly which columns were blanked. |
 | **Block** (strict) | The export is rejected with a red error card listing the missing columns — nothing is downloaded. |
 
-**Defaults: LDAP → Block, all other systems → Warn.** LDAP blocks by default
-because the Discoverer report no longer exports `Date of Birth` and the LDAP
-admin requires that a missing column never goes out blank — while a DOB
-column present with empty cells is fine and never blocks.
+**All systems default to Warn.** Exception baked into the schema: **`Date of
+Birth` never blocks for LDAP** — in any mode it is auto-added as an empty
+column and the export proceeds (per the LDAP admin's agreement, since the
+Discoverer report no longer exports DOB).
 
 - Changes apply **immediately** — no redeploy or re-upload needed.
 - Each system's toggle shows a badge: **Default** (not changed yet),
@@ -351,9 +353,9 @@ column present with empty cells is fine and never blocks.
   `VALIDATION_MODE_<SYSTEM>` environment variable is set on the server —
   it always wins over the saved setting).
 - When to use **Block**: when a missing column would silently corrupt the
-  downstream file (e.g. a missing `ID Number` for Library). When to use
-  **Warn**: when a blank column is the agreed format for an expected absence
-  (e.g. toggling LDAP to Warn if you accept a blank `Date of Birth` column).
+  downstream file (e.g. a missing `ID Number` for Library, or `First Name`
+  for LDAP). DOB is the one exception — it always exports as an empty column
+  rather than blocking.
 
 ---
 

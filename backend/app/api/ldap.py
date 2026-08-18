@@ -9,7 +9,11 @@ from app.services.ldap_export import (
     generate_ldap_comparison_exports,
     LDAP_SCHEMA_REQUIRED_COLUMNS,
 )
-from app.core.quercus_schema import check_columns, missing_required_response
+from app.core.quercus_schema import (
+    check_columns,
+    missing_required_response,
+    blocking_missing_required,
+)
 from app.core.settings import get_validation_mode
 from app.services.quercus_preprocess import preprocess_quercus
 from app.utils.date_utils import date_suffix
@@ -46,18 +50,23 @@ async def download_ldap(
         # STRICT mode blocks with a 422; WARN mode proceeds with blank columns
         # and reports the missing columns via the X-Missing-Required header.
         # Mode comes from app/core/settings.py (admin-configurable per system).
+        # Date of Birth is non-blocking even in strict mode (see
+        # NON_BLOCKING_REQUIRED_COLUMNS in quercus_schema.py) — it is always
+        # auto-added as an empty column.
         check = check_columns("ldap", quercus_df.columns)
         missing_required_header = None
         if check["missing_required"]:
-            if get_validation_mode("ldap") == "strict":
+            blocking = blocking_missing_required("ldap", check)
+            if blocking and get_validation_mode("ldap") == "strict":
                 logger.warning(
                     "LDAP export rejected — missing required Quercus columns: %s",
-                    check["missing_required"],
+                    blocking,
                 )
-                return missing_required_response("ldap", check)
+                return missing_required_response(
+                    "ldap", {**check, "missing_required": blocking}
+                )
             logger.warning(
-                "LDAP export proceeding in warn mode — missing required columns "
-                "exported as blank: %s",
+                "LDAP export proceeding — missing required columns auto-added as blank: %s",
                 check["missing_required"],
             )
             quercus_df = backfill_missing_columns(quercus_df, check["missing_required"])
