@@ -136,6 +136,42 @@ try:
 except ValueError:
     pass
 
+# --- LIBRARY regression: gapped index + missing optional column ---
+# Repro for the "array length N does not match index length M" crash when a
+# filtered (non-contiguous) index meets a template column the file no longer
+# has (e.g. Gender dropped from the new Quercus export format).
+from app.services.library_service import clean_library_data, build_library_template
+from app.services.quercus_preprocess import merge_quercus_files
+
+_lib_cols = [
+    "Status", "ID Number", "Course Code", "Course Description",
+    "Course Instance Course Year", "Course Instance Course Stream",
+    "First Name", "Last Name", "Term Email", "LDAP ID", "Student Category",
+    "Home Email", "Course Instance End Date", "Course Instance Start Date",
+]
+
+def _mk_quercus(ids, statuses):
+    df = pd.DataFrame({c: "x" for c in _lib_cols}, index=range(len(ids)))
+    df["ID Number"] = ids
+    df["Status"] = statuses
+    df["First Name"] = "F"
+    df["Last Name"] = "L"
+    df["Course Code"] = "AD401"
+    df["Term Email"] = [f"{i}@student.ncad.ie" for i in ids]
+    return df
+
+_ids = list(range(10000000, 10000000 + 2178))
+_f1 = _mk_quercus(_ids, ["Registered" if i % 5 else "Withdrawn" for i in range(2178)])
+_f2 = _mk_quercus(_ids, ["Withdrawn" if i % 5 else "Registered" for i in range(2178)])
+_lib_cleaned = clean_library_data(_f1, _f2)
+assert "Gender" not in _lib_cleaned.columns, "Test setup: Gender must be absent"
+assert _lib_cleaned.index.equals(pd.RangeIndex(len(_lib_cleaned))), "Index must be contiguous after preprocessing"
+assert len(_lib_cleaned) > 0
+_lib_final = build_library_template(_lib_cleaned)
+assert _lib_final.shape == (len(_lib_cleaned), len(LIBRARY_OUTPUT_COLUMNS)), f"Library template shape wrong: {_lib_final.shape}"
+assert _lib_final.iloc[0]["gender"] == "UNKNOWN", "Missing Gender must export as UNKNOWN"
+print(f"Library regression: {len(_lib_cleaned)} rows -> {_lib_final.shape} (no index-length crash)")
+
 print("\n" + "=" * 60)
 print("ALL PIPELINE SMOKE TESTS PASSED")
 print("=" * 60)

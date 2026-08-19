@@ -91,7 +91,7 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
         df_copy.attrs["filtered_out_status_count"] = 0
         df_copy.attrs["external_students_removed_count"] = 0
         df_copy.attrs["duplicate_rows_detected"] = 0
-        return df_copy
+        return df_copy.reset_index(drop=True)
 
     df_copy = df.copy()
 
@@ -173,5 +173,11 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
     else:
         df_copy["Type"] = None
 
-    return df_copy
+    # Reset the index after filtering so downstream consumers (e.g. the
+    # Library/Athens template builders, which mix df columns with plain
+    # lists) always get a contiguous 0..n-1 RangeIndex. Without this, a
+    # filtered (gapped) index combined with a missing optional column makes
+    # pandas raise "array length N does not match index length M" when the
+    # output DataFrame is constructed.
+    return df_copy.reset_index(drop=True)
 
