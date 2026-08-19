@@ -33,7 +33,7 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000          # local backend
 Double-click the launcher for your OS — it installs dependencies, starts both servers, and opens the browser:
 
 - **Windows:** double-click `start.bat`
-- **macOS/Linux:** run `./start.sh` (first time: `chmod +x start.sh`)
+- **macOS/Linux:** run `bash start.sh` (no permissions needed) or `./start.sh` after a one-time `chmod +x start.sh`
 
 ### Manual setup
 
@@ -91,6 +91,20 @@ All pipelines (except Library) compare Quercus data against a system-specific ba
 ---
 
 ## Documentation
+
+### Where to go next
+
+Start with the one that matches who you are:
+
+| You're… | Start with… |
+|---|---|
+| Using it week-to-week (non-IT) | [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) — step-by-step operation |
+| Developer / maintainer | [`docs/ONBOARDING.md`](docs/ONBOARDING.md) — every file, APIs, design decisions |
+| Testing a change | [`docs/MANUAL_TESTING.md`](docs/MANUAL_TESTING.md) — test scenarios |
+| Planning the automation end-goal | [`docs/AUTOMATION_ROADMAP.md`](docs/AUTOMATION_ROADMAP.md) — the manager-facing vision |
+
+Short version: read this README → run it via the launcher → then pick a guide
+by your role above.
 
 **[→ Full Developer Onboarding Guide](docs/ONBOARDING.md)**
 

@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# HOW TO RUN ON macOS/LINUX (nothing else needed):
+#
+#   Option A - no permissions to change:   bash start.sh
+#   Option B - one-time, then ./start.sh:  chmod +x start.sh  &&  ./start.sh
+#
+# The script self-heals the venv, deps, words.txt, node_modules, .env and
+# frontend build, then starts backend (:8000) + frontend (:3000).
+# Press Ctrl+C to stop.
 
 cd "$(dirname "$0")"
 
@@ -67,25 +75,19 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-# ------------------------------------------------------------------
-# Backend
-# ------------------------------------------------------------------
-echo "[1/4] Setting up Python virtual environment..."
-cd backend
-if [ ! -d ".venv" ]; then
-  "$PYTHON" -m venv .venv
-fi
-echo ""
-
-echo "[2/4] Installing Python dependencies..."
-.venv/bin/python -m pip install -r ../requirements.txt
-if [ $? -ne 0 ]; then
-  echo "[ERROR] Failed to install Python dependencies."
+# Run the self-healing setup (venv, deps, words.txt, node_modules, .env, build)
+echo "Running self-healing setup..."
+if ! "$PYTHON" scripts/bootstrap.py; then
+  echo "[ERROR] Setup failed. See messages above."
   exit 1
 fi
 echo ""
 
-echo "[3/4] Starting backend on http://localhost:8000 ..."
+# ------------------------------------------------------------------
+# Backend
+# ------------------------------------------------------------------
+echo "[1/2] Starting backend on http://localhost:8000 ..."
+cd backend
 .venv/bin/python -m uvicorn app.main:app --port 8000 &
 BACKEND_PID=$!
 cd ..
@@ -93,16 +95,8 @@ cd ..
 # ------------------------------------------------------------------
 # Frontend
 # ------------------------------------------------------------------
-echo "[4/4] Setting up and starting frontend on http://localhost:3000 ..."
+echo "[2/2] Starting frontend on http://localhost:3000 ..."
 cd frontend
-npm install
-if [ $? -ne 0 ]; then
-  echo "[ERROR] Failed to install Node.js dependencies."
-  exit 1
-fi
-echo "Building frontend for production (this may take a minute)..."
-npm run build
-echo "Build complete."
 npm run start &
 FRONTEND_PID=$!
 cd ..

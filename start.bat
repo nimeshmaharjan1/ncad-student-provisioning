@@ -70,43 +70,30 @@ echo.
 echo All prerequisites met.
 echo.
 
-:: ----------------------------------------------------------------------------
-:: Backend
-:: ----------------------------------------------------------------------------
-echo [1/4] Setting up Python virtual environment...
-cd backend
-if not exist ".venv" (
-    python -m venv .venv
-)
-echo.
-
-echo [2/4] Installing Python dependencies...
-.venv\Scripts\python -m pip install -r ..\requirements.txt
+:: ----- Run the self-healing setup --------------------------------------------
+:: Creates/repairs venv, deps, words.txt check, node_modules, .env, build.
+echo Running self-healing setup...
+python scripts\bootstrap.py
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install Python dependencies.
+    echo [ERROR] Setup failed. See messages above.
     pause
     exit /b 1
 )
 echo.
 
-echo [3/4] Starting backend on http://localhost:8000 ...
+:: ----------------------------------------------------------------------------
+:: Backend
+:: ----------------------------------------------------------------------------
+echo [1/2] Starting backend on http://localhost:8000 ...
+cd backend
 start /B "" cmd /c ".venv\Scripts\python -m uvicorn app.main:app --port 8000"
 cd ..
 
 :: ----------------------------------------------------------------------------
 :: Frontend
 :: ----------------------------------------------------------------------------
-echo [4/4] Setting up and starting frontend on http://localhost:3000 ...
+echo [2/2] Starting frontend on http://localhost:3000 ...
 cd frontend
-call npm install
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install Node.js dependencies.
-    pause
-    exit /b 1
-)
-echo Building frontend for production ^(this may take a minute^)...
-call npm run build
-echo Build complete.
 start /B "" cmd /c "npm run start"
 cd ..
 

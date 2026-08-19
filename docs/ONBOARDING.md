@@ -23,6 +23,15 @@ NCAD Student Provisioning automates the creation and update of student accounts 
 - Node.js 20+
 - npm
 
+### Launch
+
+The one-click launchers install dependencies, self-heal the environment, start
+both servers, and open the browser:
+
+- **Windows:** double-click `start.bat`
+- **macOS/Linux:** `bash start.sh` (no permissions needed) or `./start.sh` after
+  a one-time `chmod +x start.sh`
+
 ### Backend Setup
 
 ```bash
@@ -35,6 +44,47 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 The API is now at `http://localhost:8000`.
+
+#### Required: the passcode word list (`words.txt`)
+
+The full 1,668-word list is **gitignored** — it is a deployment asset that
+travels out-of-band, exactly like the baselines and real Quercus files. It is
+**not** in the repo; get it from the system owner (NCAD IT Support). Any NCAD
+channel that delivers the intact file works (shared drive, USB, Teams, SFTP) —
+secrecy is not the concern, integrity is. The list should contain 1,668 words,
+one per line.
+
+**If you use `start.bat` / `start.sh`, the launcher does this for you.** On a
+fresh clone it checks for the file; if it's missing it asks whether you have it
+and (if you don't) prints these instructions and stops, so the weak built-in
+15-word fallback never runs silently. Only `PROVISION_REQUIRE_WORDS=0` opts
+into the fallback (demo machines only).
+
+**If you run the backend manually**, do one of the following:
+
+Option 1 — copy the file into the project (recommended):
+
+```
+backend/app/utils/words.txt
+```
+
+Option 2 — keep it elsewhere and point to it with `PASSCODE_WORD_FILE`.
+That variable tells the system where the list lives instead of the default
+location. Use an **absolute** path:
+
+```
+# Windows cmd (this session)
+set PASSCODE_WORD_FILE=C:\path\to\words.txt
+# Windows cmd (permanent)
+setx PASSCODE_WORD_FILE "C:\path\to\words.txt"
+# PowerShell
+$env:PASSCODE_WORD_FILE = "C:\path\to\words.txt"
+# Linux/macOS
+export PASSCODE_WORD_FILE=/path/to/words.txt
+```
+
+Without the file, passcodes fall back to a built-in 15-word list: ~23 bits of
+entropy — far too weak for the permanent LDAP credential.
 
 ### Frontend Setup
 

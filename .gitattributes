@@ -1,0 +1,6 @@
+# Shell scripts must always use LF line endings - CRLF breaks bash on
+# macOS/Linux (the infamous "$'\r': command not found" error).
+*.sh text eol=lf
+
+# Batch files keep CRLF - safest for cmd.exe label/goto handling.
+*.bat text eol=crlf
