@@ -671,12 +671,12 @@ export default function GuidePage() {
               { number: 3, icon: Download, text: "Download the .zip" },
             ]}
             zipContents={[
-              { file: "YYYYMMDD_library.csv", desc: "Ready for SFTP upload (46-column template)" },
+              { file: "YYYYMMDD_library.txt", desc: "Ready for SFTP upload (46-column template, tab-delimited)" },
               { file: "YYYYMMDD_library_cleaned.csv", desc: "Intermediate file for verification" },
             ]}
             manualSteps={[
               { number: 4, icon: Upload, text: "Open your SFTP client and connect using the Library SFTP credentials", detail: "Provided by John" },
-              { number: 5, icon: Upload, text: "Upload YYYYMMDD_library.csv" },
+              { number: 5, icon: Upload, text: "Upload YYYYMMDD_library.txt" },
               { number: 6, icon: Check, text: "The Library system handles merging automatically" },
             ]}
           />

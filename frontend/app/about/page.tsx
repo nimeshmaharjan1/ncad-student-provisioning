@@ -82,7 +82,7 @@ const systems = [
     description: "Library system — patron records.",
     required: ["ID Number"],
     optional: ["First Name", "Last Name", "Gender", "Course Code", "Course Instance Start Date", "Course Instance End Date"],
-    output: "ZIP with 2 files: library_cleaned.csv + library.csv (46-column template).",
+    output: "ZIP with 2 files: library_cleaned.csv (debug) + library.txt (tab-delimited 46-col template).",
     postSteps: ["SFTP upload to Library system", "Library handles merging automatically"],
   },
 ]

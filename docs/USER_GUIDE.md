@@ -276,13 +276,13 @@ The Library page is standalone (no pipeline dependency). Access it from the home
 3. Download the `.zip`
 
 **The `.zip` contains:**
-- `YYYYMMDD_library.csv` — ready for SFTP upload (46-column template)
+- `YYYYMMDD_library.txt` — ready for SFTP upload (46-column template, tab-delimited)
 - `YYYYMMDD_library_cleaned.csv` — intermediate file for verification
 
 **Once the file is downloaded:**
 
 4. Open your SFTP client and connect using the Library SFTP credentials (provided by IT support)
-5. Upload `YYYYMMDD_library.csv`
+5. Upload `YYYYMMDD_library.txt`
 6. The Library system handles merging automatically
 
 ---
@@ -376,7 +376,7 @@ YYYYMMDD_system_description.csv
 | `20260701_google_upload.csv` | Google Workspace bulk upload |
 | `20260701_google_reactivate.csv` | Google accounts to review for reactivation |
 | `20260701_athens.csv` | OpenAthens bulk upload |
-| `20260701_library.csv` | Library upload file |
+| `20260701_library.txt` | Library upload file (tab-delimited) |
 
 ---
 

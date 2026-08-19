@@ -280,7 +280,7 @@ Constants: `groups=ncad_students`, `status=pending`, `expiry=2026-09-23`,
 
 Returns ZIP:
 - `YYYYMMDD_library_cleaned.csv` — debug: cleaned intermediate data
-- `YYYYMMDD_library.csv` — 46-col Library upload template
+- `YYYYMMDD_library.txt` — 46-col Library upload template, **tab-delimited**, dates `yyyy-mm-dd` untouched (SFTP-ready)
 
 Constants: `institutionId=46722`, `homeBranch=266006`, `sourceSystem=https://idp.ncad.ie/idp/shibboleth`.
 
@@ -512,7 +512,7 @@ Examples:
 - `20260630_athens_new_users.csv`
 - `20260630_athens.csv`
 - `20260630_library_cleaned.csv`
-- `20260630_library.csv`
+- `20260630_library.txt`
 
 ZIP files follow: `YYYYMMDD_<system>_export.zip`
 

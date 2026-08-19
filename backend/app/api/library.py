@@ -53,12 +53,12 @@ async def export_library(files: list[UploadFile] = File(...)):
         ds = date_suffix()
 
         cleaned_csv = cleaned.to_csv(index=False).encode("utf-8")
-        final_csv = final.to_csv(index=False).encode("utf-8")
+        final_txt = final.to_csv(sep="\t", index=False).encode("utf-8")
 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.writestr(f"{ds}_library_cleaned.csv", cleaned_csv)
-            zf.writestr(f"{ds}_library.csv", final_csv)
+            zf.writestr(f"{ds}_library.txt", final_txt)
 
         zip_buffer.seek(0)
 

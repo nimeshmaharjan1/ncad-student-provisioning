@@ -158,6 +158,8 @@ def _mk_quercus(ids, statuses):
     df["Last Name"] = "L"
     df["Course Code"] = "AD401"
     df["Term Email"] = [f"{i}@student.ncad.ie" for i in ids]
+    df["Course Instance Start Date"] = "01-Sep-26"
+    df["Course Instance End Date"] = "31-Aug-27"
     return df
 
 _ids = list(range(10000000, 10000000 + 2178))
@@ -170,7 +172,21 @@ assert len(_lib_cleaned) > 0
 _lib_final = build_library_template(_lib_cleaned)
 assert _lib_final.shape == (len(_lib_cleaned), len(LIBRARY_OUTPUT_COLUMNS)), f"Library template shape wrong: {_lib_final.shape}"
 assert _lib_final.iloc[0]["gender"] == "UNKNOWN", "Missing Gender must export as UNKNOWN"
-print(f"Library regression: {len(_lib_cleaned)} rows -> {_lib_final.shape} (no index-length crash)")
+assert _lib_final.iloc[0]["circRegistrationDate"] == "2026-09-01", "circRegistrationDate must be yyyy-mm-dd"
+assert _lib_final.iloc[0]["oclcExpirationDate"] == "2027-08-31", "oclcExpirationDate must be yyyy-mm-dd"
+
+_lib_txt = _lib_final.to_csv(sep="\t", index=False)
+_lib_txt_lines = _lib_txt.strip().splitlines()
+assert "\t" in _lib_txt_lines[0] and len(_lib_txt_lines[0].split("\t")) == len(LIBRARY_OUTPUT_COLUMNS), "TXT must be tab-delimited with all 46 columns"
+assert "2026-09-01" in _lib_txt and "2027-08-31" in _lib_txt, "TXT must keep yyyy-mm-dd dates untouched"
+assert "\t" in _lib_txt_lines[1], "data rows must be tab-separated"
+
+_lib_with_gender = _lib_cleaned.copy()
+_lib_with_gender["Gender"] = ["male", "F"] + ["Other"] * (len(_lib_with_gender) - 2)
+_t_g = build_library_template(_lib_with_gender)
+assert _t_g.iloc[0]["gender"] == "MALE", "Gender must be uppercased passthrough"
+assert _t_g.iloc[1]["gender"] == "F", "Non-whitelist value must pass through, not become UNKNOWN"
+print(f"Library regression: {len(_lib_cleaned)} rows -> {_lib_final.shape} (no index-length crash, TXT tab-delimited + yyyy-mm-dd)")
 
 print("\n" + "=" * 60)
 print("ALL PIPELINE SMOKE TESTS PASSED")

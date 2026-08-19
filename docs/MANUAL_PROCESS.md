@@ -404,12 +404,10 @@ Remove:
 - Home addresses
 
 ### Validate Gender Values
-Only the following values are permitted:
-- MALE
-- FEMALE
-- UNKNOWN
-
-Any other value must be changed to: **UNKNOWN**
+The automated Library export passes any present gender value through uppercased
+(e.g. `male` → `MALE`) and writes `UNKNOWN` only when the field is blank or the
+source file has no `Gender` column. If gender must be restricted to
+`MALE`/`FEMALE`/`UNKNOWN`, ensure the source export only contains those values.
 
 ### Verify Date Formats
 Format all date columns using: `yyyy-mm-dd`
@@ -418,16 +416,16 @@ Verify:
 - Course End Date (`oclcExpirationDate`)
 
 ### Create the New Library Upload File
-1. Open the previous Library upload file (e.g. `20260616_library.csv`).
+1. Open the previous Library upload file (e.g. `20260616_library.txt`).
 2. *This file is used as a reference/template only. Do not overwrite the previous file.*
 3. Compare the column headers visually, as the Quercus field names and Library field names differ.
 4. Copy the values from `all_students_20260618.csv` into their corresponding columns in the Library format.
 5. Preserve the existing Library column names and structure.
 6. Append the new records below the existing records.
-7. Save the completed file as: `20260618_library.csv`
+7. Save the completed file as: `20260618_library.txt` (tab-delimited)
 
 ### Upload File
-Upload `20260618_library.csv` using the Library SFTP process.
+Upload `20260618_library.txt` using the Library SFTP process.
 Separate SFTP instructions will be provided by IT support.
 
 **Note:** The Library system automatically patches existing users and creates new users as required. Therefore, no comparison with previous Library uploads is required.

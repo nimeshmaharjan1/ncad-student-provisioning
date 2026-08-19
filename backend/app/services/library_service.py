@@ -38,17 +38,14 @@ def _assign_borrower_category(course_num: int | None) -> str:
 def _validate_gender(val) -> str:
     if pd.isna(val):
         return "UNKNOWN"
-    s = str(val).strip().upper()
-    if s in ("MALE", "FEMALE"):
-        return s
-    return "UNKNOWN"
+    return str(val).strip().upper()
 
 
 def _format_date_ymd(val) -> str:
     if pd.isna(val):
         return ""
     try:
-        dt = pd.to_datetime(val, errors="coerce")
+        dt = pd.to_datetime(val, dayfirst=True, format="mixed", errors="coerce")
         if pd.isna(dt):
             return ""
         return dt.strftime("%Y-%m-%d")

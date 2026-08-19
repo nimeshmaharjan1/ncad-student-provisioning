@@ -23,7 +23,7 @@ All sample files referenced below live in the repo's `samples/` folder:
 | Quercus | Upload `quercus_2025.csv` + `quercus_2026.csv` | Green success toast, cleaned CSV downloads, stepper "Quercus" turns done, **no warning card** |
 | LDAP | Upload `baseline_ldap.csv` + the **cleaned file from the Quercus step** | ZIP with `new_students.csv` + `updated_baseline.csv`, success card |
 | Canvas / Google / Athens | Same pattern with their baseline files | ZIP downloads, all steps done |
-| Library | Upload the two Quercus files directly | ZIP with cleaned + 46-column template |
+| Library | Upload the two Quercus files directly | ZIP with cleaned CSV + tab-delimited 46-column `.txt` template |
 | Anywhere | Open Export History | Entries with timestamps / row counts |
 
 Key detail: at the LDAP / Canvas / Google / Athens steps you upload the

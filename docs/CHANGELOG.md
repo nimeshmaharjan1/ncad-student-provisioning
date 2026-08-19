@@ -2,6 +2,25 @@
 
 ## 2026-08-19
 
+### Library export fixes
+- **Index-length crash fixed:** `preprocess_quercus()` now resets the DataFrame
+  index after filtering. A filtered (gapped) index combined with a missing
+  optional column (e.g. `Gender` dropped from the new Quercus export format)
+  made pandas raise `array length N does not match index length M` when the
+  Library/Athens templates were built.
+- **Library upload file is now `.txt`:** `POST /library/export` returns a ZIP
+  with `YYYYMMDD_library_cleaned.csv` (debug) and `YYYYMMDD_library.txt` —
+  tab-delimited, dates kept `yyyy-mm-dd` untouched (matching the staff
+  Library tool's SFTP-ready output).
+- **Gender passthrough:** blank/missing `Gender` still exports as `UNKNOWN`,
+  but any present value now passes through uppercased instead of being forced
+  to `UNKNOWN` (e.g. `male` → `MALE`, `F` → `F`).
+- **Date parsing fix:** the Library template's registration/expiry dates are
+  written `yyyy-mm-dd` from any format the admin's export uses — the real
+  `dd-Mon-yy` (e.g. `15-May-26`), day-first `dd/MM/yyyy`, or ISO — parsed with
+  `dayfirst=True` and `format="mixed"` (previously `01/09/2025` was read as
+  month-first, i.e. 9 January instead of 1 September).
+
 ### Self-healing launcher & shared-drive operating model
 - `scripts/bootstrap.py` (new): the launchers now self-heal every setup step —
   venv + Python deps (reinstall when `requirements.txt` changes), a hard
