@@ -1,5 +1,13 @@
 @echo off
 title NCAD Student Provisioning
+set "_DIR=%~dp0"
+if "%_DIR:~0,2%"=="\\" (
+    echo [ERROR] You are running this from a shared/network drive.
+    echo Copy the folder to your own machine first, then run start.bat there.
+    echo.
+    pause
+    exit /b 1
+)
 cd /d "%~dp0"
 :: .venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
 echo ============================================

@@ -15,6 +15,14 @@
 
 cd "$(dirname "$0")"
 
+case "$(pwd)" in
+  /Volumes/*|/mnt/*|/media/*)
+    echo "[ERROR] You are running this from a shared/network drive."
+    echo "Copy the folder to your own machine first, then run start.sh there."
+    exit 1
+    ;;
+esac
+
 echo "============================================"
 echo "  NCAD Student Provisioning -- Launcher"
 echo "============================================"

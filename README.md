@@ -8,21 +8,14 @@ Automates student account creation and updates across **5 institutional systems*
 
 ---
 
-## Demo Environment
-
-A public demo is deployed for testing and validation:
-
-- **Frontend:** https://ncad-student-provisioning.vercel.app/
-- **Backend:** https://ncad-student-provisioning.onrender.com/
-
-No sensitive student data is exposed. All processing is transient (upload → transform → export) — no data is persisted or stored.
-
-To switch between local and demo, edit `frontend/.env`:
-
-```env
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000          # local backend
-# NEXT_PUBLIC_API_URL=https://ncad-student-provisioning.onrender.com  # demo
-```
+> ## IMPORTANT — this is the NCAD shared-drive master copy
+> **Never run `start.bat` / `start.sh` from this shared folder.** Network
+> drives are too slow for the dependency install/build and break with
+> concurrent use.
+>
+> 1. Copy this whole folder to your own machine (Desktop, Documents, …).
+> 2. Run the launcher there — it installs everything and starts the servers.
+> 3. On macOS, if you see `Permission denied`: `chmod +x start.sh` (or `bash start.sh`).
 
 ---
 

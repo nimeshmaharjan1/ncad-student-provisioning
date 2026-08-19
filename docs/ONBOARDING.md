@@ -33,6 +33,12 @@ both servers, and open the browser:
   a one-time `chmod +x start.sh`. If you ever see `Permission denied`, run
   `chmod +x start.sh` once (a fresh clone already has the bit set).
 
+> **Shared-drive copy:** the repo may live on the NCAD shared drive. Never run
+> the launcher from there — network drives are too slow for the dependency
+> install/build and break with concurrent use. **Copy the whole folder to your
+> own machine first**, then run the launcher locally. Both launchers refuse to
+> run from a network drive and print this message automatically.
+
 ### Backend Setup
 
 ```bash

@@ -64,7 +64,6 @@ Do this before opening the provisioning system.
 
 Open the provisioning system:
 - **Local:** http://localhost:3000
-- **Demo:** https://ncad-student-provisioning.vercel.app/
 
 Click **Provisioning Pipeline** on the home page.
 
