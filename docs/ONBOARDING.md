@@ -30,7 +30,8 @@ both servers, and open the browser:
 
 - **Windows:** double-click `start.bat`
 - **macOS/Linux:** `bash start.sh` (no permissions needed) or `./start.sh` after
-  a one-time `chmod +x start.sh`
+  a one-time `chmod +x start.sh`. If you ever see `Permission denied`, run
+  `chmod +x start.sh` once (a fresh clone already has the bit set).
 
 ### Backend Setup
 

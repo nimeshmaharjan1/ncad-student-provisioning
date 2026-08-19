@@ -7,6 +7,11 @@
 # The script self-heals the venv, deps, words.txt, node_modules, .env and
 # frontend build, then starts backend (:8000) + frontend (:3000).
 # Press Ctrl+C to stop.
+#
+# If double-clicking or ./start.sh ever says "Permission denied", the file
+# lost its executable bit - run  chmod +x start.sh  once. Fresh clones of
+# this repo already have it set. If double-clicking opens an editor instead
+# of running, use  bash start.sh  (or right-click > Open With > Terminal).
 
 cd "$(dirname "$0")"
 
