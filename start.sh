@@ -123,8 +123,9 @@ echo "  Docs:     http://localhost:3000/about"
 echo "============================================"
 echo ""
 
-# Wait for frontend to be ready (poll port 3000, max 120 seconds).
-# Tries curl first, then wget, then nc — not all systems have curl.
+# Wait for frontend to be ready (poll port 3000, up to ~4 minutes; first
+# start is slow). Tries curl first, then wget, then nc — not all systems
+# have curl.
 if command -v curl &>/dev/null; then
   CHECK_CMD="curl -s -o /dev/null http://localhost:3000"
 elif command -v wget &>/dev/null; then
@@ -136,14 +137,18 @@ else
 fi
 
 if [ -n "$CHECK_CMD" ]; then
-  echo "Waiting for frontend to start (this may take a minute)..."
-  for i in $(seq 1 120); do
+  echo "Waiting for frontend to start (first start can take a couple of minutes)..."
+  for i in $(seq 1 240); do
     if $CHECK_CMD 2>/dev/null; then
       echo "Frontend ready."
       break
     fi
     sleep 1
   done
+  if ! $CHECK_CMD 2>/dev/null; then
+    echo "[WARN] Frontend not ready after ~4 minutes. It may still be starting -"
+    echo "       open http://localhost:3000 manually."
+  fi
 else
   echo "[WARN] curl, wget, nc not found — cannot verify frontend is ready."
   echo "If the browser doesn't open, visit http://localhost:3000 manually."

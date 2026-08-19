@@ -23,7 +23,7 @@ Automates student account creation and updates across **5 institutional systems*
 
 ### One-click launcher (no manual steps)
 
-Double-click the launcher for your OS — it installs dependencies, starts both servers, and opens the browser:
+Run the launcher for your OS — it installs dependencies, starts both servers, and opens the browser:
 
 - **Windows:** double-click `start.bat`
 - **macOS/Linux:** run `bash start.sh` (no permissions needed) or `./start.sh` after a one-time `chmod +x start.sh`. If you ever see `Permission denied`, the file lost its executable bit — run `chmod +x start.sh` once (a fresh clone already has it set).

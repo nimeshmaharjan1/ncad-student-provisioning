@@ -1,7 +1,7 @@
 # Handover Brief — NCAD Student Provisioning System (Caveats & Rationale)
 
 > Prepared for the manager handover (August 2026). Focuses on the **why** —
-> the underlying caveats, where data lives, and why the public demo is safe.
+> the underlying caveats, where data lives, and why the design is safe.
 > For "how to operate": `USER_GUIDE.md`. For the manual fallback:
 > `MANUAL_PROCESS.md`. For the manager-facing vision: `AUTOMATION_ROADMAP.md`.
 
@@ -14,15 +14,17 @@ LDAP, Canvas, Google Workspace, OpenAthens, and Library from Quercus exports.
 It is a **stateless, transient-processing tool**: you upload files, it
 transforms them in memory, you download the results, and everything is
 discarded. There is **no database and no server-side storage of student data**.
-That single invariant is what makes the public demo acceptable.
+That single invariant is what makes the design safe.
 
 ---
 
 ## 0.5 Deployment & operating model (internal tool)
 
 This system is an **in-house tool for the NCAD IT team**, not a public
-product. It is designed to run on **NCAD equipment**, with the public
-Vercel/Render deployments serving only as validation and demo environments.
+product. It is designed to run on **NCAD equipment**; the operational home
+is the shared drive, and there are no public deployments. (A public GitHub
+repo and Vercel/Render demos were used during development for validation
+and have been retired.)
 The team's preferred way of working is **script-driven / command-line**
 operation — deterministic, repeatable, and easy to audit; the web interface
 is an alternative front-end to the same pipeline, not a requirement.
@@ -107,16 +109,10 @@ forced by LDAP.
 
 ## 3. The honest risks (be ready to explain these)
 
-> These all apply to the **public demo environments**. In the intended
-> local-first operating model they largely disappear — no public endpoint,
-> no cold starts, no stale remote build — leaving only the data-handling
-> items (baseline hygiene, card numbers, retention).
+> The public demo environments that prompted some of these risks have been
+> **retired** — there are no public endpoints anymore. What remains are the
+> data-handling items that apply to local operation.
 
-- **The backend is unauthenticated and internet-open.** The WAF allowlist
-  guards only the Vercel **frontend**; the `onrender.com` backend accepts
-  POSTs from anyone. No persistence → no data theft, but it is an open
-  compute endpoint (abuse / free-tier resource use). No CORS config means
-  browser cross-origin calls are blocked, but curl/scripts are not.
 - **PII still exists in plaintext in transit and on the operator's machine**
   (baselines + downloads). "No server-side storage" is true, but it does not
   make the data disappear — the GDPR boundary is operator-side handling. Real
@@ -127,10 +123,6 @@ forced by LDAP.
 - **`Card`/barcode is blank for new students** in the automated LDAP output
   (mapping sets `Card = ""`; only existing records carry theirs). New-student
   barcodes still need manual / Triangle handling.
-- **Render runs stale code.** Render was not auto-deploying (a failed build
-  pauses auto-deploy); the deployed backend was an older build. Deploy the
-  latest commit manually from the Render dashboard before any demo.
-- **Free tier sleeps** → ~30s cold start on the first request after idle.
 
 ---
 

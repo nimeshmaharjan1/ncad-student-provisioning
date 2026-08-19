@@ -76,19 +76,27 @@ backend/app/utils/words.txt
 ```
 
 Option 2 — keep it elsewhere and point to it with `PASSCODE_WORD_FILE`.
-That variable tells the system where the list lives instead of the default
-location. Use an **absolute** path:
+`PASSCODE_WORD_FILE` is an **environment variable**, not a file — the backend
+reads it at startup to find the word list instead of the default location.
+Set it **before** running the backend (or the launcher), pointing at the
+**absolute** path of the words.txt file:
 
 ```
 # Windows cmd (this session)
 set PASSCODE_WORD_FILE=C:\path\to\words.txt
 # Windows cmd (permanent)
 setx PASSCODE_WORD_FILE "C:\path\to\words.txt"
-# PowerShell
+# PowerShell (this session)
 $env:PASSCODE_WORD_FILE = "C:\path\to\words.txt"
-# Linux/macOS
+# macOS/Linux (this session)
+export PASSCODE_WORD_FILE=/path/to/words.txt
+# macOS/Linux (permanent - add to ~/.zshrc or ~/.bashrc)
 export PASSCODE_WORD_FILE=/path/to/words.txt
 ```
+
+"This session" means the setting lasts only until you close that terminal
+window; "permanent" keeps it for future sessions (setx, or the shell profile
+line above).
 
 Without the file, passcodes fall back to a built-in 15-word list: ~23 bits of
 entropy — far too weak for the permanent LDAP credential.
@@ -433,7 +441,7 @@ Two-stage pipeline:
 Gender validation: blanks → UNKNOWN, Male/Female → MALE/FEMALE.
 
 #### `utils/passcode_generator.py`
-Generates passcodes in the format `WordWordWordWordWordNN` (5 title-cased words + 2-digit number, e.g., `RiverForestCrystalStormFalcon42`). To allow public hosting of this repository, the 1,668-word list is gitignored and loaded dynamically at runtime from `words.txt` or the `PASSCODE_WORD_FILE` environment variable, falling back to a minimal 15-word list if neither is found.
+Generates passcodes in the format `WordWordWordWordWordNN` (5 title-cased words + 2-digit number, e.g., `RiverForestCrystalStormFalcon42`). The 1,668-word list is gitignored and travels out-of-band (shared drive, USB, Teams, SFTP), loaded dynamically at runtime from `words.txt` or the `PASSCODE_WORD_FILE` environment variable, falling back to a minimal 15-word list if neither is found.
 
 #### `core/settings.py`
 Per-system validation-mode registry (`warn` / `strict`). Export

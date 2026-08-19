@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-08-19
+
+### Self-healing launcher & shared-drive operating model
+- `scripts/bootstrap.py` (new): the launchers now self-heal every setup step —
+  venv + Python deps (reinstall when `requirements.txt` changes), a hard
+  `words.txt` check (never auto-created; clear copy-or-set instructions),
+  frontend `node_modules` and the `.next` build — each guarded by a sha256
+  marker, so installs/builds happen once and later runs skip them.
+- **Shared-drive master copy:** the operational home is the NCAD shared drive;
+  both launchers refuse to run from a network/shared path (`\\` on Windows;
+  `/Volumes/`, `/mnt/`, `/media/` on macOS/Linux) and tell you to copy the
+  folder first. README has the "copy before you run" callout; the public demo
+  (GitHub + Vercel/Render) has been **retired**.
+- **Cross-platform:** `.gitattributes` forces LF for `.sh` and CRLF for `.bat`;
+  the `start.sh` executable bit is tracked; the header documents `bash start.sh`
+  vs `chmod +x` for the "Permission denied" case on macOS.
+- **Frontend `.env` removed:** the API URL is now a static constant in
+  `next.config.ts` (`http://127.0.0.1:8000`); the launcher no longer creates a
+  `.env`, and `frontend/.env.example` was deleted — both servers always run on
+  the same machine.
+- **Launcher messaging:** `start.bat`/`start.sh` now wait up to ~4 minutes for
+  the frontend (first start is slow) and print an honest end banner — "This
+  window stays open while the servers run. To stop them, close this window (X)
+  or press Ctrl+C."
+- **words.txt instructions rewritten** (launcher + ONBOARDING.md): explains what
+  the file is and that `PASSCODE_WORD_FILE` is an environment variable the
+  backend reads at startup — set it before running, point it at the absolute
+  path, and the difference between "this session" and "permanent".
+
 ## 2026-08-18
 
 ### LDAP Date of Birth fix (auto-added blank column)

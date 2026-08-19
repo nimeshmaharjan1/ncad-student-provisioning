@@ -148,8 +148,8 @@ A DOB column present with empty cells never blocks either (no row-level
 validation).
 
 The settings file path can be overridden with `NCAD_SETTINGS_FILE`. Note the
-file is per-deployment state — on Render it resets when the service is
-redeployed, so use an env var for a permanent override.
+file is per-deployment state — it resets on a redeploy, so use an env var for
+a permanent override.
 
 **Why the mode is stored server-side (not in the browser):** enforcement
 happens here — the export endpoints decide warn vs 422 based on this

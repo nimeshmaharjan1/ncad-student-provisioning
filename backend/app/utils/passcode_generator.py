@@ -42,11 +42,12 @@ What this does NOT protect against
   baseline CSV access controls).
 
 If the repo ever goes public
-----------------------------
+---------------------------
 The word list secrecy is NOT the entropy source (Kerckhoffs's principle).
 1668^5 * 90 = ~57 bits regardless of whether the attacker knows the list.
-To allow public hosting, the list is gitignored. If you want more paranoia,
-set the PASSCODE_WORD_FILE env var to override the file path.
+The list is gitignored and travels out-of-band (shared drive, USB, Teams,
+SFTP). If you want more paranoia, set the PASSCODE_WORD_FILE env var to
+override the file path.
 
 Word list maintenance
 ---------------------

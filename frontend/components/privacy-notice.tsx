@@ -43,12 +43,11 @@ export function PrivacyNotice() {
                     are ever stored.
                   </li>
                   <li>
-                    <strong>Why is it OK that this site is hosted publicly?</strong>{" "}
-                    Because there is no database, no accounts, and no file
+                    <strong>Why is it safe to run?</strong>{" "}
+                    There is no database, no accounts, and no file
                     storage behind it — uploads are processed and discarded
-                    instantly. The public demo is for testing and validation;
-                    for real student data you&apos;d run your own local copy of
-                    the same code.
+                    instantly. This instance runs on your own machine; the
+                    same code stays transient wherever it runs.
                   </li>
                 </ul>
                 <Link

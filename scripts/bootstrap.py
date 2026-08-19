@@ -145,22 +145,30 @@ def ensure_python_deps() -> bool:
 # Step 3: words.txt
 # ---------------------------------------------------------------------------
 _WORDS_INSTRUCTIONS = """\
-The passcode word list is missing. Without it, passcodes would fall back to
-a weak built-in 15-word list - not acceptable.
+The passcode word list (words.txt) is missing. Passcodes are generated from
+this list; without it the system would fall back to a weak built-in 15-word
+list - not acceptable for real passcodes.
 
-Fix it either way:
+Fix it EITHER way:
 
-  Option 1 - copy the file into the project (recommended):
+  Option 1 - copy the file into the project (recommended - nothing else to set):
     Copy the word list to:  backend\\app\\utils\\words.txt
     (full path: %s\\backend\\app\\utils\\words.txt)
+    That is the default location the backend checks, so there is no extra
+    setup. The path above is the folder you ran the launcher from.
 
-  Option 2 - keep it elsewhere and point to it via PASSCODE_WORD_FILE:
-    That variable tells the system where the list lives instead of the
-    default location. Set it to the file's ABSOLUTE path:
+  Option 2 - keep the file elsewhere and tell the backend where it is:
+    PASSCODE_WORD_FILE is an ENVIRONMENT VARIABLE, not a file. The backend
+    reads it at startup to find the word list instead of the default
+    location above. Set it BEFORE running the launcher, pointing at the
+    ABSOLUTE path of the words.txt file:
       Windows cmd (this session):   set PASSCODE_WORD_FILE=C:\\path\\to\\words.txt
       Windows cmd (permanent):      setx PASSCODE_WORD_FILE "C:\\path\\to\\words.txt"
-      PowerShell:                   $env:PASSCODE_WORD_FILE = "C:\\path\\to\\words.txt"
-      Linux/macOS:                  export PASSCODE_WORD_FILE=/path/to/words.txt
+      PowerShell (this session):    $env:PASSCODE_WORD_FILE = "C:\\path\\to\\words.txt"
+      macOS/Linux (this session):   export PASSCODE_WORD_FILE=/path/to/words.txt
+    "This session" = the setting lasts only until you close that terminal
+    window. "Permanent" = kept for future sessions (setx, or add the export
+    line to your shell profile, e.g. ~/.zshrc or ~/.bashrc).
 
 Where to get the file:
   It is deliberately NOT in the repo - it travels separately, like the

@@ -222,9 +222,8 @@ precedence, and the non-blocking-column registry).
 
 ## Gotchas
 
-- Test on **localhost:3000**, not the public onrender URL — the deployed app
-  runs older code until main is pushed and auto-deploy runs, so new features
-  (like the missing-column warning) will not appear there.
+- Test on **localhost:3000** — the app runs locally; there is no deployed
+  environment anymore.
 - The Quercus upload warning (`Test 2`) and the export warn mode (`Test 3a`)
   are WARN behavior; the export rejection (`Test 3b/3c`) is strict behavior.
   All read from the same registry — the upload warning tells you in advance

@@ -31,7 +31,7 @@ a word you forgot, come back here.
 | **Admin token** / **service account** | A secret key that an administrator of an outside system (e.g. Canvas or Google) creates so that our program alone may use that system's door. It can be limited and revoked at any time |
 | **Scheduler** (cron / Windows Task Scheduler) | An alarm clock built into the server: "every Monday at 9 a.m., run the provisioning pipeline". The alarm clock fires, the pipeline runs, nobody has to be there |
 | **Drop-folder** | A special folder on the server that the system watches. You (or the Quercus export, if it can be scheduled) put the exported file in it; the system notices the new file and does everything else by itself |
-| **Always-on private server** | A quiet computer, owned by NCAD, that stays switched on and is only reachable by NCAD staff. Unlike the public demo deployments (Vercel / Render) — free-tier services that switch themselves off when unused ("instances sleep") and are visible to anyone on the internet |
+| **Always-on private server** | A quiet computer, owned by NCAD, that stays switched on and is only reachable by NCAD staff. It is the opposite of the free-tier hosting used during development, which switches itself off when unused ("instances sleep") — a scheduler cannot sleep |
 | **Dry-run** | A practice run: the system generates everything exactly as it would for a real week — files, emails, logs — but sends nothing. A person reviews the practice output, then clicks "send for real" |
 | **Approval gate** / **click-to-confirm** / **human-in-the-loop** | A small review screen: the system prepares everything and then stops, waiting for a person to click "yes" before anything is sent. Used only for the few steps that need a human decision |
 | **Encryption (at rest)** | Storing student data and passwords in scrambled form on the server's disk. Even if the disk were stolen, the data would be unreadable without the secret key |
@@ -131,10 +131,10 @@ works.
 | # | Blocker (external factor) | Why it blocks | What we do instead |
 |---|--------------------------|---------------|--------------------|
 | 1 | **Quercus has NO API** (Ellucian). Data only via web UI export | "Pull from Quercus automatically" is impossible without fragile UI-robots (Puppeteer/Playwright), rejected in AUTOMATION_STRATEGY.md — any Ellucian UI change breaks it | Keep the ~5-minute manual export; the scheduler **watches a drop-folder (SFTP)** — the moment a new export lands, everything else runs automatically. Also ask the Quercus admin about *saved/scheduled report delivery* (see Credentials & Access Checklist #8) |
-| 2 | **GDPR posture flips**. Automation requires storing student PII server-side (baselines, run logs). The current app explicitly promises transient processing | Storing student names/details (PII — see glossary) on a server is a data-protection decision (GDPR, DPIA — see glossary), not a code decision | Documented decision required from the manager: secure storage, access control, encryption, retention policy (all in the glossary). The public demo stays transient; the scheduler runs on a private server only |
+| 2 | **GDPR posture flips**. Automation requires storing student PII server-side (baselines, run logs). The current app explicitly promises transient processing | Storing student names/details (PII — see glossary) on a server is a data-protection decision (GDPR, DPIA — see glossary), not a code decision | Documented decision required from the manager: secure storage, access control, encryption, retention policy (all in the glossary). The tool stays transient; the scheduler runs on a private server only |
 | 3 | **Triangle Service Desk is a human gate**. Their confirmation is their business process | The confirmation step cannot be auto-approved | Auto-SFTP the LDAP files + auto-email the Service Desk, then **wait for a click-to-confirm** (see glossary: a review screen where a person clicks "yes") — human decision for this one step only |
 | 4 | **APIs/credentials may not exist yet**: Canvas admin token, Google service account, OpenAthens API, SMTP details | Each push integration needs an administrator to create/issue credentials | Ship integrations **per system, in order of credential availability** (Credentials & Access Checklist, section 7). No credential → that step stays manual |
-| 5 | **Hosting reality**. The Vercel + Render deployments are public demo environments — free-tier and ephemeral (instances sleep — see glossary: free hosting switches itself off when unused). They are not NCAD's production hosting and are not suitable for the scheduler | Not suitable as a scheduler host; also public by design | Dedicated always-on private server for the scheduler (Checklist #4). Demo deployments stay as they are — harmless and useful for demos, and can be taken down once the private server is running |
+| 5 | **Hosting reality**. The development deployments (Vercel + Render) were free-tier and ephemeral — instances sleep when unused and are unsuitable as a scheduler host. They have been **retired** | The scheduler needs a machine that never sleeps | Dedicated always-on private server for the scheduler (Checklist #4) |
 | 6 | **Passcodes are sensitive**. Emails carry generated credentials | Automated emails carrying student passwords need rules (who may receive them, how they are protected) — a policy decision, not just a technical one. It matters more now because automation sends them in bulk, every week | We **already** send passcodes by email today (Thunderbird mail merge) — automation keeps that practice, it does not invent a new one. The manager signs off **ONCE** per email type, e.g. "student passwords may be emailed from the automated system, to the student's personal address". After that single decision, the weekly emails send themselves — there is **no per-email approval step**. Passwords are stored scrambled (encrypted at rest) and never appear in run logs (logs record only run numbers, counts, and statuses) |
 | 7 | **Ownership & maintenance**. No deadline ≠ no risk | After the current process owner leaves, someone must own credentials, API changes, failed runs, renewals | This repo is the handover: everything documented (this file, ONBOARDING, MANUAL_TESTING). Manager assigns an owner for credentials and monitoring |
 | 8 | **Half-failed runs**. A weekly run that dies mid-way must not send 2 of 5 exports | Silent partial provisioning is worse than no automation | Per-step status + **dry-run mode** (default) + explicit approval gate before any email/SFTP push; failure alerts to IT |
@@ -275,8 +275,7 @@ their business process, so the system waits for a click-to-confirm.
    not a programming one. The proposal: storage on the private NCAD server
    only, access limited to named staff, data stored scrambled (encrypted at
    rest), and a retention policy — a rule for how long it is kept and when
-   it is deleted. The public demo stays as it is: it never stores student
-   data.
+   it is deleted. The tool never stores student data (no database).
 
 2. **Passcode emails.** Student passwords are already sent by email today
    (Thunderbird mail merge) — automation keeps that practice. The manager
@@ -299,7 +298,7 @@ their business process, so the system waits for a click-to-confirm.
 | Credentials never arrive | Each step is optional; the manual path stays as it is today — the scheduler simply skips that step |
 | Quercus changes its export format | The schema registry (one central list of expected columns) is already built; a changed format is detected with a clear warning instead of silent wrong data |
 | A weekly run fails unnoticed | Failure alerts and a weekly summary email to IT (Phase 3); the run log shows every step's status |
-| Data-protection concerns | Manager sign-off, retention policy, private server, encryption — the public demo never stores student data |
+| Data-protection concerns | Manager sign-off, retention policy, private server, encryption — the tool never stores student data (no database) |
 | The process owner's knowledge is lost | This document, the ONBOARDING and MANUAL_TESTING guides, and a completed Credentials & Access Checklist are the handover |
 | "Just automate everything" keeps growing | This roadmap is the agreed scope; any change to it goes through this document |
 
@@ -387,44 +386,40 @@ does it, what to do, and why it is better than today.
   mode.
 - Security hygiene: rotate tokens when staff change; enforce the retention
   policy (auto-delete old logs); keep ONBOARDING and MANUAL_TESTING current.
-- Keep the demo deployments current so the newest version is always visible
-  at the demo URL.
+- Keep the shared-drive master copy current with the latest version.
 
-### For the manager — why the code is on a public personal GitHub, and what stays private
+### For the manager — where the code lives and what stays private
 
-The code lives on the developer's personal GitHub account, publicly. This is
-a deliberate and safe arrangement, based on facts that are already true in
-this repository:
+The operational home for this system is the **NCAD shared drive** — one
+master copy that IT staff copy to their own machines to run. During
+development a public GitHub repo and Vercel/Render demo deployments were
+used for validation; they have been **retired**. The safety facts that made
+that arrangement possible still hold:
 
 - **No secrets.** `.env` files and the passcode word list are
   excluded from the repository by design (`.gitignore`). The code reads
   exactly one setting from the environment (where the word list lives).
   Access keys and credentials never appear in the code — they live in the IT
   password manager / a secure store on the private server (Checklist #6).
-- **No real student data.** The repository ignores all `*.csv` and `*.xlsx`
-  files except the sanitized samples folder. Real baselines, real exports
-  and run logs never enter the repository. The app itself is transient — it
-  has no database and stores nothing between runs.
+- **No real student data.** All `*.csv` and `*.xlsx` files are ignored
+  except the sanitized samples folder. Real baselines, real exports and run
+  logs never enter the repository. The app itself is transient — it has no
+  database and stores nothing between runs.
 - **No internal names.** The documentation uses roles ("current process
   owner", "Canvas administrator"), not real staff names.
-- **It costs nothing.** GitHub, Vercel and Render free tiers are all
-  zero-cost.
-- **It buys a lot:** a live demo URL that can be opened at any time; an
-  offsite backup with full history; a handover that any future IT person can
-  read; and a public example of the developer's work.
 - **The license is MIT.** Anyone may use the code, including NCAD, freely,
   with attribution. This does not weaken security: the protection comes from
-  the credentials and the private server, not from hiding the code.
+  the credentials and the shared drive / private server, not from hiding the
+  code.
 
-What must NEVER go into this repository: real Quercus exports, real
-baselines, run logs, and any credential. Those live only on the private
-server, in the secure store, under the retention policy.
+What must NEVER go into the shared copy's tracked files: real Quercus
+exports, real baselines, run logs, and any credential. Those live only on
+the private server, in the secure store, under the retention policy.
 
-One honest consideration: the repository sits on a personal account. If the
-developer ever leaves, the repository can be transferred to an NCAD
-organisation account or forked in minutes — and this document, ONBOARDING.md
-and MANUAL_TESTING.md are the handover that make the code understandable to
-whoever inherits it.
+One honest consideration: the code also sits on a personal GitHub account
+used as staging for producing the shared copy. The shared-drive master copy
+is the real home; ONBOARDING.md and MANUAL_TESTING.md are the handover that
+make the code understandable to whoever inherits it.
 
 ### Guardrails
 
