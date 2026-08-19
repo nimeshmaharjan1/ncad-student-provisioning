@@ -8,8 +8,7 @@ launchers need and skips whatever is already healthy:
   2. Python deps                (re)install when requirements.txt changes
   3. words.txt                  validate the passcode word list (never auto-created)
   4. frontend/node_modules      (re)install when package files change
-  5. frontend/.env              create from the local default if missing
-  6. frontend/.next             rebuild when the source changes
+  5. frontend/.next             rebuild when the source changes
 
 `words.txt` is the one asset this script will not fabricate: it is a secret
 that travels out-of-band (like the baselines). If it is missing the launcher
@@ -30,7 +29,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MIN_WORDS = 100
-DEFAULT_ENV = "NEXT_PUBLIC_API_URL=http://127.0.0.1:8000\n"
 
 
 # ---------------------------------------------------------------------------
@@ -237,7 +235,7 @@ def check_words() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Steps 4-6: frontend
+# Steps 4-5: frontend
 # ---------------------------------------------------------------------------
 def ensure_node_deps() -> bool:
     fe = ROOT / "frontend"
@@ -265,22 +263,6 @@ def ensure_node_deps() -> bool:
     marker.parent.mkdir(parents=True, exist_ok=True)
     marker.write_text(current, encoding="utf-8")
     print("[INFO] Frontend dependencies up to date.")
-    return True
-
-
-def ensure_env() -> bool:
-    env = ROOT / "frontend" / ".env"
-    if env.exists():
-        content = env.read_text(encoding="utf-8")
-        if "NEXT_PUBLIC_API_URL" not in content:
-            print("[WARN] frontend/.env exists but has no NEXT_PUBLIC_API_URL - appending default.")
-            with env.open("a", encoding="utf-8") as f:
-                f.write(DEFAULT_ENV)
-        else:
-            print("[SKIP] already present.")
-        return True
-    env.write_text(DEFAULT_ENV, encoding="utf-8")
-    print("[INFO] Created frontend/.env with the local backend URL.")
     return True
 
 
@@ -315,7 +297,7 @@ def ensure_build() -> bool:
 
 # ---------------------------------------------------------------------------
 def main() -> int:
-    total = 6
+    total = 5
     ok = True
 
     step(1, total, "Python virtual environment")
@@ -330,10 +312,7 @@ def main() -> int:
     step(4, total, "Frontend dependencies (node_modules)")
     ok = ensure_node_deps() and ok
 
-    step(5, total, "Frontend environment (.env)")
-    ok = ensure_env() and ok
-
-    step(6, total, "Frontend build (.next)")
+    step(5, total, "Frontend build (.next)")
     ok = ensure_build() and ok
 
     print("\n" + ("Setup complete - all systems go." if ok else "Setup finished with warnings/errors above."))

@@ -4,7 +4,7 @@
 #   Option A - no permissions to change:   bash start.sh
 #   Option B - one-time, then ./start.sh:  chmod +x start.sh  &&  ./start.sh
 #
-# The script self-heals the venv, deps, words.txt, node_modules, .env and
+# The script self-heals the venv, deps, words.txt, node_modules and
 # frontend build, then starts backend (:8000) + frontend (:3000).
 # Press Ctrl+C to stop.
 #
@@ -88,7 +88,7 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-# Run the self-healing setup (venv, deps, words.txt, node_modules, .env, build)
+# Run the self-healing setup (venv, deps, words.txt, node_modules, build)
 echo "Running self-healing setup..."
 if ! "$PYTHON" scripts/bootstrap.py; then
   echo "[ERROR] Setup failed. See messages above."

@@ -13,8 +13,8 @@ All sample files referenced below live in the repo's `samples/` folder:
 
 1. Backend: `cd backend` → activate venv → `uvicorn app.main:app --reload --port 8000`
 2. Frontend: `cd frontend` → `npm run dev` → http://localhost:3000
-3. Make sure `frontend/.env` points at the LOCAL backend
-   (`NEXT_PUBLIC_API_URL=http://127.0.0.1:8000`), not the demo URL.
+   (the frontend always targets the local backend at `http://127.0.0.1:8000`
+   by default — no `.env` needed.)
 
 ## Test 1 — Happy path (regression check)
 

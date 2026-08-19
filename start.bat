@@ -79,7 +79,7 @@ echo All prerequisites met.
 echo.
 
 :: ----- Run the self-healing setup --------------------------------------------
-:: Creates/repairs venv, deps, words.txt check, node_modules, .env, build.
+:: Creates/repairs venv, deps, words.txt check, node_modules, build.
 echo Running self-healing setup...
 python scripts\bootstrap.py
 if %errorlevel% neq 0 (
@@ -117,16 +117,17 @@ echo.
 :: ----- Wait for frontend to be ready -----------------------------------------
 :: Uses netstat (native cmd) instead of PowerShell to avoid corporate
 :: execution policy restrictions on New-Object / Get-NetTCPConnection.
-:: Polls every ~2 seconds for up to 120 seconds.
-echo Waiting for frontend to start (this may take a minute)...
-for /l %%i in (1,1,60) do (
+:: Polls until the port listens (up to ~4 minutes; first start is slow).
+echo Waiting for frontend to start (first start can take a couple of minutes)...
+for /l %%i in (1,1,90) do (
     >nul 2>&1 netstat -ano | findstr ":3000" | findstr "LISTENING" && (
         echo Frontend ready.
         goto :frontend_up
     )
-    >nul ping -n 3 localhost
+    >nul ping -n 4 localhost
 )
-echo [WARN] Frontend not ready after 120s. Open http://localhost:3000 manually.
+echo [WARN] Frontend not ready after ~4 minutes. It may still be starting -
+echo        open http://localhost:3000 manually.
 :frontend_up
 
 :: ----- Open browser tabs -----------------------------------------------------
@@ -134,7 +135,12 @@ start http://localhost:3000
 start http://localhost:3000/about
 
 echo.
-echo Browser tabs should open automatically.
-echo Close this window to stop both servers.
+echo ============================================
+echo   Servers are running.
+echo   Backend:  http://localhost:8000
+echo   Frontend: http://localhost:3000
+echo   Docs:     http://localhost:3000/about
 echo.
-pause
+echo   This window stays open while the servers run.
+echo   To stop them, close this window (X) or press Ctrl+C.
+echo ============================================

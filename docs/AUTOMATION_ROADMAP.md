@@ -396,7 +396,7 @@ The code lives on the developer's personal GitHub account, publicly. This is
 a deliberate and safe arrangement, based on facts that are already true in
 this repository:
 
-- **No secrets.** Environment files (`.env`) and the passcode word list are
+- **No secrets.** `.env` files and the passcode word list are
   excluded from the repository by design (`.gitignore`). The code reads
   exactly one setting from the environment (where the word list lives).
   Access keys and credentials never appear in the code — they live in the IT
