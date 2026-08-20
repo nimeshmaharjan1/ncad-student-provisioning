@@ -29,6 +29,13 @@ print(f"  external_students_removed_count: {cleaned.attrs.get('external_students
 print(f"  duplicate_rows_detected: {cleaned.attrs.get('duplicate_rows_detected')}")
 # 5 cleaned: Alice (CEAD), Bob (UG), Carol (PG), Dave (UG), Frank (UG - Excel DOB)
 assert len(cleaned) == 5, f"Expected 5 cleaned rows; got {len(cleaned)}"
+# ID Number is the source of truth: normalized to 8 digits BEFORE Term Email
+# is derived from it, so every downstream ID (Canvas, LDAP, Athens, Library)
+# matches the email.
+assert cleaned["ID Number"].astype(str).str.len().eq(8).all(), "ID Number must be 8 digits"
+assert cleaned["ID Number"].tolist() == ["00012345", "00067890", "00054321", "00098765", "00022222"], f"ID Number padding wrong: {cleaned['ID Number'].tolist()}"
+assert cleaned["Term Email"].tolist() == ["00012345@student.ncad.ie", "00067890@student.ncad.ie", "00054321@student.ncad.ie", "00098765@student.ncad.ie", "00022222@student.ncad.ie"], f"Term Email must derive from padded ID: {cleaned['Term Email'].tolist()}"
+assert (cleaned["LDAP ID"].astype(str) == "").all(), "empty LDAP ID must stay empty after padding"
 
 # --- LDAP ---
 baseline_ldap = load("baseline_ldap.csv")
@@ -36,12 +43,16 @@ new_ldap, updated_ldap, audit = generate_ldap_comparison_exports(baseline_ldap, 
 print(f"\nLDAP: {audit['new_students_count']} new, {audit['updated_baseline_count']} baseline")
 # Baseline has Alice + Carol. New: Bob, Dave, Frank = 3
 assert audit['new_students_count'] == 3, f"Expected 3 new LDAP students; got {audit['new_students_count']}"
+assert new_ldap["Student ID"].astype(str).str.len().eq(8).all(), "LDAP Student ID must be 8-digit padded"
+assert set(new_ldap["Student ID"]) == {"00067890", "00098765", "00022222"}, f"LDAP Student ID padding wrong: {set(new_ldap['Student ID'])}"
 
 # --- CANVAS ---
 baseline_canvas = load("baseline_canvas.csv")
 new_canvas, updated_canvas, audit_c = generate_canvas_comparison_exports(baseline_canvas, cleaned)
 print(f"Canvas: {audit_c['new_users_count']} new, {audit_c['updated_baseline_count']} baseline")
 assert audit_c['new_users_count'] == 3, f"Expected 3 new Canvas users; got {audit_c['new_users_count']}"
+assert new_canvas["user_id"].astype(str).str.len().eq(8).all(), "Canvas user_id must be 8-digit padded"
+assert set(new_canvas["user_id"]) == {"00067890", "00098765", "00022222"}, f"Canvas user_id padding wrong: {set(new_canvas['user_id'])}"
 
 # --- GOOGLE ---
 baseline_google = load("baseline_google.csv")
@@ -67,6 +78,7 @@ print(f"Google email files: {len(email_new_students)} email_new_students, {len(d
 baseline_athens = load("baseline_athens.csv")
 new_athens, upload_athens = run_athens_pipeline(baseline_athens, cleaned)
 print(f"Athens: {len(new_athens)} new, {len(upload_athens)} upload")
+assert new_athens["ID Number"].astype(str).str.len().eq(8).all(), "Athens new-user ID Number must be 8-digit padded"
 # Baseline has Alice + Carol. New: Bob, Dave, Frank = 3
 assert len(new_athens) == 3, f"Expected 3 new Athens users; got {len(new_athens)}"
 

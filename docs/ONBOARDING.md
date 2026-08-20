@@ -303,7 +303,8 @@ merge_quercus_files()
     │
     ▼
 preprocess_quercus()
-    1. Create Term Email from zero-padded 8-digit ID Number
+    1. Normalize ID Number (and LDAP ID) to the zero-padded 8-digit form, then
+       create Term Email from the padded ID Number
     2. Remove blank emails
     3. Keep only Status="Registered" or starts with "Recommend"
     4. Remove "NCAD Elective - External Students"
@@ -536,6 +537,7 @@ The date suffix is generated once per request: `datetime.now().strftime("%Y%m%d"
 | 6 | **Library barcode = student ID** | Zero-padded 8-digit student ID (same as `idAtSource`). Previously was a constant placeholder. |
 | 7 | **Gender → MALE/FEMALE/UNKNOWN** | Blanks or unknown values are explicitly set to UNKNOWN to avoid validation errors in the Library system. |
 | 8 | **DOB: explicit strptime per pattern** | No pandas `to_datetime(format="mixed")` — too many format ambiguities. 3 explicit regex patterns + Excel serial fallback. |
+| 9 | **ID Number is the source of truth** | `ID Number` (and `LDAP ID`) are normalized to the zero-padded 8-digit form during preprocessing, *before* Term Email is derived from them. Every downstream ID (Canvas `user_id`, LDAP `Student ID`/username, Athens `identifier`, Library barcode) reads the padded column, so identifiers never drift from the email. |
 | 9 | **Baseline supports .xlsx** | Detected by file extension. Uses `pd.read_excel(engine="openpyxl")`. All 4 baseline-accepting endpoints support it. |
 | 10 | **Google: reactivation detection** | Suspended accounts who reappear in Quercus are flagged for reactivation instead of being re-created. |
 | 11 | **Canvas: 11-column SIS format** | Matches Canvas SIS import requirements. `full_name` and `sortable_name` derived from first/last. |

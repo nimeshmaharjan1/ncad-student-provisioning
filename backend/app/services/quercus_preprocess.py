@@ -99,11 +99,22 @@ def preprocess_quercus(df: pd.DataFrame) -> pd.DataFrame:
     if "ID Number" not in df_copy.columns:
         raise KeyError("Required column 'ID Number' not found in DataFrame.")
 
-    # 1. Create Term Email
+    # 1. Normalize ID Number to the 8-digit zero-padded form (the canonical
+    # student number), THEN derive Term Email from it. ID Number is the source
+    # of truth: every downstream consumer (Canvas user_id, LDAP Student ID,
+    # Athens identifier, Library barcode) reads this column, so padding it here
+    # keeps the identifier consistent everywhere.
     cleaned_ids = df_copy["ID Number"].apply(clean_id_number)
+    df_copy["ID Number"] = cleaned_ids
     df_copy["Term Email"] = cleaned_ids.apply(
         lambda x: f"{x}@student.ncad.ie" if x else ""
     )
+
+    # LDAP ID is the LDAP username — the same student number, so it must match
+    # the padded 8-digit form too. Guarded: the column is only required by the
+    # LDAP pipeline.
+    if "LDAP ID" in df_copy.columns:
+        df_copy["LDAP ID"] = df_copy["LDAP ID"].apply(clean_id_number)
 
     # 2. Remove blank Term Emails
     df_copy = df_copy[df_copy["Term Email"] != ""]

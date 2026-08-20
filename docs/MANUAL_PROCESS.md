@@ -43,16 +43,21 @@ Open both CSV files and combine the 2025 and 2026 records into a single dataset.
 Keep the 2025 records first and append the 2026 records below them.
 
 ### Create the Term Email Column
-Create a new column called **Term Email**.
-The student ID must always be represented as an 8-digit number with leading zeros where required.
+The **ID Number** is the source of truth and must always be an 8-digit number with leading zeros where required. The Term Email is then derived from that padded ID Number.
 
-Use the following Excel formula:
+First, normalise the ID Number column to 8 digits (new column "ID Number (padded)"):
 ```
-=TEXT(A2,"00000000")&"@student.ncad.ie"
+=TEXT(A2,"00000000")
+```
+
+Then create the **Term Email** column from the padded ID Number:
+```
+=TEXT(B2,"00000000")&"@student.ncad.ie"
 ```
 
 Example:
 - If the Student ID is: `123456`
+- Padded ID Number: `00123456`
 - The resulting Term Email will be: `00123456@student.ncad.ie`
 
 The Term Email field will be used as the unique identifier when comparing records across all systems.
@@ -375,8 +380,9 @@ The **barcode** should be the same as **idAtSource**.
 
 ### Recreate Term Email
 1. Remove the existing Term Email column.
-2. Create a new Term Email column using the **ID Number** field.
-3. Student IDs must always be eight digits long and must use ID Number rather than LDAP ID.
+2. Normalise the **ID Number** column to 8 digits (leading zeros added where required).
+3. Create a new Term Email column using the padded **ID Number** field.
+4. Student IDs must always be eight digits long and must use ID Number rather than LDAP ID.
 
 Use:
 ```

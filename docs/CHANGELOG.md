@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-20
+
+### ID Number (and LDAP ID) are now normalised to 8 digits before anything else
+- `preprocess_quercus()` writes the zero-padded 8-digit value back into the
+  **ID Number** column (the source of truth) and only then derives the
+  **Term Email** from it. `LDAP ID` is padded to match.
+- Downstream consumers therefore all emit the padded identifier: Canvas
+  `user_id`, LDAP `Student ID` and the `Quercus_LDAP` username, Athens
+  `identifier`, and the Library barcode — no more `2002523` vs `02002523`
+  mismatch between emails and IDs.
+
 ## 2026-08-19
 
 ### Quercus upload no longer warns about Date of Birth
