@@ -2,6 +2,21 @@
 
 ## 2026-08-20
 
+### Google export: Mail Merge files renamed/reworked to `to_email_1_2` + `to_email_3`
+- Replaced `YYYYMMDD_email_new_students.csv` and `YYYYMMDD_date_to_email.csv`
+  with:
+  - `YYYYMMDD_to_email_1_2.csv` (`firstname`, `email`, `password`) — one row
+    per new student; `email` = Term Email, `password` = the word-based SSO/LDAP
+    passcode. Sent to the student's own NCAD address.
+  - `YYYYMMDD_to_email_3.csv` (`email`, `firstname`, `username`, `password`,
+    `newemail`) — `email` = Home Email (the Mail Merge recipient), `username`
+    and `newemail` = Term Email, `password` = the Google temp password (same
+    UUID as the upload CSV). Sent to personal addresses after 1 & 2.
+- Students with **no home email on record are still included** in
+  `to_email_3` with a blank email column; the Google step shows an amber
+  warning listing them (via the new `X-No-Home-Email` response header) so
+  their addresses can be filled in before merging.
+
 ### ID Number (and LDAP ID) are now normalised to 8 digits before anything else
 - `preprocess_quercus()` writes the zero-padded 8-digit value back into the
   **ID Number** column (the source of truth) and only then derives the

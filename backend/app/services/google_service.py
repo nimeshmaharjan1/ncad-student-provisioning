@@ -5,6 +5,7 @@ from app.utils.df_utils import (
     normalize_baseline_schema,
     detect_new_users,
 )
+from app.utils.passcode_generator import generate_passcode
 
 GOOGLE_EMAIL_PRIORITY = ["Email Address [Required]", "Term Email"]
 
@@ -62,22 +63,22 @@ GOOGLE_UPLOAD_COLUMNS = [
     "Change Password at Next Sign-In",
 ]
 
-# Recipient source for the Thunderbird Mail Merge "Student Email Account Details"
-# campaign (the generated replacement for the manually-maintained `to_mail`
-# file in Email_2025/). Carries both the NCAD address (Email Address) and the
-# personal address (Home Email); the mail-merge operator picks the recipient
-# column. `Temp` holds the same temporary password assigned to the Google
-# account so the emailed credentials match.
-EMAIL_NEW_STUDENTS_COLUMNS = [
-    "First Name [Required]",
-    "Last Name [Required]",
-    "Email Address [Required]",
-    "Status",
-    "Home Email",
-    "Temp",
+# Thunderbird Mail Merge recipient files for the "Student Email Account Details"
+# campaign (replaces the manually-maintained `to_mail` files in Email_2025/).
+#
+# - `{ds}_to_email_1_2.csv`  — sent to every student's own NCAD address (Term
+#   Email). Carries the SSO/LDAP passcode + eduroam details.
+# - `{ds}_to_email_3.csv`     — sent to the student's personal address (Home
+#   Email) after 1 & 2. Carries the Google temp password (same UUID as the
+#   upload CSV). Students without a home email are still included, with a
+#   blank email column; the Google step warns about them.
+TO_EMAIL_1_2_COLUMNS = [
+    "firstname",
+    "email",
+    "password",
 ]
 
-DATE_TO_EMAIL_COLUMNS = [
+TO_EMAIL_3_COLUMNS = [
     "email",
     "firstname",
     "username",
@@ -157,36 +158,43 @@ def generate_upload_export(new_users_df: pd.DataFrame, passwords: list[str]) -> 
     return pd.DataFrame(records, columns=GOOGLE_UPLOAD_COLUMNS)
 
 
-def generate_email_new_students_export(new_users_df: pd.DataFrame, passwords: list[str]) -> pd.DataFrame:
-    """Build the `to_mail`-style recipient file for the Student Email Details campaign."""
+def generate_to_email_1_2_export(new_users_df: pd.DataFrame, passcodes: list[str]) -> pd.DataFrame:
+    """Recipient file for the email sent to each student's NCAD address.
+
+    `email` is the Term Email and `password` is the word-based SSO/LDAP
+    passcode (the details students need for their new address + eduroam).
+    """
     records = []
-    for (_, row), password in zip(new_users_df.iterrows(), passwords):
+    for (_, row), passcode in zip(new_users_df.iterrows(), passcodes):
         records.append({
-            "First Name [Required]": row.get("First Name", row.get("First Name [Required]", "")),
-            "Last Name [Required]": row.get("Last Name", row.get("Last Name [Required]", "")),
-            "Email Address [Required]": row.get("Term Email", row.get("Email Address [Required]", "")),
-            "Status": str(row.get("Type", "")).strip(),
-            "Home Email": row.get("Home Email", ""),
-            "Temp": password,
+            "firstname": row.get("First Name", row.get("First Name [Required]", "")),
+            "email": row.get("Term Email", row.get("Email Address [Required]", "")),
+            "password": passcode,
         })
 
-    return pd.DataFrame(records, columns=EMAIL_NEW_STUDENTS_COLUMNS)
+    return pd.DataFrame(records, columns=TO_EMAIL_1_2_COLUMNS)
 
 
-def generate_date_to_email_export(new_users_df: pd.DataFrame, passwords: list[str]) -> pd.DataFrame:
-    """Build the credentials-to-email file (recipient, username, password, new email)."""
+def generate_to_email_3_export(new_users_df: pd.DataFrame, passwords: list[str]) -> pd.DataFrame:
+    """Recipient file for the follow-up email sent to personal addresses.
+
+    `email` is the student's Home Email (blank when they have none on
+    record), `username`/`newemail` are the Term Email and `password` is the
+    same Google temp password as the upload CSV.
+    """
     records = []
     for (_, row), password in zip(new_users_df.iterrows(), passwords):
         username = row.get("Term Email", row.get("Email Address [Required]", ""))
+        home_email = row.get("Home Email", "")
         records.append({
-            "email": username,
+            "email": "" if pd.isna(home_email) else str(home_email).strip(),
             "firstname": row.get("First Name", row.get("First Name [Required]", "")),
             "username": username,
             "password": password,
             "newemail": username,
         })
 
-    return pd.DataFrame(records, columns=DATE_TO_EMAIL_COLUMNS)
+    return pd.DataFrame(records, columns=TO_EMAIL_3_COLUMNS)
 
 
 def run_google_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
@@ -199,6 +207,9 @@ def run_google_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> 
     # and the email exports so the emailed credentials match the account.
     passwords = [generate_password() for _ in range(len(new_users_raw))]
 
+    # One word-based SSO/LDAP passcode per new student for to_email_1_2.
+    passcodes = [generate_passcode() for _ in range(len(new_users_raw))]
+
     # Enrich reactivation candidates with Type from Quercus data
     if not reactivation_candidates_raw.empty:
         quercus_emails = normalize_email_identity(quercus_df, GOOGLE_EMAIL_PRIORITY)
@@ -210,12 +221,27 @@ def run_google_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> 
 
     reactivation_df = generate_reactivation_export(reactivation_candidates_raw)
     upload_df = generate_upload_export(new_users_raw, passwords)
-    email_new_students_df = generate_email_new_students_export(new_users_raw, passwords)
-    date_to_email_df = generate_date_to_email_export(new_users_raw, passwords)
+    to_email_1_2_df = generate_to_email_1_2_export(new_users_raw, passcodes)
+    to_email_3_df = generate_to_email_3_export(new_users_raw, passwords)
+
+    # Students with no home email are still included in to_email_3 with a
+    # blank email column - the Google step warns the operator to fill these in.
+    home_email = to_email_3_df["email"].astype(str).str.strip()
+    no_home_email_mask = (home_email == "") | (home_email == "nan")
+    no_home_email_students = [
+        f"{first} {last}".strip()
+        for first, last, missing in zip(
+            new_users_raw.get("First Name", ""),
+            new_users_raw.get("Last Name", ""),
+            no_home_email_mask,
+        )
+        if missing
+    ]
 
     audit_info = {
         "reactivation_count": len(reactivation_df),
         "total_upload_count": len(upload_df),
+        "no_home_email_students": no_home_email_students,
     }
 
-    return upload_df, reactivation_df, email_new_students_df, date_to_email_df, audit_info
+    return upload_df, reactivation_df, to_email_1_2_df, to_email_3_df, audit_info

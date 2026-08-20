@@ -251,8 +251,8 @@ Returns ZIP:
 Returns ZIP:
 - `YYYYMMDD_google_upload.csv` — 24-col Google upload (UUID passwords)
 - `YYYYMMDD_google_reactivate.csv` — 7-col reactivation candidates (suspended + in Quercus)
-- `YYYYMMDD_email_new_students.csv` — Thunderbird Mail Merge recipient file for the "Student Email Account Details" campaign (replaces the manual `to_mail`; includes `Home Email` + the same temp password)
-- `YYYYMMDD_date_to_email.csv` — per-student credentials to email (`email`, `firstname`, `username`, `password`, `newemail`)
+- `YYYYMMDD_to_email_1_2.csv` — Thunderbird Mail Merge recipient file (`firstname`, `email`, `password`), one row per new student; `email` is the Term Email and `password` is the word-based SSO/LDAP passcode (sent to the student's own NCAD address)
+- `YYYYMMDD_to_email_3.csv` — Thunderbird Mail Merge recipient file (`email`, `firstname`, `username`, `password`, `newemail`); `email` is the student's Home Email (blank when none on record — the Google step warns about those students), `username`/`newemail` are the Term Email and `password` is the same Google temp password as the upload
 
 ---
 
@@ -512,8 +512,8 @@ Examples:
 - `20260630_canvas_all_pre.csv`
 - `20260630_google_upload.csv`
 - `20260630_google_reactivate.csv`
-- `20260630_email_new_students.csv`
-- `20260630_date_to_email.csv`
+- `20260630_to_email_1_2.csv`
+- `20260630_to_email_3.csv`
 - `20260630_athens_new_users.csv`
 - `20260630_athens.csv`
 - `20260630_library_cleaned.csv`

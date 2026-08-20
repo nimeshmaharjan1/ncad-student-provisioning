@@ -9,6 +9,7 @@ import { WorkflowChips } from "@/components/workflow-chips"
 import { ExportError } from "@/components/export-error"
 import { SuccessCard } from "@/components/success-card"
 import { WarnBanner } from "@/components/warn-banner"
+import { NoHomeEmailBanner } from "@/components/no-home-email-banner"
 import { downloadGoogleExport, ExportError as ExportErrorClass } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
 import { useToast } from "@/lib/toast-context"
@@ -25,6 +26,7 @@ export function GoogleStep() {
   const [done, setDone] = useState(false)
   const [doneTs, setDoneTs] = useState<Date | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
+  const [noHomeEmail, setNoHomeEmail] = useState<string[]>([])
 
   const handleRun = async () => {
     if (!baselineFile || !cleanedQuercusFile) return
@@ -32,10 +34,11 @@ export function GoogleStep() {
     setError(null)
     setErrorDetail(null)
     setWarnings([])
+    setNoHomeEmail([])
     setDone(false)
     setDoneTs(null)
     try {
-      const { blob, filename, missingRequired } = await downloadGoogleExport(baselineFile, cleanedQuercusFile)
+      const { blob, filename, missingRequired, noHomeEmail } = await downloadGoogleExport(baselineFile, cleanedQuercusFile)
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
@@ -50,7 +53,7 @@ export function GoogleStep() {
         system: "Google Workspace",
         status: "success",
         rowCount: null,
-        fileCount: filename.endsWith(".zip") ? 2 : 1,
+        fileCount: filename.endsWith(".zip") ? 4 : 1,
       })
       addToast({
         type: "success",
@@ -58,6 +61,7 @@ export function GoogleStep() {
         description: filename,
       })
       setWarnings(missingRequired)
+      setNoHomeEmail(noHomeEmail)
     } catch (e) {
       const message = e instanceof Error ? e.message : "Google export failed"
       if (e instanceof ExportErrorClass) {
@@ -120,6 +124,9 @@ export function GoogleStep() {
       )}
       {warnings.length > 0 && (
         <WarnBanner missingColumns={warnings} system="Google" />
+      )}
+      {noHomeEmail.length > 0 && (
+        <NoHomeEmailBanner students={noHomeEmail} />
       )}
       {done && doneTs && (
         <SuccessCard

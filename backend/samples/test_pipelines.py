@@ -56,23 +56,31 @@ assert set(new_canvas["user_id"]) == {"00067890", "00098765", "00022222"}, f"Can
 
 # --- GOOGLE ---
 baseline_google = load("baseline_google.csv")
-upload_google, reactivate_google, email_new_students, date_to_email, audit_g = run_google_pipeline(baseline_google, cleaned)
+upload_google, reactivate_google, to_email_1_2, to_email_3, audit_g = run_google_pipeline(baseline_google, cleaned)
 print(f"Google: {audit_g['total_upload_count']} upload, {audit_g['reactivation_count']} reactivate")
 # Carol is suspended in baseline and appears in Quercus -> reactivate (1)
 # Bob, Dave, Frank not in baseline -> upload (3)
 assert audit_g['total_upload_count'] == 3, f"Expected 3 upload; got {audit_g['total_upload_count']}"
 assert audit_g['reactivation_count'] == 1, f"Expected 1 reactivation; got {audit_g['reactivation_count']}"
-# Email exports carry the same temp password as the Google upload, per student
-from app.services.google_service import EMAIL_NEW_STUDENTS_COLUMNS, DATE_TO_EMAIL_COLUMNS
-assert len(email_new_students) == 3 and len(date_to_email) == 3, "Email exports must cover every new student"
-assert list(email_new_students.columns) == EMAIL_NEW_STUDENTS_COLUMNS, "email_new_students columns mismatch"
-assert list(date_to_email.columns) == DATE_TO_EMAIL_COLUMNS, "date_to_email columns mismatch"
-assert (email_new_students["Temp"].tolist() == upload_google["Password [Required]"].tolist()), "Temp must match Google upload password"
-assert (date_to_email["password"].tolist() == upload_google["Password [Required]"].tolist()), "date_to_email password must match Google upload password"
-assert (date_to_email["username"].tolist() == date_to_email["newemail"].tolist()), "username must equal newemail"
-assert (email_new_students["Email Address [Required]"].tolist() == upload_google["Email Address [Required]"].tolist()), "email address must match upload"
-assert "Home Email" in email_new_students.columns, "Home Email column must be present"
-print(f"Google email files: {len(email_new_students)} email_new_students, {len(date_to_email)} date_to_email (shared passwords)")
+# Mail Merge recipient files: to_email_1_2 covers every new student (sent to
+# their NCAD address); to_email_3 covers every new student too (sent to their
+# home email), including those with no home email on record.
+from app.services.google_service import TO_EMAIL_1_2_COLUMNS, TO_EMAIL_3_COLUMNS
+assert len(to_email_1_2) == 3 and len(to_email_3) == 3, "Email exports must cover every new student"
+assert list(to_email_1_2.columns) == TO_EMAIL_1_2_COLUMNS, "to_email_1_2 columns mismatch"
+assert list(to_email_3.columns) == TO_EMAIL_3_COLUMNS, "to_email_3 columns mismatch"
+# 1_2: recipient = Term Email; password = word-based SSO/LDAP passcode
+assert (to_email_1_2["email"].tolist() == upload_google["Email Address [Required]"].tolist()), "to_email_1_2 email must be the student email"
+assert to_email_1_2["password"].astype(str).str.len().gt(0).all(), "to_email_1_2 password must not be blank"
+assert (to_email_1_2["password"].tolist() != upload_google["Password [Required]"].tolist()), "to_email_1_2 must carry the passcode, not the Google temp password"
+# 3: recipient = Home Email (blank for students with none); username/newemail = Term Email;
+#    password = same Google temp password as the upload.
+assert (to_email_3["password"].tolist() == upload_google["Password [Required]"].tolist()), "to_email_3 password must match Google upload password"
+assert (to_email_3["username"].tolist() == to_email_3["newemail"].tolist()), "username must equal newemail"
+assert (to_email_3["username"].tolist() == upload_google["Email Address [Required]"].tolist()), "to_email_3 username/newemail must be the student email"
+assert to_email_3["email"].tolist() == ["bob.johnson@example.com", "dave.brown@example.com", ""], f"to_email_3 home emails wrong: {to_email_3['email'].tolist()}"
+assert audit_g["no_home_email_students"] == ["Frank Wilson"], f"no-home-email warning wrong: {audit_g['no_home_email_students']}"
+print(f"Google email files: {len(to_email_1_2)} to_email_1_2, {len(to_email_3)} to_email_3 (shared passwords; no-home-email warning: {audit_g['no_home_email_students']})")
 
 # --- ATHENS ---
 baseline_athens = load("baseline_athens.csv")

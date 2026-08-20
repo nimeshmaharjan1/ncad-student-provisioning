@@ -62,7 +62,7 @@ const systems = [
     description: "Google Workspace — new accounts + reactivations.",
     required: ["ID Number", "First Name", "Last Name"],
     optional: [],
-    output: "ZIP with 4 files: google_upload.csv (new accounts) + google_reactivate.csv (reactivations) + email_new_students.csv + date_to_email.csv (Mail Merge recipient files).",
+    output: "ZIP with 4 files: google_upload.csv (new accounts) + google_reactivate.csv (reactivations) + to_email_1_2.csv + to_email_3.csv (Mail Merge recipient files).",
     postSteps: ["Bulk upload users in Google Admin Console", "Review reactivations, send password reset emails"],
   },
   {

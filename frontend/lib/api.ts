@@ -95,6 +95,8 @@ export interface ExportResult {
   filename: string
   /** Required Quercus columns that were missing and exported as blank (warn mode). */
   missingRequired: string[]
+  /** New students with no home email who are still included in to_email_3. */
+  noHomeEmail: string[]
 }
 
 function parseMissingRequired(res: Response): string[] {
@@ -103,6 +105,15 @@ function parseMissingRequired(res: Response): string[] {
   return header
     .split(",")
     .map((col) => col.trim())
+    .filter(Boolean)
+}
+
+function parseNoHomeEmail(res: Response): string[] {
+  const header = res.headers.get("X-No-Home-Email")
+  if (!header) return []
+  return header
+    .split(",")
+    .map((name) => name.trim())
     .filter(Boolean)
 }
 
@@ -122,7 +133,12 @@ async function downloadExport(url: string, formData: FormData): Promise<ExportRe
   const match = disposition.match(/filename="?(.+?)"?$/)
   const filename = match ? match[1] : "export.zip"
   const blob = await res.blob()
-  return { blob, filename, missingRequired: parseMissingRequired(res) }
+  return {
+    blob,
+    filename,
+    missingRequired: parseMissingRequired(res),
+    noHomeEmail: parseNoHomeEmail(res),
+  }
 }
 
 export function downloadQuercus(files: File[]): Promise<ExportResult> {
@@ -184,7 +200,12 @@ export async function downloadLibraryExport(files: File[]): Promise<ExportResult
   const match = disposition.match(/filename="?(.+?)"?$/)
   const filename = match ? match[1] : "library_export.csv"
   const blob = await res.blob()
-  return { blob, filename, missingRequired: parseMissingRequired(res) }
+  return {
+    blob,
+    filename,
+    missingRequired: parseMissingRequired(res),
+    noHomeEmail: parseNoHomeEmail(res),
+  }
 }
 
 export interface CanvasStaffRow {

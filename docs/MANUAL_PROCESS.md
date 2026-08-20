@@ -542,16 +542,25 @@ Use the same LDAP file: `YYYYMMDD_ldap.csv` as the source of student email addre
 3. Open the **student email template**.
 
 ### Prepare Recipient List
-Use the generated file: `YYYYMMDD_email_new_students.csv` (produced by the
-Google export step — it replaces the manually-maintained `to_mail` file in
-`Email_2025/`). It contains the students' personal email addresses in the
-`Home Email` column (plus the NCAD address in `Email Address [Required]` and
-the temporary password in `Temp`).
+Use the generated files (produced by the Google export step — they replace the
+manually-maintained `to_mail` files in `Email_2025/`):
+
+- `YYYYMMDD_to_email_1_2.csv` — recipient file for the email sent to each
+  student's **own NCAD address** (Term Email). Columns: `firstname`, `email`
+  (student email), `password` (word-based SSO/LDAP passcode).
+- `YYYYMMDD_to_email_3.csv` — recipient file for the follow-up email sent to
+  the students' **personal email addresses** (Home Email). Columns: `email`
+  (home email), `firstname`, `username`/`newemail` (Term Email), `password`
+  (Google temp password). Students with no home email on record are still
+  included with a blank `email` column — the Google step shows an amber
+  warning listing them; fill those addresses in before merging.
 
 ### Send Student Email Details
 1. Use Thunderbird **Tools → Mail Merge**.
 2. Select the student email template.
-3. Use the `to_mail` file as the recipient source.
-4. Send student email account details to the students' personal email addresses.
+3. Run the merge with `YYYYMMDD_to_email_1_2.csv` as the recipient source
+   (student NCAD addresses).
+4. Then run the merge again with `YYYYMMDD_to_email_3.csv` as the recipient
+   source (personal email addresses).
 
 *Further mail merge settings and manual steps will be documented later.*
