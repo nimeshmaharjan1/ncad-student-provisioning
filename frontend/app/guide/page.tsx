@@ -711,7 +711,7 @@ export default function GuidePage() {
           </div>
 
           <div className="px-5 pb-6 pt-6">
-            {/* Email 1: LDAP */}
+            {/* Email 1: SSO Account + Eduroam */}
             <div className="relative flex gap-4">
               <div className="flex flex-col items-center">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-sm font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
@@ -722,7 +722,8 @@ export default function GuidePage() {
               <div className="flex-1 pb-8">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <Key className="size-4 text-amber-600 dark:text-amber-400" />
-                  <p className="text-sm font-medium">LDAP Credentials</p>
+                  <Wifi className="size-4 text-amber-600 dark:text-amber-400" />
+                  <p className="text-sm font-medium">SSO Account &amp; Eduroam Wi-Fi</p>
                   <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
                     Wait for LDAP
                   </span>
@@ -731,98 +732,17 @@ export default function GuidePage() {
                   <div className="flex items-center gap-2 text-xs">
                     <Clock className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="text-muted-foreground">When:</span>
-                    <span>After Triangle confirms LDAP accounts are created</span>
+                    <span>Only after Triangle confirms the students have been added to the LDAP system</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <FileText className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="text-muted-foreground">Template:</span>
-                    <span>LDAP email template</span>
+                    <span>NCAD Important - SSO account and NCAD Eduroam Wifi - how to connect</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <UserPlus className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="text-muted-foreground">Recipients:</span>
-                    <span>YYYYMMDD_ldap_new_students.csv</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Mail className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Tool:</span>
-                    <span>Thunderbird → Tools → Mail Merge</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Email 2: Eduroam */}
-            <div className="relative flex gap-4">
-              <div className="flex flex-col items-center">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-sm font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-                  2
-                </div>
-                <div className="mt-1 w-px flex-1 bg-amber-200 dark:bg-amber-800" />
-              </div>
-              <div className="flex-1 pb-8">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Wifi className="size-4 text-amber-600 dark:text-amber-400" />
-                  <p className="text-sm font-medium">Eduroam Wi-Fi</p>
-                  <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                    Same recipients
-                  </span>
-                </div>
-                <div className="space-y-1.5 rounded-lg bg-amber-50/50 px-3 py-2.5 dark:bg-amber-950/20">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Clock className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">When:</span>
-                    <span>After LDAP credentials are sent</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <FileText className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Template:</span>
-                    <span>Eduroam email template</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <UserPlus className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Recipients:</span>
-                    <span>YYYYMMDD_ldap_new_students.csv (same file)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Mail className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Tool:</span>
-                    <span>Thunderbird → Tools → Mail Merge</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Email 3: Student Email */}
-            <div className="relative flex gap-4">
-              <div className="flex flex-col items-center">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-sm font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-                  3
-                </div>
-              </div>
-              <div className="flex-1 pb-6">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Mail className="size-4 text-amber-600 dark:text-amber-400" />
-                  <p className="text-sm font-medium">Student Email Details</p>
-                  <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                    Personal emails
-                  </span>
-                </div>
-                <div className="space-y-1.5 rounded-lg bg-amber-50/50 px-3 py-2.5 dark:bg-amber-950/20">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Clock className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">When:</span>
-                    <span>After LDAP credentials are sent</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <FileText className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Template:</span>
-                    <span>Student email template</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <UserPlus className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Recipients:</span>
-                    <span>YYYYMMDD_to_email_1_2.csv then YYYYMMDD_to_email_3.csv (generated by the Google step)</span>
+                    <span>YYYYMMDD_to_email_1_2.csv (each student's NCAD address)</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <Mail className="size-3.5 shrink-0 text-muted-foreground" />
@@ -833,7 +753,53 @@ export default function GuidePage() {
                 <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-300">
                   <Info className="size-3.5 shrink-0" />
                   <span>
-                    <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">to_email_1_2</code> is sent to each student's own NCAD address; <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">to_email_3</code> is sent to their personal address. Students with no home email on record are still included in <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">to_email_3</code> with a blank email — the Google step warns about them.
+                    <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">to_email_1_2</code> carries the student's NCAD address (<code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">email</code>) and the word-based SSO/LDAP passcode (<code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">password</code>) — sent to the student's own address.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Email 2: Google Apps for Education */}
+            <div className="relative flex gap-4">
+              <div className="flex flex-col items-center">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-sm font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                  2
+                </div>
+              </div>
+              <div className="flex-1 pb-6">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Globe className="size-4 text-amber-600 dark:text-amber-400" />
+                  <p className="text-sm font-medium">Google Apps for Education Account</p>
+                  <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
+                    Wait for LDAP
+                  </span>
+                </div>
+                <div className="space-y-1.5 rounded-lg bg-amber-50/50 px-3 py-2.5 dark:bg-amber-950/20">
+                  <div className="flex items-center gap-2 text-xs">
+                    <Clock className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">When:</span>
+                    <span>Only after Triangle confirms the students have been added to the LDAP system</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">Template:</span>
+                    <span>NCAD Google Apps for Education Account</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <UserPlus className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">Recipients:</span>
+                    <span>YYYYMMDD_to_email_3.csv (students' home emails)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <Mail className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">Tool:</span>
+                    <span>Thunderbird → Tools → Mail Merge</span>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-300">
+                  <Info className="size-3.5 shrink-0" />
+                  <span>
+                    The student's Google account is the Term Email — <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">email@student.ncad.ie</code>. In <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">to_email_3</code>, <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">email</code> is the home email (the recipient), <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">username</code>/<code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">newemail</code> are the Term Email and <code className="rounded bg-amber-100 px-1 py-0.5 text-[11px] dark:bg-amber-900/40">password</code> is the Google temp password. Students with no home email on record are still included with a blank email — the Google step warns about them.
                   </span>
                 </div>
               </div>

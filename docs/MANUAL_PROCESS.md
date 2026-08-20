@@ -490,77 +490,57 @@ Example: `20260618_athens` / `20260618_athens.csv`
 
 ---
 
-## Step 7: Send LDAP Credentials to Student Email Addresses
+## Step 7: Send SSO Account & Eduroam Wi-Fi Details
 
 ### Wait for LDAP Account Creation Confirmation
-Wait for confirmation from the **Triangle Service Desk** that the LDAP accounts have been successfully created.
-**Do not send any student communications before receiving confirmation.**
+Wait for confirmation from the **Triangle Service Desk** that the students have
+been added to the LDAP system.
+**Do not send any student communications before receiving this confirmation.**
 
 ### Access Thunderbird
 1. Open **Thunderbird**.
 2. Use the account provided by IT support.
-3. Open the **LDAP email template**.
+3. Open the **NCAD Important - SSO account and NCAD Eduroam Wifi - how to connect** template.
 
 ### Prepare Recipient List
-Use the LDAP file: `YYYYMMDD_ldap.csv` as the source of student email addresses.
+Use the generated file (produced by the Google export step): `YYYYMMDD_to_email_1_2.csv`.
+It contains `firstname`, the student's NCAD address (`email`) and the word-based
+SSO/LDAP passcode (`password`). It replaces the manually-maintained `to_mail`
+files in `Email_2025/`.
 
-### Send LDAP Credentials
+### Send SSO Account & Eduroam Details
 1. Use Thunderbird **Tools → Mail Merge**.
-2. Select the LDAP email template.
-3. Merge using the LDAP file.
-4. Send LDAP credentials to student email addresses.
+2. Select the **NCAD Important - SSO account and NCAD Eduroam Wifi - how to connect** template.
+3. Merge using `YYYYMMDD_to_email_1_2.csv` (recipients = each student's NCAD address).
+4. Send the SSO account and Eduroam details to student email addresses.
 
 *Further mail merge settings and manual steps will be documented later.*
 
 ---
 
-## Step 8: Send Eduroam Wi-Fi Information
+## Step 8: Send Google Apps for Education Account Details
+
+### Wait for LDAP Account Creation Confirmation
+Also send this **only after** the Triangle Service Desk confirms the students
+have been added to the LDAP system.
 
 ### Access Thunderbird
 1. Open **Thunderbird**.
 2. Use the account provided by IT support.
-3. Open the **Eduroam email template**.
+3. Open the **NCAD Google Apps for Education Account** template.
 
 ### Prepare Recipient List
-Use the same LDAP file: `YYYYMMDD_ldap.csv` as the source of student email addresses.
+Use the generated file (produced by the Google export step): `YYYYMMDD_to_email_3.csv`.
+Columns: `email` (the student's Home Email — the Mail Merge recipient),
+`firstname`, `username`/`newemail` (the Term Email, i.e. `email@student.ncad.ie`),
+`password` (Google temp password). Students with no home email on record are
+still included with a blank `email` column — the Google step shows an amber
+warning listing them; fill those addresses in before merging.
 
-### Send Eduroam Information
+### Send Google Apps Details
 1. Use Thunderbird **Tools → Mail Merge**.
-2. Select the Eduroam template.
-3. Merge using the LDAP file.
-4. Send the Eduroam Wi-Fi information to student email addresses.
-
-*Further mail merge settings and manual steps will be documented later.*
-
----
-
-## Step 9: Send Student Email Account Details to Personal Email Addresses
-
-### Access Thunderbird
-1. Open **Thunderbird**.
-2. Use the account provided by IT support.
-3. Open the **student email template**.
-
-### Prepare Recipient List
-Use the generated files (produced by the Google export step — they replace the
-manually-maintained `to_mail` files in `Email_2025/`):
-
-- `YYYYMMDD_to_email_1_2.csv` — recipient file for the email sent to each
-  student's **own NCAD address** (Term Email). Columns: `firstname`, `email`
-  (student email), `password` (word-based SSO/LDAP passcode).
-- `YYYYMMDD_to_email_3.csv` — recipient file for the follow-up email sent to
-  the students' **personal email addresses** (Home Email). Columns: `email`
-  (home email), `firstname`, `username`/`newemail` (Term Email), `password`
-  (Google temp password). Students with no home email on record are still
-  included with a blank `email` column — the Google step shows an amber
-  warning listing them; fill those addresses in before merging.
-
-### Send Student Email Details
-1. Use Thunderbird **Tools → Mail Merge**.
-2. Select the student email template.
-3. Run the merge with `YYYYMMDD_to_email_1_2.csv` as the recipient source
-   (student NCAD addresses).
-4. Then run the merge again with `YYYYMMDD_to_email_3.csv` as the recipient
-   source (personal email addresses).
+2. Select the **NCAD Google Apps for Education Account** template.
+3. Merge using `YYYYMMDD_to_email_3.csv` (recipients = students' home emails).
+4. Send the Google Apps account details to the students' personal email addresses.
 
 *Further mail merge settings and manual steps will be documented later.*

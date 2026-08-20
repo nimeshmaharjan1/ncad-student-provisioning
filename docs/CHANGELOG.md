@@ -2,6 +2,31 @@
 
 ## 2026-08-20
 
+### Guides: Mail Merge section updated to the 2 email campaigns
+- The three old campaigns (LDAP Credentials / Eduroam / Student Email Details)
+  are now two, matching the new export files:
+  - **Email 1 — SSO Account & Eduroam Wi-Fi**, template **"NCAD Important -
+    SSO account and NCAD Eduroam Wifi - how to connect"**, sent to each
+    student's own NCAD address from `YYYYMMDD_to_email_1_2.csv`.
+  - **Email 2 — Google Apps for Education Account**, template **"NCAD Google
+    Apps for Education Account"** (account = `email@student.ncad.ie`), sent to
+    home emails from `YYYYMMDD_to_email_3.csv`.
+- Both emails are marked **"Wait for LDAP"**: they are only sent after the
+  Triangle Service Desk confirms the students have been added to the LDAP
+  system. Updated in `USER_GUIDE.md` (Phase 4), `MANUAL_PROCESS.md`
+  (Steps 7-8), and the in-app guide (`guide/page.tsx`).
+
+### Launcher: fixed ~4-minute wait and added a backend check
+- `start.bat` placed `>nul 2>&1` **before** `netstat` in the port poll, which
+  swallowed netstat's output so `findstr "LISTENING"` never matched and the
+  loop always ran all 90 iterations (~4.5 minutes). The redirection now comes
+  after the pipe chain, the wait is capped at ~15 seconds (1-second checks),
+  and the browser still opens even if the port is not ready yet.
+- Port-cleanup only kills processes that are actually `LISTENING` and reports
+  the killed PID.
+- Added a short (~8s) backend check on port 8000 with an actionable warning
+  (the frontend cannot work without the backend).
+
 ### Google export: Mail Merge files renamed/reworked to `to_email_1_2` + `to_email_3`
 - Replaced `YYYYMMDD_email_new_students.csv` and `YYYYMMDD_date_to_email.csv`
   with:

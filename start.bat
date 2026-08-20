@@ -67,11 +67,11 @@ echo [5/5] Checking system ports...
 :: Auto-kill orphaned processes on ports 8000 and 3000.
 :: Uses netstat + taskkill (native cmd) instead of PowerShell,
 :: because corporate Windows may restrict PowerShell execution policy.
-for /f "tokens=5 delims= " %%p in ('netstat -ano ^| findstr ":8000"') do (
-    if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1 && echo [INFO] Port 8000 was in use - killed leftover process.
+for /f "tokens=5 delims= " %%p in ('netstat -ano ^| findstr ":8000" ^| findstr "LISTENING"') do (
+    if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1 && echo [INFO] Port 8000 was in use (PID %%p) - killed leftover process.
 )
-for /f "tokens=5 delims= " %%p in ('netstat -ano ^| findstr ":3000"') do (
-    if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1 && echo [INFO] Port 3000 was in use - killed leftover process.
+for /f "tokens=5 delims= " %%p in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do (
+    if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1 && echo [INFO] Port 3000 was in use (PID %%p) - killed leftover process.
 )
 
 echo.
@@ -117,18 +117,33 @@ echo.
 :: ----- Wait for frontend to be ready -----------------------------------------
 :: Uses netstat (native cmd) instead of PowerShell to avoid corporate
 :: execution policy restrictions on New-Object / Get-NetTCPConnection.
-:: Polls until the port listens (up to ~4 minutes; first start is slow).
-echo Waiting for frontend to start (first start can take a couple of minutes)...
-for /l %%i in (1,1,90) do (
-    >nul 2>&1 netstat -ano | findstr ":3000" | findstr "LISTENING" && (
+:: NOTE: the ">nul 2>&1" must come AFTER the pipe chain - if placed before
+:: netstat it swallows netstat's output and the check never matches.
+echo Waiting for frontend to start...
+for /l %%i in (1,1,15) do (
+    netstat -ano | findstr ":3000" | findstr "LISTENING" >nul 2>&1 && (
         echo Frontend ready.
         goto :frontend_up
     )
-    >nul ping -n 4 localhost
+    >nul ping -n 2 localhost
 )
-echo [WARN] Frontend not ready after ~4 minutes. It may still be starting -
-echo        open http://localhost:3000 manually.
+echo [WARN] Frontend did not become ready after ~15 seconds.
+echo        It may still be starting - open http://localhost:3000 manually.
 :frontend_up
+
+:: ----- Check backend is listening ---------------------------------------------
+echo Checking backend on port 8000...
+for /l %%i in (1,1,8) do (
+    netstat -ano | findstr ":8000" | findstr "LISTENING" >nul 2>&1 && (
+        echo Backend ready.
+        goto :backend_up
+    )
+    >nul ping -n 2 localhost
+)
+echo [WARN] Backend did not become ready after ~8 seconds.
+echo        Look for an error in the window above and retry - the frontend
+echo        will not work without it.
+:backend_up
 
 :: ----- Open browser tabs -----------------------------------------------------
 start http://localhost:3000
