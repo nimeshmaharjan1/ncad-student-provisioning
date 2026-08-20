@@ -52,7 +52,7 @@ const systems = [
     description: "Canvas SIS Import — student accounts for LMS.",
     required: ["ID Number", "First Name", "Last Name", "Term Email"],
     optional: [],
-    output: "ZIP with 2 files: canvas.csv (new users) + canvas_all_pre.csv (updated baseline in SIS format).",
+    output: "ZIP with 2 files: YYYYMMDD_canvas.csv (new users) + pre_YYYYMMDD_canvas.csv (updated baseline in SIS format).",
     postSteps: ["SIS Import in Canvas administration", "Upload via FileSender and notify Rene", "Verify no duplicate accounts"],
   },
   {

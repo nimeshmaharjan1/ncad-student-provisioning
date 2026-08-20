@@ -103,8 +103,8 @@ the manual steps needed to complete it.
 3. Download the `.zip`
 
 **The `.zip` contains:**
-- `YYYYMMDD_ldap_new_students.csv` — includes **passcodes**
-- `YYYYMMDD_ldap_updated_baseline.csv` — save as your next baseline
+- `YYYYMMDD_ldap.csv` — includes **passcodes**
+- `pre_YYYYMMDD_ldap.csv` — save as your next baseline
 
 > **Date of Birth:** since the GDPR change, the Quercus Discoverer report no
 > longer exports `Date of Birth`. This is expected: the system **auto-adds
@@ -117,7 +117,7 @@ the manual steps needed to complete it.
 **Once the file is downloaded:**
 
 4. Open your SFTP client and connect to the Triangle LDAP server
-5. Upload `YYYYMMDD_ldap_new_students.csv`
+5. Upload `YYYYMMDD_ldap.csv`
 6. Email **Triangle Service Desk** to confirm the upload
 7. **Wait** for confirmation that LDAP accounts have been created
 8. Do not proceed to send any student communications until confirmed
@@ -128,13 +128,13 @@ the manual steps needed to complete it.
 
 **In the system:**
 
-1. Upload the most recent Canvas baseline CSV (e.g. `canvas_all_pre_20260616.csv` from your `Canvas_2025/` folder)
+1. Upload the most recent Canvas baseline CSV (e.g. `pre_20260616_canvas.csv` from your `Canvas_2025/` folder)
 2. Click **Run Canvas Export**
 3. Download the `.zip`
 
 **The `.zip` contains:**
 - `YYYYMMDD_canvas.csv` — ready for Canvas SIS Import
-- `YYYYMMDD_canvas_all_pre.csv` — save as your next baseline
+- `pre_YYYYMMDD_canvas.csv` — save as your next baseline
 
 **Once the file is downloaded:**
 
@@ -374,10 +374,10 @@ YYYYMMDD_system_description.csv
 | Example | What it is |
 |---|---|
 | `20260701_quercus.csv` | Cleaned Quercus data |
-| `20260701_ldap_new_students.csv` | New LDAP accounts with passcodes |
-| `20260701_ldap_updated_baseline.csv` | Updated LDAP baseline (save for next run) |
+| `20260701_ldap.csv` | New LDAP accounts with passcodes |
+| `pre_20260701_ldap.csv` | Updated LDAP baseline (save for next run) |
 | `20260701_canvas.csv` | Canvas SIS import file |
-| `20260701_canvas_all_pre.csv` | Updated Canvas baseline |
+| `pre_20260701_canvas.csv` | Updated Canvas baseline |
 | `20260701_google_upload.csv` | Google Workspace bulk upload |
 | `20260701_google_reactivate.csv` | Google accounts to review for reactivation |
 | `20260701_to_email_1_2.csv` | Mail Merge recipient file (sent to student NCAD addresses) |

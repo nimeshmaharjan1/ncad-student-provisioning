@@ -579,12 +579,12 @@ export default function GuidePage() {
               { number: 3, icon: Download, text: "Download the .zip" },
             ]}
             zipContents={[
-              { file: "YYYYMMDD_ldap_new_students.csv", desc: "Includes passcodes" },
-              { file: "YYYYMMDD_ldap_updated_baseline.csv", desc: "Save as your next baseline" },
+              { file: "YYYYMMDD_ldap.csv", desc: "Includes passcodes" },
+              { file: "pre_YYYYMMDD_ldap.csv", desc: "Save as your next baseline" },
             ]}
             manualSteps={[
               { number: 4, icon: Upload, text: "Open your SFTP client and connect to the Triangle LDAP server", detail: "Using Cyberduck" },
-              { number: 5, icon: Upload, text: "Upload YYYYMMDD_ldap_new_students.csv" },
+              { number: 5, icon: Upload, text: "Upload YYYYMMDD_ldap.csv" },
               { number: 6, icon: Mail, text: "Email Triangle Service Desk to confirm the upload" },
             ]}
             criticalSteps={[
@@ -598,13 +598,13 @@ export default function GuidePage() {
             title="Canvas"
             accent="rose"
             autoSteps={[
-              { number: 1, icon: Upload, text: "Upload the most recent Canvas baseline CSV", detail: "e.g. canvas_all_pre_20260616.csv from your Canvas_2025/ folder" },
+              { number: 1, icon: Upload, text: "Upload the most recent Canvas baseline CSV", detail: "e.g. pre_20260616_canvas.csv from your Canvas_2025/ folder" },
               { number: 2, icon: Play, text: "Click Run Canvas Export" },
               { number: 3, icon: Download, text: "Download the .zip" },
             ]}
             zipContents={[
               { file: "YYYYMMDD_canvas.csv", desc: "Ready for Canvas SIS Import" },
-              { file: "YYYYMMDD_canvas_all_pre.csv", desc: "Save as your next baseline" },
+              { file: "pre_YYYYMMDD_canvas.csv", desc: "Save as your next baseline" },
             ]}
             manualSteps={[
               { number: 4, icon: LogIn, text: "Log into Canvas administration" },

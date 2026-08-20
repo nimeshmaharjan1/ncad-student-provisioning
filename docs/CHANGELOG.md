@@ -2,6 +2,17 @@
 
 ## 2026-08-20
 
+### ZIP filenames aligned with the manual naming convention (LDAP / Canvas)
+- Upload files are now just `<date>_<system>` and baseline/reference files get a
+  `pre_` prefix, matching the existing manual workflow:
+  - LDAP: `YYYYMMDD_ldap_new_students.csv` → `YYYYMMDD_ldap.csv`;
+    `YYYYMMDD_ldap_updated_baseline.csv` → `pre_YYYYMMDD_ldap.csv`
+  - Canvas: `YYYYMMDD_canvas_all_pre.csv` → `pre_YYYYMMDD_canvas.csv`
+    (`YYYYMMDD_canvas.csv` unchanged)
+- Library filenames are unchanged (`YYYYMMDD_library_cleaned.csv` +
+  `YYYYMMDD_library.txt`).
+- Athens and Google filenames are unchanged (out of scope for now).
+
 ### Guides: Mail Merge section updated to the 2 email campaigns
 - The three old campaigns (LDAP Credentials / Eduroam / Student Email Details)
   are now two, matching the new export files:

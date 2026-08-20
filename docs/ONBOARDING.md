@@ -218,8 +218,8 @@ Same input as upload. Returns `YYYYMMDD_quercus.csv` — the cleaned, preprocess
 
 #### `POST /ldap/download` (file download)
 Same inputs. Returns a ZIP containing:
-- `YYYYMMDD_ldap_new_students.csv` — 13 cols (Student ID, Code, Description, Year, ... Passcode)
-- `YYYYMMDD_ldap_updated_baseline.csv` — merged baseline + new students
+- `YYYYMMDD_ldap.csv` — 13 cols (Student ID, Code, Description, Year, ... Passcode)
+- `pre_YYYYMMDD_ldap.csv` — merged baseline + new students
 
 Optional query params: `format=csv` (returns single CSV with section headers),
 `new_students_filename`, `updated_baseline_filename`.
@@ -236,7 +236,7 @@ Optional query params: `format=csv` (returns single CSV with section headers),
 
 Returns ZIP:
 - `YYYYMMDD_canvas.csv` — 11-col Canvas SIS import (new users only)
-- `YYYYMMDD_canvas_all_pre.csv` — updated reference file
+- `pre_YYYYMMDD_canvas.csv` — updated reference file
 
 ---
 
@@ -506,10 +506,10 @@ All output files follow: `YYYYMMDD_<system>[_<description>].csv`
 
 Examples:
 - `20260630_quercus.csv`
-- `20260630_ldap_new_students.csv`
-- `20260630_ldap_updated_baseline.csv`
+- `20260630_ldap.csv`
+- `pre_20260630_ldap.csv`
 - `20260630_canvas.csv`
-- `20260630_canvas_all_pre.csv`
+- `pre_20260630_canvas.csv`
 - `20260630_google_upload.csv`
 - `20260630_google_reactivate.csv`
 - `20260630_to_email_1_2.csv`

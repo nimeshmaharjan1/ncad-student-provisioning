@@ -21,7 +21,7 @@ All sample files referenced below live in the repo's `samples/` folder:
 | Step | Action | Expect |
 |------|--------|--------|
 | Quercus | Upload `quercus_2025.csv` + `quercus_2026.csv` | Green success toast, cleaned CSV downloads, stepper "Quercus" turns done, **no warning card** |
-| LDAP | Upload `baseline_ldap.csv` + the **cleaned file from the Quercus step** | ZIP with `new_students.csv` + `updated_baseline.csv`, success card |
+| LDAP | Upload `baseline_ldap.csv` + the **cleaned file from the Quercus step** | ZIP with `YYYYMMDD_ldap.csv` + `pre_YYYYMMDD_ldap.csv`, success card |
 | Canvas / Google / Athens | Same pattern with their baseline files | ZIP downloads, all steps done |
 | Library | Upload the two Quercus files directly | ZIP with cleaned CSV + tab-delimited 46-column `.txt` template |
 | Anywhere | Open Export History | Entries with timestamps / row counts |

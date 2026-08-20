@@ -89,8 +89,8 @@ async def download_ldap(
         def _ensure_csv(name: str) -> str:
             return name if name.lower().endswith(".csv") else name + ".csv"
 
-        new_fn = _ensure_csv(new_students_filename) if new_students_filename else f"{ds}_ldap_new_students.csv"
-        upd_fn = _ensure_csv(updated_baseline_filename) if updated_baseline_filename else f"{ds}_ldap_updated_baseline.csv"
+        new_fn = _ensure_csv(new_students_filename) if new_students_filename else f"{ds}_ldap.csv"
+        upd_fn = _ensure_csv(updated_baseline_filename) if updated_baseline_filename else f"pre_{ds}_ldap.csv"
 
         if format == "zip":
             zip_buffer = io.BytesIO()

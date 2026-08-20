@@ -119,27 +119,29 @@ echo.
 :: execution policy restrictions on New-Object / Get-NetTCPConnection.
 :: NOTE: the ">nul 2>&1" must come AFTER the pipe chain - if placed before
 :: netstat it swallows netstat's output and the check never matches.
+:: IMPORTANT: no "goto" inside parenthesized blocks here - jumping out of a
+:: block mid-parse can make the batch close early.
+set fwait=0
 echo Waiting for frontend to start...
-for /l %%i in (1,1,15) do (
-    netstat -ano | findstr ":3000" | findstr "LISTENING" >nul 2>&1 && (
-        echo Frontend ready.
-        goto :frontend_up
-    )
-    >nul ping -n 2 localhost
-)
+:wait_frontend
+netstat -ano | findstr ":3000" | findstr "LISTENING" >nul 2>&1
+if %errorlevel% equ 0 goto :frontend_up
+>nul ping -n 2 localhost
+set /a fwait+=1
+if %fwait% lss 15 goto :wait_frontend
 echo [WARN] Frontend did not become ready after ~15 seconds.
 echo        It may still be starting - open http://localhost:3000 manually.
 :frontend_up
 
 :: ----- Check backend is listening ---------------------------------------------
+set bwait=0
 echo Checking backend on port 8000...
-for /l %%i in (1,1,8) do (
-    netstat -ano | findstr ":8000" | findstr "LISTENING" >nul 2>&1 && (
-        echo Backend ready.
-        goto :backend_up
-    )
-    >nul ping -n 2 localhost
-)
+:wait_backend
+netstat -ano | findstr ":8000" | findstr "LISTENING" >nul 2>&1
+if %errorlevel% equ 0 goto :backend_up
+>nul ping -n 2 localhost
+set /a bwait+=1
+if %bwait% lss 8 goto :wait_backend
 echo [WARN] Backend did not become ready after ~8 seconds.
 echo        Look for an error in the window above and retry - the frontend
 echo        will not work without it.
@@ -156,6 +158,7 @@ echo   Backend:  http://localhost:8000
 echo   Frontend: http://localhost:3000
 echo   Docs:     http://localhost:3000/about
 echo.
-echo   This window stays open while the servers run.
-echo   To stop them, close this window (X) or press Ctrl+C.
+echo   Keep this window open while you work - the servers run underneath it.
+echo   Press any key here to stop them (this also closes the window).
 echo ============================================
+pause >nul

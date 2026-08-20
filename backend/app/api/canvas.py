@@ -63,7 +63,7 @@ async def export_canvas(baseline: UploadFile = File(...), quercus: UploadFile = 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.writestr(f"{ds}_canvas.csv", new_users_df.to_csv(index=False))
-            zf.writestr(f"{ds}_canvas_all_pre.csv", updated_baseline_df.to_csv(index=False))
+            zf.writestr(f"pre_{ds}_canvas.csv", updated_baseline_df.to_csv(index=False))
         zip_buffer.seek(0)
 
         headers = {
