@@ -2,6 +2,22 @@
 
 ## 2026-08-19
 
+### Quercus upload no longer warns about Date of Birth
+- The Quercus upload step (`check_source_columns()`) now skips columns in
+  `NON_BLOCKING_REQUIRED_COLUMNS` — i.e. LDAP's `Date of Birth`, which the
+  Discoverer report no longer exports (GDPR) and which is always auto-added
+  blank. Uploading files without DOB no longer shows the amber "missing
+  columns" card; the warning only appears for genuinely missing columns.
+
+### Google export now generates the Mail Merge email files
+- `POST /google/export` returns four files: the existing upload + reactivate
+  CSVs, plus `YYYYMMDD_email_new_students.csv` (recipient file for the
+  Thunderbird "Student Email Account Details" campaign — replaces the manual
+  `to_mail` file) and `YYYYMMDD_date_to_email.csv` (per-student credentials).
+- The temporary password is generated **once per new student** and shared
+  across the Google upload and both email files, so the emailed credentials
+  match the account password.
+
 ### Library export fixes
 - **Index-length crash fixed:** `preprocess_quercus()` now resets the DataFrame
   index after filtering. A filtered (gapped) index combined with a missing

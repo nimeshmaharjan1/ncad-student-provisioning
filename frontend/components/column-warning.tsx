@@ -73,8 +73,6 @@ export function ColumnWarning({ missingColumns, missingColumnsByFile }: ColumnWa
               are included, and re-export the CSV before moving on. Downstream
               exports (LDAP, Canvas, Google, OpenAthens, Library) may reject
               the file or auto-add the missing columns with empty values.
-              Date of Birth is expected to be absent from the Discoverer
-              report (GDPR) — it is always auto-added as an empty column.
             </p>
           </div>
         </div>

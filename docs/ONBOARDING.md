@@ -251,6 +251,8 @@ Returns ZIP:
 Returns ZIP:
 - `YYYYMMDD_google_upload.csv` — 24-col Google upload (UUID passwords)
 - `YYYYMMDD_google_reactivate.csv` — 7-col reactivation candidates (suspended + in Quercus)
+- `YYYYMMDD_email_new_students.csv` — Thunderbird Mail Merge recipient file for the "Student Email Account Details" campaign (replaces the manual `to_mail`; includes `Home Email` + the same temp password)
+- `YYYYMMDD_date_to_email.csv` — per-student credentials to email (`email`, `firstname`, `username`, `password`, `newemail`)
 
 ---
 
@@ -509,6 +511,8 @@ Examples:
 - `20260630_canvas_all_pre.csv`
 - `20260630_google_upload.csv`
 - `20260630_google_reactivate.csv`
+- `20260630_email_new_students.csv`
+- `20260630_date_to_email.csv`
 - `20260630_athens_new_users.csv`
 - `20260630_athens.csv`
 - `20260630_library_cleaned.csv`

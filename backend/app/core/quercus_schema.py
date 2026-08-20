@@ -219,6 +219,12 @@ def check_source_columns(df_columns) -> list[str]:
     Quercus file. Processing is NEVER blocked by this check — the result is
     surfaced as a warning so the user can recheck their export settings
     before running downstream exports.
+
+    Columns in NON_BLOCKING_REQUIRED_COLUMNS (e.g. LDAP's ``Date of Birth``)
+    are excluded: they are expected to be absent (the Discoverer report no
+    longer exports DOB, GDPR) and are auto-added with empty values downstream,
+    so their absence is not something to warn about.
     """
     cols = {str(c) for c in df_columns}
-    return [col for col in SOURCE_WARN_COLUMNS if col not in cols]
+    non_blocking = {c for t in NON_BLOCKING_REQUIRED_COLUMNS.values() for c in t}
+    return [col for col in SOURCE_WARN_COLUMNS if col not in cols and col not in non_blocking]

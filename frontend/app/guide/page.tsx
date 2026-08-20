@@ -628,6 +628,8 @@ export default function GuidePage() {
             zipContents={[
               { file: "YYYYMMDD_google_upload.csv", desc: "New accounts with UUID passwords (force-change enabled)" },
               { file: "YYYYMMDD_google_reactivate.csv", desc: "Suspended students who reappeared in Quercus" },
+              { file: "YYYYMMDD_email_new_students.csv", desc: "Mail Merge recipient file for Student Email Details (includes Home Email + temp password)" },
+              { file: "YYYYMMDD_date_to_email.csv", desc: "Per-student credentials to email (email, username, password, newemail)" },
             ]}
             manualSteps={[
               { number: 4, icon: LogIn, text: "Log into Google Workspace Admin Console (student domain)" },

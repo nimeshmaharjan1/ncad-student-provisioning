@@ -56,7 +56,9 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
 
         cleaned_quercus_df = preprocess_quercus(quercus_df)
 
-        upload_df, reactivation_df, _ = run_google_pipeline(baseline_df, cleaned_quercus_df)
+        upload_df, reactivation_df, email_new_students_df, date_to_email_df, _ = run_google_pipeline(
+            baseline_df, cleaned_quercus_df
+        )
 
         ds = date_suffix()
 
@@ -64,6 +66,8 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.writestr(f"{ds}_google_upload.csv", upload_df.to_csv(index=False))
             zf.writestr(f"{ds}_google_reactivate.csv", reactivation_df.to_csv(index=False))
+            zf.writestr(f"{ds}_email_new_students.csv", email_new_students_df.to_csv(index=False))
+            zf.writestr(f"{ds}_date_to_email.csv", date_to_email_df.to_csv(index=False))
         zip_buffer.seek(0)
 
         headers = {

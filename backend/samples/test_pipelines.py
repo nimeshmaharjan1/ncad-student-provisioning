@@ -45,12 +45,23 @@ assert audit_c['new_users_count'] == 3, f"Expected 3 new Canvas users; got {audi
 
 # --- GOOGLE ---
 baseline_google = load("baseline_google.csv")
-upload_google, reactivate_google, audit_g = run_google_pipeline(baseline_google, cleaned)
+upload_google, reactivate_google, email_new_students, date_to_email, audit_g = run_google_pipeline(baseline_google, cleaned)
 print(f"Google: {audit_g['total_upload_count']} upload, {audit_g['reactivation_count']} reactivate")
 # Carol is suspended in baseline and appears in Quercus -> reactivate (1)
 # Bob, Dave, Frank not in baseline -> upload (3)
 assert audit_g['total_upload_count'] == 3, f"Expected 3 upload; got {audit_g['total_upload_count']}"
 assert audit_g['reactivation_count'] == 1, f"Expected 1 reactivation; got {audit_g['reactivation_count']}"
+# Email exports carry the same temp password as the Google upload, per student
+from app.services.google_service import EMAIL_NEW_STUDENTS_COLUMNS, DATE_TO_EMAIL_COLUMNS
+assert len(email_new_students) == 3 and len(date_to_email) == 3, "Email exports must cover every new student"
+assert list(email_new_students.columns) == EMAIL_NEW_STUDENTS_COLUMNS, "email_new_students columns mismatch"
+assert list(date_to_email.columns) == DATE_TO_EMAIL_COLUMNS, "date_to_email columns mismatch"
+assert (email_new_students["Temp"].tolist() == upload_google["Password [Required]"].tolist()), "Temp must match Google upload password"
+assert (date_to_email["password"].tolist() == upload_google["Password [Required]"].tolist()), "date_to_email password must match Google upload password"
+assert (date_to_email["username"].tolist() == date_to_email["newemail"].tolist()), "username must equal newemail"
+assert (email_new_students["Email Address [Required]"].tolist() == upload_google["Email Address [Required]"].tolist()), "email address must match upload"
+assert "Home Email" in email_new_students.columns, "Home Email column must be present"
+print(f"Google email files: {len(email_new_students)} email_new_students, {len(date_to_email)} date_to_email (shared passwords)")
 
 # --- ATHENS ---
 baseline_athens = load("baseline_athens.csv")

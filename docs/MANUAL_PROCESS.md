@@ -536,8 +536,11 @@ Use the same LDAP file: `YYYYMMDD_ldap.csv` as the source of student email addre
 3. Open the **student email template**.
 
 ### Prepare Recipient List
-Use the reference file: `to_mail` located in: `Email_2025`
-This file contains the students' personal email addresses.
+Use the generated file: `YYYYMMDD_email_new_students.csv` (produced by the
+Google export step — it replaces the manually-maintained `to_mail` file in
+`Email_2025/`). It contains the students' personal email addresses in the
+`Home Email` column (plus the NCAD address in `Email Address [Required]` and
+the temporary password in `Temp`).
 
 ### Send Student Email Details
 1. Use Thunderbird **Tools → Mail Merge**.

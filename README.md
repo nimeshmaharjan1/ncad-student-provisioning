@@ -75,7 +75,7 @@ All pipelines (except Library) compare Quercus data against a system-specific ba
 | `POST /quercus/download` | Cleaned CSV | 1+ Quercus CSVs |
 | `POST /ldap/download` | ZIP (new + baseline) | baseline + quercus |
 | `POST /canvas/export` | ZIP | baseline + quercus |
-| `POST /google/export` | ZIP (upload + reactivate) | baseline + quercus |
+| `POST /google/export` | ZIP (upload + reactivate + email files) | baseline + quercus |
 | `POST /athens/export` | ZIP | baseline + quercus |
 | `POST /library/export` | ZIP (cleaned CSV + tab-delimited .txt template) | 1+ Quercus CSVs |
 | `POST /staff/canvas/*` | Staff Canvas generation/export | JSON names |

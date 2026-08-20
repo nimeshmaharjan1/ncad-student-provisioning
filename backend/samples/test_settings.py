@@ -109,6 +109,7 @@ def main():
             check_columns,
             blocking_missing_required,
             NON_BLOCKING_REQUIRED_COLUMNS,
+            check_source_columns,
         )
         check(
             "ldap DOB is registered as non-blocking",
@@ -144,6 +145,19 @@ def main():
             "canvas missing column always blocks",
             blocking_missing_required("canvas", canvas_missing_first) == ["First Name"],
         )
+
+        # 7. Quercus upload warning excludes non-blocking columns (DOB)
+        print("Upload source warning columns:")
+        source_without_dob = check_source_columns(
+            [
+                "ID Number", "Course Code", "Course Description",
+                "Course Instance Course Year", "Type", "First Name",
+                "Last Name", "Term Email", "LDAP ID",
+            ],
+        )
+        check("DOB excluded from upload warning", "Date of Birth" not in source_without_dob)
+        source_missing_first = check_source_columns(["ID Number", "Last Name", "Term Email"])
+        check("genuine missing column still warned", "First Name" in source_missing_first)
 
     finally:
         if old_env_file is None:

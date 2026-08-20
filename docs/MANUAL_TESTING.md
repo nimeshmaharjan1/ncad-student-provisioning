@@ -32,15 +32,15 @@ you upload the raw files. Baselines are immutable — never edit them.
 
 ## Test 2 — Quercus missing-column warning (warns, never blocks)
 
-1. Use the provided `quercus_2025_without_dob.csv` (a copy of
-   `quercus_2025.csv` with the **`Date of Birth`** column deleted) — or make
-   your own by copying `quercus_2025.csv` and deleting that column.
+1. Make a copy of `quercus_2025.csv` and delete a genuinely required column
+   (e.g. **`First Name`**) so the warning actually triggers — deleting
+   `Date of Birth` no longer does (see the table below).
 2. Upload it **together with** the unmodified `quercus_2026.csv`.
 3. Expect:
    - Processing succeeds — the step is still "done" and the audit summary /
      preview render, but **no automatic download** happens.
    - Amber warning card **"Processed with warnings — missing columns"**
-     with a row: `quercus_2025_without_dob.csv → Date of Birth` (the 2026
+     with a row for the modified file listing the deleted column (the 2026
      file is absent from the list — it has all columns).
    - A **"Download cleaned file anyway"** button below the card; clicking it
      downloads the cleaned CSV (this is the only way to download when
@@ -60,7 +60,8 @@ More warning scenarios (each = copy the file, delete one column, upload alone):
 
 | Delete column | Expect |
 |---------------|--------|
-| `Date of Birth` | Warning card (export proceeds with the column **auto-added blank** — DOB never blocks; see Test 3) |
+| `Date of Birth` | **No warning** — expected to be absent (GDPR); LDAP auto-adds it blank and never blocks (see Test 3) |
+| `First Name` | Warning (required everywhere) |
 | `Status` | Warning (preprocessing's status filter would be silently skipped) |
 | `LDAP ID` | Warning (LDAP export proceeds with blank LDAP ID under warn mode) |
 | `Home Mobile Phone` | **No warning** — it is optional now |
