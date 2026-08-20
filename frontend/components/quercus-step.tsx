@@ -13,7 +13,7 @@ import { uploadQuercus, downloadQuercus, type AuditInfo, type MissingColumnsByFi
 import { usePipeline } from "@/lib/pipeline-context"
 import { useToast } from "@/lib/toast-context"
 import { addExportHistoryEntry } from "@/lib/local-storage"
-import { Download } from "lucide-react"
+import { Download, Info } from "lucide-react"
 
 function saveBlobDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
@@ -36,6 +36,20 @@ function DownloadAnywayButton({
       <Download className="size-4" />
       {downloading ? "Preparing download..." : "Download cleaned file anyway"}
     </Button>
+  )
+}
+
+function ExcelNote() {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+      <Info className="mt-0.5 size-3.5 shrink-0" />
+      <span>
+        Excel hides leading zeros on numeric columns — <code>01625350</code> shows as{" "}
+        <code>1625350</code>, and re-saving in Excel strips them. The preview table is the
+        correct view. To check a file, open it in Notepad or use Data → From Text/CSV with
+        the ID column set to Text.
+      </span>
+    </div>
   )
 }
 
@@ -189,6 +203,7 @@ export function QuercusStep() {
           </>
         )}
         <AuditSummary audit={result.auditInfo} />
+        <ExcelNote />
         <div>
           <p className="mb-2 text-sm text-muted-foreground">
             Preview (first {result.sampleRows.length} rows):
@@ -253,6 +268,7 @@ export function QuercusStep() {
             </>
           )}
           <AuditSummary audit={result.auditInfo} />
+          <ExcelNote />
           <div>
             <p className="mb-2 text-sm text-muted-foreground">
               Preview (first {result.sampleRows.length} rows):

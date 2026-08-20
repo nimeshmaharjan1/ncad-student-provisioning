@@ -84,6 +84,12 @@ After processing, you'll see:
 
 Keep this download — it's your processed Quercus data.
 
+> **Excel hides leading zeros.** Don't check exported CSV files in Excel —
+> numeric columns like ID Number are padded to 8 digits (e.g. `01625350`),
+> which Excel displays as `1625350` and strips if you re-save. The preview
+> table is the correct view. To verify a file, open it in Notepad or use
+> Data → From Text/CSV with the ID column set to Text.
+
 ---
 
 ### Phase 3: Process Each System

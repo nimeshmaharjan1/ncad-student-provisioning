@@ -549,6 +549,16 @@ export default function GuidePage() {
           ))}
         </div>
 
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+          <Info className="mt-0.5 size-4 shrink-0" />
+          <span>
+            Don't check the exported files in Excel — Excel hides leading zeros on numeric
+            columns (<code>01625350</code> shows as <code>1625350</code>) and strips them if
+            you re-save. The preview table is the correct view. To verify a file, open it in
+            Notepad or use Data → From Text/CSV with the ID column set to Text.
+          </span>
+        </div>
+
         <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
           <Check className="size-4 shrink-0" />
           <span>

@@ -2,6 +2,25 @@
 
 ## 2026-08-20
 
+### Excel leading-zero warning
+- Excel hides leading zeros on numeric CSV columns (ID Number is padded to
+  8 digits, so `01625350` displays as `1625350`) and strips them if a file is
+  re-saved — re-saved exports would break account creation. Warning added in:
+  - `quercus-step.tsx` — inline amber note under the audit summary in both
+    result views.
+  - The in-app guide (`guide/page.tsx`) after the Quercus steps.
+  - `USER_GUIDE.md`, `ONBOARDING.md`, `MANUAL_PROCESS.md` — callout: check
+    exports in Notepad or Data → From Text/CSV (ID column as Text), never in
+    Excel.
+
+### Launcher: fixed the start.bat early-close regression
+- The previous fix used `goto` inside parenthesized blocks in the wait loops;
+  once the poll actually matched, cmd aborted the blocks, the script ran to
+  EOF in seconds, the window closed and the `start /B` servers were killed.
+- Both waits are now goto-free labeled loops (`:wait_frontend` /
+  `:wait_backend`), the batch ends with `pause` so the window stays open, and
+  the file is back to CRLF line endings.
+
 ### ZIP filenames aligned with the manual naming convention (LDAP / Canvas)
 - Upload files are now just `<date>_<system>` and baseline/reference files get a
   `pre_` prefix, matching the existing manual workflow:

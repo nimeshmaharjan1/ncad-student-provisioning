@@ -96,6 +96,11 @@ Save the file in the `Quercus_2025` folder using the naming convention:
 
 Example: `20260617_quercus` / `20260617_quercus.csv`
 
+> **Excel hides leading zeros.** When checking these CSVs, note that Excel
+> displays padded IDs like `01625350` as `1625350` and strips the zeros if
+> the file is re-saved. Do not edit or re-save the exports in Excel — use
+> Notepad (or Data → From Text/CSV with the ID column as Text) to view them.
+
 ---
 
 ## Step 2: Prepare the LDAP Import File

@@ -504,6 +504,11 @@ Each pipeline step is a self-contained component that:
 
 All output files follow: `YYYYMMDD_<system>[_<description>].csv`
 
+> **Excel hides leading zeros.** Opening the exported CSVs in Excel makes
+> padded IDs like `01625350` display as `1625350`, and re-saving strips the
+> zeros. The in-app preview table is the correct view — use Notepad or
+> Data → From Text/CSV (ID column as Text) to check a file.
+
 Examples:
 - `20260630_quercus.csv`
 - `20260630_ldap.csv`
