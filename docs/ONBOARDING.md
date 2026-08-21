@@ -247,11 +247,12 @@ Returns ZIP:
 |-------|------|-------------|
 | `baseline` | `UploadFile` | Current Google snapshot |
 | `quercus` | `UploadFile` | Cleaned Quercus CSV |
+| `ldap_export` | `UploadFile` | LDAP export CSV from the LDAP step — supplies the real SSO passcodes for `to_email_1_2.csv` |
 
 Returns ZIP:
 - `YYYYMMDD_google_upload.csv` — 24-col Google upload (UUID passwords)
 - `YYYYMMDD_google_reactivate.csv` — 7-col reactivation candidates (suspended + in Quercus)
-- `YYYYMMDD_to_email_1_2.csv` — Thunderbird Mail Merge recipient file (`firstname`, `email`, `password`), one row per new student; `email` is the Term Email and `password` is the word-based SSO/LDAP passcode (sent to the student's own NCAD address)
+- `YYYYMMDD_to_email_1_2.csv` — Thunderbird Mail Merge recipient file (`firstname`, `email`, `password`), one row per new student; `email` is the Term Email and `password` is the student's real SSO/LDAP passcode looked up from the uploaded `ldap_export` CSV (matched by Term Email, fallback Student ID). Students with no match get a blank password and are listed in the `X-Missing-LDAP-Passcode` response header (sent to the student's own NCAD address)
 - `YYYYMMDD_to_email_3.csv` — Thunderbird Mail Merge recipient file (`email`, `firstname`, `username`, `password`, `newemail`); `email` is the student's Home Email (blank when none on record — the Google step warns about those students), `username`/`newemail` are the Term Email and `password` is the same Google temp password as the upload
 
 ---

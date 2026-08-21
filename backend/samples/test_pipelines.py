@@ -56,7 +56,15 @@ assert set(new_canvas["user_id"]) == {"00067890", "00098765", "00022222"}, f"Can
 
 # --- GOOGLE ---
 baseline_google = load("baseline_google.csv")
-upload_google, reactivate_google, to_email_1_2, to_email_3, audit_g = run_google_pipeline(baseline_google, cleaned)
+# LDAP export CSV as produced by the LDAP step — supplies the real SSO
+# passcodes for to_email_1_2. Frank is deliberately absent so the
+# missing-passcode path is exercised.
+ldap_export = pd.DataFrame({
+    "Student ID": ["00067890", "00098765"],
+    "Email_address": ["00067890@student.ncad.ie", "00098765@student.ncad.ie"],
+    "Passcode": ["amber-forest-92", "stone-river-17"],
+})
+upload_google, reactivate_google, to_email_1_2, to_email_3, audit_g = run_google_pipeline(baseline_google, cleaned, ldap_export)
 print(f"Google: {audit_g['total_upload_count']} upload, {audit_g['reactivation_count']} reactivate")
 # Carol is suspended in baseline and appears in Quercus -> reactivate (1)
 # Bob, Dave, Frank not in baseline -> upload (3)
@@ -69,9 +77,11 @@ from app.services.google_service import TO_EMAIL_1_2_COLUMNS, TO_EMAIL_3_COLUMNS
 assert len(to_email_1_2) == 3 and len(to_email_3) == 3, "Email exports must cover every new student"
 assert list(to_email_1_2.columns) == TO_EMAIL_1_2_COLUMNS, "to_email_1_2 columns mismatch"
 assert list(to_email_3.columns) == TO_EMAIL_3_COLUMNS, "to_email_3 columns mismatch"
-# 1_2: recipient = Term Email; password = word-based SSO/LDAP passcode
+# 1_2: recipient = Term Email; password = the student's real SSO/LDAP passcode
+# looked up from the LDAP export CSV (Bob + Dave found; Frank missing -> blank)
 assert (to_email_1_2["email"].tolist() == upload_google["Email Address [Required]"].tolist()), "to_email_1_2 email must be the student email"
-assert to_email_1_2["password"].astype(str).str.len().gt(0).all(), "to_email_1_2 password must not be blank"
+assert to_email_1_2["password"].tolist() == ["amber-forest-92", "stone-river-17", ""], f"to_email_1_2 passcodes wrong: {to_email_1_2['password'].tolist()}"
+assert audit_g["missing_ldap_passcodes"] == ["Frank Wilson"], f"missing-passcode warning wrong: {audit_g['missing_ldap_passcodes']}"
 assert (to_email_1_2["password"].tolist() != upload_google["Password [Required]"].tolist()), "to_email_1_2 must carry the passcode, not the Google temp password"
 # 3: recipient = Home Email (blank for students with none); username/newemail = Term Email;
 #    password = same Google temp password as the upload.

@@ -5,7 +5,6 @@ from app.utils.df_utils import (
     normalize_baseline_schema,
     detect_new_users,
 )
-from app.utils.passcode_generator import generate_passcode
 
 GOOGLE_EMAIL_PRIORITY = ["Email Address [Required]", "Term Email"]
 
@@ -67,7 +66,9 @@ GOOGLE_UPLOAD_COLUMNS = [
 # campaign (replaces the manually-maintained `to_mail` files in Email_2025/).
 #
 # - `{ds}_to_email_1_2.csv`  — sent to every student's own NCAD address (Term
-#   Email). Carries the SSO/LDAP passcode + eduroam details.
+#   Email). Carries the SSO/LDAP passcode + eduroam details. Passcodes come
+#   from the LDAP export CSV uploaded alongside the baseline — they MUST be
+#   the same values that were provisioned in AD, never freshly generated.
 # - `{ds}_to_email_3.csv`     — sent to the student's personal address (Home
 #   Email) after 1 & 2. Carries the Google temp password (same UUID as the
 #   upload CSV). Students without a home email are still included, with a
@@ -158,21 +159,77 @@ def generate_upload_export(new_users_df: pd.DataFrame, passwords: list[str]) -> 
     return pd.DataFrame(records, columns=GOOGLE_UPLOAD_COLUMNS)
 
 
-def generate_to_email_1_2_export(new_users_df: pd.DataFrame, passcodes: list[str]) -> pd.DataFrame:
+def build_ldap_passcode_lookup(ldap_export_df: pd.DataFrame | None) -> tuple[dict[str, str], dict[str, str]]:
+    """Passcode lookups from the LDAP export CSV, keyed by normalized Term
+    Email and by Student ID. Rows with a blank Passcode are skipped."""
+    by_email: dict[str, str] = {}
+    by_id: dict[str, str] = {}
+    if ldap_export_df is None or ldap_export_df.empty:
+        return by_email, by_id
+
+    df = ldap_export_df.copy()
+    df.columns = [str(c).strip() for c in df.columns]
+    if "Passcode" not in df.columns:
+        return by_email, by_id
+
+    email_col = next((c for c in ("Email_address", "Term Email") if c in df.columns), None)
+    id_col = next((c for c in ("Student ID", "ID Number") if c in df.columns), None)
+
+    for _, row in df.iterrows():
+        passcode = str(row.get("Passcode", "")).strip()
+        if not passcode or passcode.lower() == "nan":
+            continue
+        if email_col is not None:
+            email = str(row.get(email_col, "")).strip().lower()
+            if email and email != "nan":
+                by_email[email] = passcode
+        if id_col is not None:
+            sid = str(row.get(id_col, "")).strip()
+            if sid and sid.lower() != "nan":
+                by_id[sid] = passcode
+
+    return by_email, by_id
+
+
+def resolve_ldap_passcode(row: pd.Series, ldap_passcode_lookup: tuple[dict[str, str], dict[str, str]]) -> str:
+    """Find a student's real SSO/LDAP passcode: Term Email first, Student ID
+    fallback. Returns "" when the student is not in the LDAP export."""
+    by_email, by_id = ldap_passcode_lookup
+    email = str(row.get("Term Email", row.get("Email Address [Required]", ""))).strip().lower()
+    if email and email in by_email:
+        return by_email[email]
+    sid = str(row.get("ID Number", row.get("Student ID", ""))).strip()
+    if sid and sid in by_id:
+        return by_id[sid]
+    return ""
+
+
+def generate_to_email_1_2_export(
+    new_users_df: pd.DataFrame,
+    ldap_passcode_lookup: tuple[dict[str, str], dict[str, str]],
+) -> tuple[pd.DataFrame, list[str]]:
     """Recipient file for the email sent to each student's NCAD address.
 
-    `email` is the Term Email and `password` is the word-based SSO/LDAP
-    passcode (the details students need for their new address + eduroam).
+    `email` is the Term Email and `password` is the student's real SSO/LDAP
+    passcode looked up from the LDAP export CSV — never generated here.
+    Returns the DataFrame plus the names of students with no matching
+    passcode (their password column is left blank).
     """
     records = []
-    for (_, row), passcode in zip(new_users_df.iterrows(), passcodes):
+    missing: list[str] = []
+    for _, row in new_users_df.iterrows():
+        firstname = row.get("First Name", row.get("First Name [Required]", ""))
+        lastname = row.get("Last Name", row.get("Last Name [Required]", ""))
+        passcode = resolve_ldap_passcode(row, ldap_passcode_lookup)
+        if not passcode:
+            missing.append(f"{firstname} {lastname}".strip())
         records.append({
-            "firstname": row.get("First Name", row.get("First Name [Required]", "")),
+            "firstname": firstname,
             "email": row.get("Term Email", row.get("Email Address [Required]", "")),
             "password": passcode,
         })
 
-    return pd.DataFrame(records, columns=TO_EMAIL_1_2_COLUMNS)
+    return pd.DataFrame(records, columns=TO_EMAIL_1_2_COLUMNS), missing
 
 
 def generate_to_email_3_export(new_users_df: pd.DataFrame, passwords: list[str]) -> pd.DataFrame:
@@ -197,7 +254,11 @@ def generate_to_email_3_export(new_users_df: pd.DataFrame, passwords: list[str])
     return pd.DataFrame(records, columns=TO_EMAIL_3_COLUMNS)
 
 
-def run_google_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
+def run_google_pipeline(
+    baseline_df: pd.DataFrame,
+    quercus_df: pd.DataFrame,
+    ldap_export_df: pd.DataFrame | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     baseline_normalized = normalize_baseline_schema(baseline_df, GOOGLE_BASELINE_COLUMNS, GOOGLE_ALIAS_MAP)
 
     new_users_raw = detect_new_users(baseline_normalized, quercus_df, GOOGLE_EMAIL_PRIORITY)
@@ -207,8 +268,9 @@ def run_google_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> 
     # and the email exports so the emailed credentials match the account.
     passwords = [generate_password() for _ in range(len(new_users_raw))]
 
-    # One word-based SSO/LDAP passcode per new student for to_email_1_2.
-    passcodes = [generate_passcode() for _ in range(len(new_users_raw))]
+    # SSO/LDAP passcodes for to_email_1_2 come from the LDAP export CSV —
+    # never generated here, so emailed passwords always match AD.
+    ldap_passcode_lookup = build_ldap_passcode_lookup(ldap_export_df)
 
     # Enrich reactivation candidates with Type from Quercus data
     if not reactivation_candidates_raw.empty:
@@ -221,7 +283,7 @@ def run_google_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> 
 
     reactivation_df = generate_reactivation_export(reactivation_candidates_raw)
     upload_df = generate_upload_export(new_users_raw, passwords)
-    to_email_1_2_df = generate_to_email_1_2_export(new_users_raw, passcodes)
+    to_email_1_2_df, missing_ldap_passcodes = generate_to_email_1_2_export(new_users_raw, ldap_passcode_lookup)
     to_email_3_df = generate_to_email_3_export(new_users_raw, passwords)
 
     # Students with no home email are still included in to_email_3 with a
@@ -242,6 +304,7 @@ def run_google_pipeline(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> 
         "reactivation_count": len(reactivation_df),
         "total_upload_count": len(upload_df),
         "no_home_email_students": no_home_email_students,
+        "missing_ldap_passcodes": missing_ldap_passcodes,
     }
 
     return upload_df, reactivation_df, to_email_1_2_df, to_email_3_df, audit_info

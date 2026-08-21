@@ -14,12 +14,13 @@ import { downloadGoogleExport, ExportError as ExportErrorClass } from "@/lib/api
 import { usePipeline } from "@/lib/pipeline-context"
 import { useToast } from "@/lib/toast-context"
 import { addExportHistoryEntry } from "@/lib/local-storage"
-import { Upload, UserPlus, Globe } from "lucide-react"
+import { Upload, UserPlus, Globe, AlertTriangle } from "lucide-react"
 
 export function GoogleStep() {
   const { step1Done, cleanedQuercusFile, setStepStatus } = usePipeline()
   const { addToast } = useToast()
   const [baselineFile, setBaselineFile] = useState<File | null>(null)
+  const [ldapExportFile, setLdapExportFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [errorDetail, setErrorDetail] = useState<ExportErrorClass | null>(null)
@@ -27,18 +28,20 @@ export function GoogleStep() {
   const [doneTs, setDoneTs] = useState<Date | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
   const [noHomeEmail, setNoHomeEmail] = useState<string[]>([])
+  const [missingLdapPasscodes, setMissingLdapPasscodes] = useState<string[]>([])
 
   const handleRun = async () => {
-    if (!baselineFile || !cleanedQuercusFile) return
+    if (!baselineFile || !cleanedQuercusFile || !ldapExportFile) return
     setLoading(true)
     setError(null)
     setErrorDetail(null)
     setWarnings([])
     setNoHomeEmail([])
+    setMissingLdapPasscodes([])
     setDone(false)
     setDoneTs(null)
     try {
-      const { blob, filename, missingRequired, noHomeEmail } = await downloadGoogleExport(baselineFile, cleanedQuercusFile)
+      const { blob, filename, missingRequired, noHomeEmail, missingLdapPasscodes } = await downloadGoogleExport(baselineFile, cleanedQuercusFile, ldapExportFile)
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
@@ -62,6 +65,7 @@ export function GoogleStep() {
       })
       setWarnings(missingRequired)
       setNoHomeEmail(noHomeEmail)
+      setMissingLdapPasscodes(missingLdapPasscodes)
     } catch (e) {
       const message = e instanceof Error ? e.message : "Google export failed"
       if (e instanceof ExportErrorClass) {
@@ -97,9 +101,15 @@ export function GoogleStep() {
         disabled={!step1Done}
         onFilesSelected={(f) => setBaselineFile(f[0] ?? null)}
       />
+      <FileUpload
+        label="Upload LDAP Export CSV (from the LDAP step — supplies the real SSO passwords for Email 1)"
+        accept=".csv"
+        disabled={!step1Done}
+        onFilesSelected={(f) => setLdapExportFile(f[0] ?? null)}
+      />
       <Button
         onClick={handleRun}
-        disabled={!baselineFile || !cleanedQuercusFile || loading}
+        disabled={!baselineFile || !cleanedQuercusFile || !ldapExportFile || loading}
       >
         {loading ? "Exporting..." : "Run Google Export"}
       </Button>
@@ -127,6 +137,17 @@ export function GoogleStep() {
       )}
       {noHomeEmail.length > 0 && (
         <NoHomeEmailBanner students={noHomeEmail} />
+      )}
+      {missingLdapPasscodes.length > 0 && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <span>
+            No SSO passcode found in the LDAP export for:{" "}
+            <strong>{missingLdapPasscodes.join(", ")}</strong>. Their password
+            column in <code>to_email_1_2.csv</code> is blank — fill it in from{" "}
+            <code>YYYYMMDD_ldap.csv</code> before sending Email 1.
+          </span>
+        </div>
       )}
       {done && doneTs && (
         <SuccessCard

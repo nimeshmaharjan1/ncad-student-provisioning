@@ -2,6 +2,20 @@
 
 ## 2026-08-20
 
+### Fix: Email 1 passwords now come from the LDAP export (were wrongly regenerated)
+- **Bug:** `to_email_1_2.csv` carried freshly generated passcodes instead of
+  the SSO/LDAP passcodes that were actually provisioned in AD — the Google
+  endpoint never received the LDAP file, so it could not reuse them. Any
+  Email 1 sent from a file produced before this fix told students the wrong
+  SSO password (`to_email_3.csv` was unaffected: its temp password matches
+  `google_upload.csv`).
+- **Fix:** the Google step now requires a third upload, the LDAP export CSV
+  (`YYYYMMDD_ldap.csv`). `to_email_1_2.csv` passwords are looked up from it
+  (Term Email first, Student ID fallback); students with no match get a blank
+  password and are listed in the new `X-Missing-LDAP-Passcode` response
+  header, surfaced as an amber warning in the app.
+- Weekly order is unchanged: LDAP first, then Google.
+
 ### Excel leading-zero warning
 - Excel hides leading zeros on numeric CSV columns (ID Number is padded to
   8 digits, so `01625350` displays as `1625350`) and strips them if a file is

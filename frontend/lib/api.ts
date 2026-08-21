@@ -97,6 +97,8 @@ export interface ExportResult {
   missingRequired: string[]
   /** New students with no home email who are still included in to_email_3. */
   noHomeEmail: string[]
+  /** New students whose SSO passcode was not found in the uploaded LDAP export CSV. */
+  missingLdapPasscodes: string[]
 }
 
 function parseMissingRequired(res: Response): string[] {
@@ -110,6 +112,15 @@ function parseMissingRequired(res: Response): string[] {
 
 function parseNoHomeEmail(res: Response): string[] {
   const header = res.headers.get("X-No-Home-Email")
+  if (!header) return []
+  return header
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean)
+}
+
+function parseMissingLdapPasscodes(res: Response): string[] {
+  const header = res.headers.get("X-Missing-LDAP-Passcode")
   if (!header) return []
   return header
     .split(",")
@@ -138,6 +149,7 @@ async function downloadExport(url: string, formData: FormData): Promise<ExportRe
     filename,
     missingRequired: parseMissingRequired(res),
     noHomeEmail: parseNoHomeEmail(res),
+    missingLdapPasscodes: parseMissingLdapPasscodes(res),
   }
 }
 
@@ -156,10 +168,11 @@ export function downloadLdapExport(baseline: File, quercusFile: File): Promise<E
   return downloadExport("/ldap/download?format=zip", formData)
 }
 
-export function downloadGoogleExport(baseline: File, quercusFile: File): Promise<ExportResult> {
+export function downloadGoogleExport(baseline: File, quercusFile: File, ldapExport: File): Promise<ExportResult> {
   const formData = new FormData()
   formData.append("baseline", baseline)
   formData.append("quercus", quercusFile)
+  formData.append("ldap_export", ldapExport)
   return downloadExport("/google/export", formData)
 }
 
@@ -205,6 +218,7 @@ export async function downloadLibraryExport(files: File[]): Promise<ExportResult
     filename,
     missingRequired: parseMissingRequired(res),
     noHomeEmail: parseNoHomeEmail(res),
+    missingLdapPasscodes: [],
   }
 }
 

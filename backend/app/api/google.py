@@ -21,10 +21,15 @@ router = APIRouter()
 
 
 @router.post("/export")
-async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = File(...)):
+async def export_google(
+    baseline: UploadFile = File(...),
+    quercus: UploadFile = File(...),
+    ldap_export: UploadFile = File(...),
+):
     try:
         baseline_contents = await baseline.read()
         quercus_contents = await quercus.read()
+        ldap_export_contents = await ldap_export.read()
 
         ext = os.path.splitext(baseline.filename or "")[1].lower()
         if ext == ".xlsx":
@@ -32,9 +37,11 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
         else:
             baseline_df = pd.read_csv(io.StringIO(baseline_contents.decode("utf-8")))
         quercus_df = pd.read_csv(io.StringIO(quercus_contents.decode("utf-8")))
+        ldap_export_df = pd.read_csv(io.StringIO(ldap_export_contents.decode("utf-8")))
 
         baseline_df.columns = baseline_df.columns.str.strip()
         quercus_df.columns = quercus_df.columns.str.strip()
+        ldap_export_df.columns = ldap_export_df.columns.str.strip()
 
         # --- Schema validation ---
         check = check_columns("google", quercus_df.columns)
@@ -57,7 +64,7 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
         cleaned_quercus_df = preprocess_quercus(quercus_df)
 
         upload_df, reactivation_df, to_email_1_2_df, to_email_3_df, audit = run_google_pipeline(
-            baseline_df, cleaned_quercus_df
+            baseline_df, cleaned_quercus_df, ldap_export_df
         )
 
         ds = date_suffix()
@@ -78,6 +85,9 @@ async def export_google(baseline: UploadFile = File(...), quercus: UploadFile = 
         no_home_email = audit.get("no_home_email_students") or []
         if no_home_email:
             headers["X-No-Home-Email"] = ", ".join(no_home_email)
+        missing_ldap_passcodes = audit.get("missing_ldap_passcodes") or []
+        if missing_ldap_passcodes:
+            headers["X-Missing-LDAP-Passcode"] = ", ".join(missing_ldap_passcodes)
 
         return StreamingResponse(
             zip_buffer,
