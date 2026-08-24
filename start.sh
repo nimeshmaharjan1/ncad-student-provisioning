@@ -79,6 +79,23 @@ kill_port() {
 kill_port 8000
 kill_port 3000
 
+# Wait a moment for the OS to fully free the ports before starting.
+echo "Waiting for ports to free..."
+for i in 1 2 3 4 5; do
+  if ! lsof -ti:8000 >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+if lsof -ti:8000 >/dev/null 2>&1; then
+  echo "[WARN] Port 8000 still busy after 5s - try: lsof -ti:8000 | xargs kill -9"
+fi
+for i in 1 2 3 4 5; do
+  if ! lsof -ti:3000 >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+if lsof -ti:3000 >/dev/null 2>&1; then
+  echo "[WARN] Port 3000 still busy after 5s - try: lsof -ti:3000 | xargs kill -9"
+fi
+
 cleanup() {
   echo ""
   echo "Shutting down..."
@@ -154,17 +171,11 @@ else
   echo "If the browser doesn't open, visit http://localhost:3000 manually."
 fi
 
-# Open app and docs
-if command -v xdg-open &>/dev/null; then
-  xdg-open "http://localhost:3000"
-  xdg-open "http://localhost:3000/about"
-elif command -v open &>/dev/null; then
-  open "http://localhost:3000"
-  open "http://localhost:3000/about"
-fi
-
 echo ""
-echo "Browser tabs should open automatically."
+echo "Open these links (Ctrl/Cmd+Click):"
+echo "  Backend:  http://localhost:8000"
+echo "  Frontend: http://localhost:3000"
+echo "  Docs:     http://localhost:3000/about"
 echo "Press Ctrl+C to stop both servers."
 echo ""
 

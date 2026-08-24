@@ -74,6 +74,27 @@ for /f "tokens=5 delims= " %%p in ('netstat -ano ^| findstr ":3000"') do (
     if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1 && echo [INFO] Port 3000 was in use - killed leftover process.
 )
 
+:: Wait a moment for the OS to fully free the ports before starting.
+echo Waiting for ports to free...
+set pwait8000=0
+:wait_8000
+netstat -ano | findstr ":8000" | findstr "LISTENING" >nul 2>&1
+if %errorlevel% neq 0 goto :port8000_free
+>nul ping -n 2 localhost
+set /a pwait8000+=1
+if %pwait8000% lss 5 goto :wait_8000
+:port8000_free
+netstat -ano | findstr ":8000" | findstr "LISTENING" >nul 2>&1 && echo [WARN] Port 8000 still busy after 5s - try: netstat -ano ^| findstr ":8000" then taskkill /F /PID ^<pid^>
+set pwait3000=0
+:wait_3000
+netstat -ano | findstr ":3000" | findstr "LISTENING" >nul 2>&1
+if %errorlevel% neq 0 goto :port3000_free
+>nul ping -n 2 localhost
+set /a pwait3000+=1
+if %pwait3000% lss 5 goto :wait_3000
+:port3000_free
+netstat -ano | findstr ":3000" | findstr "LISTENING" >nul 2>&1 && echo [WARN] Port 3000 still busy after 5s - try: netstat -ano ^| findstr ":3000" then taskkill /F /PID ^<pid^>
+
 echo.
 echo All prerequisites met.
 echo.
@@ -130,16 +151,13 @@ echo [WARN] Frontend not ready after ~4 minutes. It may still be starting -
 echo        open http://localhost:3000 manually.
 :frontend_up
 
-:: ----- Open browser tabs -----------------------------------------------------
-start http://localhost:3000
-start http://localhost:3000/about
-
 echo.
 echo ============================================
 echo   Servers are running.
-echo   Backend:  http://localhost:8000
-echo   Frontend: http://localhost:3000
-echo   Docs:     http://localhost:3000/about
+echo   Open these links (Ctrl+Click in this window):
+echo     Backend:  http://localhost:8000
+echo     Frontend: http://localhost:3000
+echo     Docs:     http://localhost:3000/about
 echo.
 echo   This window stays open while the servers run.
 echo   To stop them, close this window (X) or press Ctrl+C.
