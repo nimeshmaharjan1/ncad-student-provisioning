@@ -13,7 +13,7 @@ import { downloadLdapExport, ExportError as ExportErrorClass } from "@/lib/api"
 import { usePipeline } from "@/lib/pipeline-context"
 import { useToast } from "@/lib/toast-context"
 import { addExportHistoryEntry } from "@/lib/local-storage"
-import { Upload, Mail, Clock, Server } from "lucide-react"
+import { Upload, Mail, Clock, Server, Info } from "lucide-react"
 
 export function LdapStep() {
   const { step1Done, cleanedQuercusFile, setStepStatus } = usePipeline()
@@ -99,6 +99,16 @@ export function LdapStep() {
       >
         {loading ? "Exporting..." : "Run LDAP Export"}
       </Button>
+      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+        <Info className="mt-0.5 size-3.5 shrink-0" />
+        <span>
+          Save your ZIPs before you click Run again — re-running makes new
+          passwords that won’t match what you already put into the student
+          accounts or emailed. If you need to run again, use the{" "}
+          <code>pre_YYYYMMDD_ldap.csv</code> it just gave you as the new
+          starting list.
+        </span>
+      </div>
       <AnimatePresence>
         {loading && (
           <motion.div
