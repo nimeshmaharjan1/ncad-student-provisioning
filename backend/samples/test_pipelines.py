@@ -6,9 +6,9 @@ sys.path.insert(0, os.path.dirname(SCRIPT_DIR))  # backend/ for app imports
 
 import pandas as pd
 from app.services.quercus_preprocess import preprocess_quercus
-from app.services.ldap_export import generate_ldap_comparison_exports
+from app.services.ldap_export import generate_ldap_comparison_exports, TO_EMAIL_1_2_COLUMNS
 from app.services.canvas_service import generate_canvas_comparison_exports
-from app.services.google_service import run_google_pipeline
+from app.services.google_service import run_google_pipeline, TO_EMAIL_3_COLUMNS
 from app.services.athens_service import run_athens_pipeline
 
 SAMPLES = os.path.join(PROJECT_ROOT, "samples")
@@ -39,12 +39,19 @@ assert (cleaned["LDAP ID"].astype(str) == "").all(), "empty LDAP ID must stay em
 
 # --- LDAP ---
 baseline_ldap = load("baseline_ldap.csv")
-new_ldap, updated_ldap, audit = generate_ldap_comparison_exports(baseline_ldap, cleaned)
-print(f"\nLDAP: {audit['new_students_count']} new, {audit['updated_baseline_count']} baseline")
+new_ldap, to_email_1_2, updated_ldap, audit = generate_ldap_comparison_exports(baseline_ldap, cleaned)
+print(f"\nLDAP: {audit['new_students_count']} new, {audit['updated_baseline_count']} baseline, {len(to_email_1_2)} to_email_1_2")
 # Baseline has Alice + Carol. New: Bob, Dave, Frank = 3
 assert audit['new_students_count'] == 3, f"Expected 3 new LDAP students; got {audit['new_students_count']}"
 assert new_ldap["Student ID"].astype(str).str.len().eq(8).all(), "LDAP Student ID must be 8-digit padded"
 assert set(new_ldap["Student ID"]) == {"00067890", "00098765", "00022222"}, f"LDAP Student ID padding wrong: {set(new_ldap['Student ID'])}"
+# Email 1 recipient file is now delivered by the LDAP step — one row per LDAP-new
+# student, password straight from the same export (no lookup, always matches AD).
+assert list(to_email_1_2.columns) == TO_EMAIL_1_2_COLUMNS, "to_email_1_2 columns mismatch"
+assert len(to_email_1_2) == 3, f"to_email_1_2 must cover every LDAP-new student; got {len(to_email_1_2)}"
+assert to_email_1_2["email"].tolist() == new_ldap["Email_address"].tolist(), "to_email_1_2 email must be the LDAP Email_address"
+assert to_email_1_2["password"].tolist() == new_ldap["Passcode"].tolist(), "to_email_1_2 password must match the LDAP Passcode"
+assert to_email_1_2["password"].astype(str).str.len().gt(0).all(), "to_email_1_2 passwords must not be blank"
 
 # --- CANVAS ---
 baseline_canvas = load("baseline_canvas.csv")
@@ -56,33 +63,16 @@ assert set(new_canvas["user_id"]) == {"00067890", "00098765", "00022222"}, f"Can
 
 # --- GOOGLE ---
 baseline_google = load("baseline_google.csv")
-# LDAP export CSV as produced by the LDAP step — supplies the real SSO
-# passcodes for to_email_1_2. Frank is deliberately absent so the
-# missing-passcode path is exercised.
-ldap_export = pd.DataFrame({
-    "Student ID": ["00067890", "00098765"],
-    "Email_address": ["00067890@student.ncad.ie", "00098765@student.ncad.ie"],
-    "Passcode": ["amber-forest-92", "stone-river-17"],
-})
-upload_google, reactivate_google, to_email_1_2, to_email_3, audit_g = run_google_pipeline(baseline_google, cleaned, ldap_export)
+upload_google, reactivate_google, to_email_3, audit_g = run_google_pipeline(baseline_google, cleaned)
 print(f"Google: {audit_g['total_upload_count']} upload, {audit_g['reactivation_count']} reactivate")
 # Carol is suspended in baseline and appears in Quercus -> reactivate (1)
 # Bob, Dave, Frank not in baseline -> upload (3)
 assert audit_g['total_upload_count'] == 3, f"Expected 3 upload; got {audit_g['total_upload_count']}"
 assert audit_g['reactivation_count'] == 1, f"Expected 1 reactivation; got {audit_g['reactivation_count']}"
-# Mail Merge recipient files: to_email_1_2 covers every new student (sent to
-# their NCAD address); to_email_3 covers every new student too (sent to their
-# home email), including those with no home email on record.
-from app.services.google_service import TO_EMAIL_1_2_COLUMNS, TO_EMAIL_3_COLUMNS
-assert len(to_email_1_2) == 3 and len(to_email_3) == 3, "Email exports must cover every new student"
-assert list(to_email_1_2.columns) == TO_EMAIL_1_2_COLUMNS, "to_email_1_2 columns mismatch"
+# to_email_3 is the only Mail Merge file left in the Google step (Email 1
+# is now delivered by the LDAP step). It covers every Google-new student.
+assert len(to_email_3) == 3, "to_email_3 must cover every Google-new student"
 assert list(to_email_3.columns) == TO_EMAIL_3_COLUMNS, "to_email_3 columns mismatch"
-# 1_2: recipient = Term Email; password = the student's real SSO/LDAP passcode
-# looked up from the LDAP export CSV (Bob + Dave found; Frank missing -> blank)
-assert (to_email_1_2["email"].tolist() == upload_google["Email Address [Required]"].tolist()), "to_email_1_2 email must be the student email"
-assert to_email_1_2["password"].tolist() == ["amber-forest-92", "stone-river-17", ""], f"to_email_1_2 passcodes wrong: {to_email_1_2['password'].tolist()}"
-assert audit_g["missing_ldap_passcodes"] == ["Frank Wilson"], f"missing-passcode warning wrong: {audit_g['missing_ldap_passcodes']}"
-assert (to_email_1_2["password"].tolist() != upload_google["Password [Required]"].tolist()), "to_email_1_2 must carry the passcode, not the Google temp password"
 # 3: recipient = Home Email (blank for students with none); username/newemail = Term Email;
 #    password = same Google temp password as the upload.
 assert (to_email_3["password"].tolist() == upload_google["Password [Required]"].tolist()), "to_email_3 password must match Google upload password"
@@ -90,7 +80,7 @@ assert (to_email_3["username"].tolist() == to_email_3["newemail"].tolist()), "us
 assert (to_email_3["username"].tolist() == upload_google["Email Address [Required]"].tolist()), "to_email_3 username/newemail must be the student email"
 assert to_email_3["email"].tolist() == ["bob.johnson@example.com", "dave.brown@example.com", ""], f"to_email_3 home emails wrong: {to_email_3['email'].tolist()}"
 assert audit_g["no_home_email_students"] == ["Frank Wilson"], f"no-home-email warning wrong: {audit_g['no_home_email_students']}"
-print(f"Google email files: {len(to_email_1_2)} to_email_1_2, {len(to_email_3)} to_email_3 (shared passwords; no-home-email warning: {audit_g['no_home_email_students']})")
+print(f"Google email file: {len(to_email_3)} to_email_3 (shared passwords; no-home-email warning: {audit_g['no_home_email_students']})")
 
 # --- ATHENS ---
 baseline_athens = load("baseline_athens.csv")
@@ -102,7 +92,7 @@ assert len(new_athens) == 3, f"Expected 3 new Athens users; got {len(new_athens)
 
 # --- VERIFY FULL BASELINE RERUN ---
 # LDAP rerun: use updated_ldap as new baseline + same cleaned Quercus
-new_ldap2, _, audit2 = generate_ldap_comparison_exports(updated_ldap, cleaned)
+new_ldap2, _, _, audit2 = generate_ldap_comparison_exports(updated_ldap, cleaned)
 print(f"\nRerun test (LDAP): {audit2['new_students_count']} new -> should be 0")
 assert audit2['new_students_count'] == 0, f"Rerun should produce 0 new students; got {audit2['new_students_count']}"
 

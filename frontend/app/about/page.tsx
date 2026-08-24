@@ -42,7 +42,7 @@ const systems = [
     description: "Triangle LDAP server — new student accounts + passcodes.",
     required: ["ID Number", "Course Code", "Course Description", "Course Instance Course Year", "Type", "First Name", "Last Name", "Date of Birth", "Term Email", "LDAP ID"],
     optional: ["Home Mobile Phone"],
-    output: "ZIP with 2 files: new_students.csv (with generated passcodes) + updated_baseline.csv.",
+    output: "ZIP with 3 files: YYYYMMDD_ldap.csv (new students, with passcodes) + pre_YYYYMMDD_ldap.csv (updated baseline) + YYYYMMDD_to_email_1_2.csv (Mail Merge recipient file for Email 1 — firstname/email/password = real SSO passcode).",
     postSteps: ["SFTP upload to Triangle server via Cyberduck", "Email Triangle Service Desk to confirm", "Wait for confirmation before sending student emails"],
   },
   {
@@ -62,7 +62,7 @@ const systems = [
     description: "Google Workspace — new accounts + reactivations.",
     required: ["ID Number", "First Name", "Last Name"],
     optional: [],
-    output: "ZIP with 4 files: google_upload.csv (new accounts) + google_reactivate.csv (reactivations) + to_email_1_2.csv + to_email_3.csv (Mail Merge recipient files; to_email_1_2 passwords come from the uploaded LDAP export CSV).",
+    output: "ZIP with 3 files: google_upload.csv (new accounts) + google_reactivate.csv (reactivations) + to_email_3.csv (Mail Merge recipient file for home emails). Email 1 (to_email_1_2.csv) is now delivered by the LDAP step.",
     postSteps: ["Bulk upload users in Google Admin Console", "Review reactivations, send password reset emails"],
   },
   {

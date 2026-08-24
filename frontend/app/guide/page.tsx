@@ -591,6 +591,7 @@ export default function GuidePage() {
             zipContents={[
               { file: "YYYYMMDD_ldap.csv", desc: "Includes passcodes" },
               { file: "pre_YYYYMMDD_ldap.csv", desc: "Save as your next baseline" },
+              { file: "YYYYMMDD_to_email_1_2.csv", desc: "Mail Merge recipient file for Email 1 (firstname, email = NCAD address, password = real SSO passcode)" },
             ]}
             manualSteps={[
               { number: 4, icon: Upload, text: "Open your SFTP client and connect to the Triangle LDAP server", detail: "Using Cyberduck" },
@@ -632,23 +633,21 @@ export default function GuidePage() {
             accent="emerald"
             autoSteps={[
               { number: 1, icon: Upload, text: "Upload the most recent Google Workspace baseline CSV", detail: "The bulk export from Google Admin" },
-              { number: 2, icon: Upload, text: "Upload the LDAP export CSV (YYYYMMDD_ldap.csv)", detail: "Supplies the real SSO passwords for to_email_1_2.csv" },
-              { number: 3, icon: Play, text: "Click Run Google Export" },
-              { number: 4, icon: Download, text: "Download the .zip" },
+              { number: 2, icon: Play, text: "Click Run Google Export" },
+              { number: 3, icon: Download, text: "Download the .zip" },
             ]}
             zipContents={[
               { file: "YYYYMMDD_google_upload.csv", desc: "New accounts with UUID passwords (force-change enabled)" },
               { file: "YYYYMMDD_google_reactivate.csv", desc: "Suspended students who reappeared in Quercus" },
-              { file: "YYYYMMDD_to_email_1_2.csv", desc: "Mail Merge recipient file sent to student NCAD addresses (firstname, email, password = real SSO passcode from your LDAP export)" },
               { file: "YYYYMMDD_to_email_3.csv", desc: "Mail Merge recipient file sent to home emails (email = home, username/newemail = Term Email, password = Google temp password)" },
             ]}
             manualSteps={[
-              { number: 5, icon: LogIn, text: "Log into Google Workspace Admin Console (student domain)" },
-              { number: 6, icon: Upload, text: "Go to Users → Bulk upload users and upload YYYYMMDD_google_upload.csv" },
-              { number: 7, icon: Check, text: "New accounts are created with temporary passwords" },
+              { number: 4, icon: LogIn, text: "Log into Google Workspace Admin Console (student domain)" },
+              { number: 5, icon: Upload, text: "Go to Users → Bulk upload users and upload YYYYMMDD_google_upload.csv" },
+              { number: 6, icon: Check, text: "New accounts are created with temporary passwords" },
             ]}
             criticalSteps={[
-              { number: 8, icon: UserPlus, text: "Review reactivations in YYYYMMDD_google_reactivate.csv", detail: "Check status in Quercus, reactivate in Google Admin, add to correct mailing group (CEAD/UG/PG), send password reset to personal email" },
+              { number: 7, icon: UserPlus, text: "Review reactivations in YYYYMMDD_google_reactivate.csv", detail: "Check status in Quercus, reactivate in Google Admin, add to correct mailing group (CEAD/UG/PG), send password reset to personal email" },
             ]}
           />
 

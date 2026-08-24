@@ -80,7 +80,7 @@ async def download_ldap(
 
         cleaned_quercus_df = preprocess_quercus(quercus_df)
 
-        new_students_df, updated_baseline_df, _ = generate_ldap_comparison_exports(
+        new_students_df, to_email_1_2_df, updated_baseline_df, _ = generate_ldap_comparison_exports(
             baseline_df, cleaned_quercus_df
         )
 
@@ -97,6 +97,7 @@ async def download_ldap(
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
                 zf.writestr(new_fn, new_students_df.to_csv(index=False))
                 zf.writestr(upd_fn, updated_baseline_df.to_csv(index=False))
+                zf.writestr(f"{ds}_to_email_1_2.csv", to_email_1_2_df.to_csv(index=False))
             zip_buffer.seek(0)
             headers = {
                 "Content-Disposition": f"attachment; filename=\"{ds}_ldap_export.zip\"",

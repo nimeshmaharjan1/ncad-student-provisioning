@@ -109,8 +109,9 @@ the manual steps needed to complete it.
 3. Download the `.zip`
 
 **The `.zip` contains:**
-- `YYYYMMDD_ldap.csv` — includes **passcodes**
+- `YYYYMMDD_ldap.csv` — new students (13 cols, includes **passcodes**)
 - `pre_YYYYMMDD_ldap.csv` — save as your next baseline
+- `YYYYMMDD_to_email_1_2.csv` — Mail Merge recipient file (`firstname`, `email`, `password`) for **Email 1** (SSO + Eduroam), one row per LDAP-new student; `password` is the real SSO passcode provisioned in AD
 
 > **Date of Birth:** since the GDPR change, the Quercus Discoverer report no
 > longer exports `Date of Birth`. This is expected: the system **auto-adds
@@ -224,29 +225,23 @@ Go to **Staff** in the top navigation and open the **Library** tab.
 
 **In the system:**
 1. Upload the most recent Google Workspace baseline CSV (the bulk export from Google Admin)
-2. Upload the LDAP export CSV from the LDAP step (`YYYYMMDD_ldap.csv`) — it supplies the real SSO passcodes for `to_email_1_2.csv`
-3. Click **Run Google Export**
-4. Download the `.zip`
+2. Click **Run Google Export**
+3. Download the `.zip`
 
 **The `.zip` contains:**
 
 - `YYYYMMDD_google_upload.csv` — new accounts with UUID passwords (force-change enabled)
 - `YYYYMMDD_google_reactivate.csv` — suspended students who reappeared in Quercus
-- `YYYYMMDD_to_email_1_2.csv` — Mail Merge recipient file (`firstname`, `email`, `password`) sent to each new student's NCAD address (Term Email + SSO/LDAP passcode from the uploaded LDAP export)
-- `YYYYMMDD_to_email_3.csv` — Mail Merge recipient file (`email`, `firstname`, `username`, `password`, `newemail`) sent to personal addresses (Home Email + Google temp password)
-
-> If a student is missing from the LDAP export, their password in
-> `to_email_1_2.csv` is left blank and the app lists their name — fill it in
-> from `YYYYMMDD_ldap.csv` before sending Email 1.
+- `YYYYMMDD_to_email_3.csv` — Mail Merge recipient file (`email`, `firstname`, `username`, `password`, `newemail`) sent to personal addresses (Home Email + Google temp password). `YYYYMMDD_to_email_1_2.csv` for Email 1 is now delivered by the **LDAP step**, not here.
 
 **Once the file is downloaded:**
 
-5. Log into **Google Workspace Admin Console** (student domain)
-6. Go to **Users** → **Bulk upload users**
-7. Upload `YYYYMMDD_google_upload.csv`
-8. New accounts are created with temporary passwords
+4. Log into **Google Workspace Admin Console** (student domain)
+5. Go to **Users** → **Bulk upload users**
+6. Upload `YYYYMMDD_google_upload.csv`
+7. New accounts are created with temporary passwords
 
-9. **Review reactivations:** Open `YYYYMMDD_google_reactivate.csv` — for each student:
+8. **Review reactivations:** Open `YYYYMMDD_google_reactivate.csv` — for each student:
    - Check their status in Quercus
    - Reactivate the account in Google Admin if needed
    - Add them to the correct mailing group:
@@ -321,11 +316,11 @@ confirmation.
 This sends each student their SSO account details (username + passcode) and the
 Eduroam Wi-Fi setup instructions.
 
-> The Google export generates the recipient file automatically — no need to
+> The LDAP export generates the recipient file automatically — no need to
 > maintain `to_mail` in `Email_2025/` by hand. `YYYYMMDD_to_email_1_2.csv`
-> carries `firstname`, the student's NCAD address (`email`) and the student's
-> real SSO/LDAP passcode (`password`) read from the LDAP export CSV you upload
-> in the Google step — so emailed passwords always match AD.
+> (now in the LDAP ZIP) carries `firstname`, the student's NCAD address
+> (`email`) and the student's real SSO/LDAP passcode (`password`) straight
+> from that export — so emailed passwords always match AD.
 
 #### Email 2: Google Apps for Education Account
 

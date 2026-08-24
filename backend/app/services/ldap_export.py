@@ -39,6 +39,13 @@ LDAP_SCHEMA_REQUIRED_COLUMNS = [
     "Email_address", "Quercus_LDAP", "Card", "Passcode"
 ]
 
+# Thunderbird Mail Merge recipient file for Email 1 (SSO + Eduroam).
+# Unlike Email 2 (Google Apps), it carries the SSO/LDAP word passcode —
+# the same value that was provisioned in AD — so every LDAP-new student
+# gets their real password. Generated alongside the LDAP export, not the
+# Google export.
+TO_EMAIL_1_2_COLUMNS = ["firstname", "email", "password"]
+
 def map_quercus_to_ldap(quercus_df: pd.DataFrame) -> pd.DataFrame:
     """
     Pure mapping function: Quercus -> LDAP schema only, no business logic.
@@ -102,6 +109,23 @@ def assign_passcodes(new_students_df: pd.DataFrame) -> pd.DataFrame:
 
     df_copy["Passcode"] = df_copy["Passcode"].apply(get_passcode)
     return df_copy
+
+
+def generate_to_email_1_2_export(ldap_new_df: pd.DataFrame) -> pd.DataFrame:
+    """Mail Merge file for Email 1 — one row per LDAP-new student.
+
+    Uses the passcodes already in the LDAP export so the emailed password
+    always matches AD. Columns: firstname, email (Term Email via
+    Email_address), password (Passcode).
+    """
+    records = []
+    for _, row in ldap_new_df.iterrows():
+        records.append({
+            "firstname": row.get("First Name", ""),
+            "email": row.get("Email_address", ""),
+            "password": row.get("Passcode", ""),
+        })
+    return pd.DataFrame(records, columns=TO_EMAIL_1_2_COLUMNS)
 
 
 
@@ -173,12 +197,12 @@ def _format_dob_series(series: pd.Series) -> pd.Series:
     return formatted
 
 
-def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     """
     Orchestrates the LDAP comparison pipeline.
-    
+
     Returns:
-        tuple: (new_students_df, updated_baseline_df, audit_info)
+        tuple: (new_students_df, to_email_1_2_df, updated_baseline_df, audit_info)
     """
     # 1. Normalize Baseline Schema at Ingestion
     baseline_normalized = normalize_baseline_schema(baseline_df, LDAP_SCHEMA_REQUIRED_COLUMNS)
@@ -205,13 +229,17 @@ def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.D
     new_students_with_passcodes["Date of Birth"] = _format_dob_series(new_students_with_passcodes["Date of Birth"])
     updated_baseline["Date of Birth"] = _format_dob_series(updated_baseline["Date of Birth"])
 
-    # 8. Audit info based on inputs
+    # 8. Build Email 1 recipient file from the same LDAP-new rows
+    to_email_1_2_df = generate_to_email_1_2_export(new_students_with_passcodes)
+
+    # 9. Audit info based on inputs
     audit_info = {
         "new_students_count": len(new_students_with_passcodes),
+        "to_email_1_2_count": len(to_email_1_2_df),
         "updated_baseline_count": len(updated_baseline),
         "filtered_out_status_count": quercus_df.attrs.get("filtered_out_status_count", 0),
         "external_students_removed_count": quercus_df.attrs.get("external_students_removed_count", 0),
         "duplicate_rows_detected": quercus_df.attrs.get("duplicate_rows_detected", 0)
     }
 
-    return new_students_with_passcodes, updated_baseline, audit_info
+    return new_students_with_passcodes, to_email_1_2_df, updated_baseline, audit_info

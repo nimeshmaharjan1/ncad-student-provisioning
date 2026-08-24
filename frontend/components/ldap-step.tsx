@@ -50,7 +50,7 @@ export function LdapStep() {
         system: "LDAP",
         status: "success",
         rowCount: null,
-        fileCount: filename.endsWith(".zip") ? 2 : 1,
+        fileCount: filename.endsWith(".zip") ? 3 : 1,
       })
       addToast({
         type: "success",
