@@ -35,7 +35,7 @@ QUERCUS_SCHEMA_OPTIONAL_COLUMNS = SCHEMAS["ldap"].optional
 
 LDAP_SCHEMA_REQUIRED_COLUMNS = [
     "Student ID", "Code", "Description", "Year", "Code (UG/PG/E)",
-    "First Name", "Last Name", "Date of Birth", "Phone",
+    "First Name", "Last Name", "Date Of Birth", "Phone",
     "Email_address", "Quercus_LDAP", "Card", "Passcode"
 ]
 
@@ -70,7 +70,7 @@ def map_quercus_to_ldap(quercus_df: pd.DataFrame) -> pd.DataFrame:
         "Code (UG/PG/E)": "Type",
         "First Name": "First Name",
         "Last Name": "Last Name",
-        "Date of Birth": "Date of Birth",
+        "Date Of Birth": "Date of Birth",
         "Email_address": "Term Email",
         "Quercus_LDAP": "LDAP ID"
     }
@@ -91,7 +91,7 @@ def map_quercus_to_ldap(quercus_df: pd.DataFrame) -> pd.DataFrame:
     ldap_data["Card"] = ""
     ldap_data["Passcode"] = ""
 
-    return pd.DataFrame(ldap_data)
+    return pd.DataFrame(ldap_data).reindex(columns=LDAP_SCHEMA_REQUIRED_COLUMNS)
 
 def assign_passcodes(new_students_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -225,9 +225,9 @@ def generate_ldap_comparison_exports(baseline_df: pd.DataFrame, quercus_df: pd.D
     # 6. Update baseline state (this is the single stage where deduplication occurs)
     updated_baseline = update_baseline_state(baseline_normalized, new_students_with_passcodes, LDAP_EMAIL_PRIORITY)
 
-    # 7. Enforce dd/mm/yyyy format on Date of Birth in both outputs
-    new_students_with_passcodes["Date of Birth"] = _format_dob_series(new_students_with_passcodes["Date of Birth"])
-    updated_baseline["Date of Birth"] = _format_dob_series(updated_baseline["Date of Birth"])
+    # 7. Enforce dd/mm/yyyy format on Date Of Birth in both outputs
+    new_students_with_passcodes["Date Of Birth"] = _format_dob_series(new_students_with_passcodes["Date Of Birth"])
+    updated_baseline["Date Of Birth"] = _format_dob_series(updated_baseline["Date Of Birth"])
 
     # 8. Build Email 1 recipient file from the same LDAP-new rows
     to_email_1_2_df = generate_to_email_1_2_export(new_students_with_passcodes)
